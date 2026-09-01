@@ -29,7 +29,7 @@ function RoleStep({ onChoose }) {
   return (
     <div className="card p-8">
       <h1 className="mb-1 font-display text-2xl font-bold text-ink">Create an account</h1>
-      <p className="mb-8 text-sm text-muted">I am joining ShramSetu as a…</p>
+      <p className="mb-8 text-sm text-muted">I am joining NEED as a…</p>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <button

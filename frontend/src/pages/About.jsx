@@ -34,7 +34,7 @@ export default function About() {
       <SectionHeading
         eyebrow="About"
         title="A marketplace the workers own"
-        description="ShramSetu is built around one idea: the people doing the work should own the platform that finds them the work, and should keep most of what the customer pays."
+        description="NEED is built around one idea: the people doing the work should own the platform that finds them the work, and should keep most of what the customer pays."
       />
 
       <div className="mt-14 grid gap-12 lg:grid-cols-[1.1fr_0.9fr]">
@@ -48,7 +48,7 @@ export default function About() {
             the rules are set.
           </p>
           <p>
-            ShramSetu is organised as a cooperative federation instead. Workers
+            NEED is organised as a cooperative federation instead. Workers
             join a local society, get their identity and skills verified once, and
             then appear in customer search results with a member ID and a rating
             that belongs to them. The commission the platform charges is small and

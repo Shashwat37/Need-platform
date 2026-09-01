@@ -14,7 +14,7 @@ export default function NotFound() {
           This page does not exist
         </h1>
         <p className="mt-4 text-[15px] leading-relaxed text-muted">
-          The address may be mistyped, or the page belongs to a part of ShramSetu
+          The address may be mistyped, or the page belongs to a part of NEED
           that has not been built yet.
         </p>
         <Link to="/" className="btn btn-primary mt-8">

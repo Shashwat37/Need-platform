@@ -1,5 +1,5 @@
 """
-auth.py — authentication endpoints for ShramSetu.
+auth.py — authentication endpoints for NEED.
 
 WHAT: Register, login, session check and logout, all in one Blueprint.
 WHY:  Keeping auth separate from routes.py means each file stays focused.

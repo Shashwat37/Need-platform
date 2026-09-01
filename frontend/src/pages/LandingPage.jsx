@@ -127,7 +127,7 @@ export default function LandingPage() {
             </h1>
 
             <p className="mt-6 max-w-xl text-[17px] leading-relaxed text-muted">
-              ShramSetu connects you with verified electricians, plumbers, cleaners
+              NEED connects you with verified electricians, plumbers, cleaners
               and more from your own neighbourhood. The workers own the platform,
               so the money stays with the people doing the work.
             </p>
@@ -316,7 +316,7 @@ export default function LandingPage() {
       {/* ----------------------------------------------------------------- CTA */}
       <section className="container-page pb-4">
         <div className="overflow-hidden rounded-3xl bg-ink px-6 py-14 text-center sm:px-14">
-          <p className="eyebrow justify-center text-marigold-400">Join ShramSetu</p>
+          <p className="eyebrow justify-center text-marigold-400">Join NEED</p>
           <h2 className="mx-auto mt-4 max-w-2xl font-display text-3xl font-extrabold leading-tight text-white sm:text-4xl">
             Need work done, or looking for work?
           </h2>

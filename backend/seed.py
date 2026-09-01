@@ -194,8 +194,8 @@ def seed():
         # --- Admin ---------------------------------------------------------
         db.session.add(
             User(
-                name="ShramSetu Admin",
-                email="admin@shramsetu.in",
+                name="NEED Admin",
+                email="admin@need.in",
                 phone="9800000000",
                 password_hash=generate_password_hash("admin123"),
                 role="admin",
@@ -293,7 +293,7 @@ def seed():
         print(f"Added {len(WORKERS)} workers with welfare wallets")
 
         print("\nDone. Demo login details:")
-        print("  Admin    : admin@shramsetu.in / admin123")
+        print("  Admin    : admin@need.in / admin123")
         print(f"  Customer : ananya@example.com / {DEMO_PASSWORD}")
         print(f"  Worker   : rahul@example.com / {DEMO_PASSWORD}")
 

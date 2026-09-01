@@ -38,7 +38,7 @@ const CATEGORIES = [
 const FAQS = [
   {
     q: 'How does the 90/10 Cooperative split work?',
-    a: 'Unlike private gig apps that keep 25-30% platform margin, ShramSetu routes 90% directly to the worker and 10% into the worker’s personal Welfare Wallet (70% liquid emergency pool + 30% insurance reserve).',
+    a: 'Unlike private gig apps that keep 25-30% platform margin, NEED routes 90% directly to the worker and 10% into the worker’s personal Welfare Wallet (70% liquid emergency pool + 30% insurance reserve).',
   },
   {
     q: 'How do I request an Emergency Cash Withdrawal from my Welfare Wallet?',
@@ -132,7 +132,7 @@ export default function SupportPage() {
         <div>
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-brand-700">
             <LifeBuoy size={16} />
-            ShramSetu Federation Help Center
+            NEED Federation Help Center
           </div>
           <h1 className="mt-1 font-display text-3xl font-extrabold text-ink">
             Help &amp; Support Desk
@@ -177,7 +177,7 @@ export default function SupportPage() {
           <SectionHeading
             eyebrow="Need Assistance?"
             title="Create Support Ticket"
-            description="Submit an inquiry to the ShramSetu Federation support team."
+            description="Submit an inquiry to the NEED Federation support team."
           />
 
           <div className="card p-6 bg-white border-line shadow-sm">

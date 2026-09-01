@@ -4,7 +4,7 @@
  * WHAT: Shows the worker's cooperative member ID card, availability toggle,
  *       earnings, ratings, welfare wallet savings, and assigned job requests.
  *
- * WHY:  On ShramSetu, workers are cooperative owners, not anonymous gig contractors.
+ * WHY:  On NEED, workers are cooperative owners, not anonymous gig contractors.
  *       The dashboard emphasizes their cooperative membership, verified status,
  *       and welfare safety net.
  *
@@ -407,7 +407,7 @@ export default function WorkerDashboard() {
               <WorkerIdCard
                 name={workerUser.name}
                 trade={profile?.primary_service || 'General Service'}
-                society="ShramSetu Cooperative Fed."
+                society="NEED Cooperative Fed."
                 memberId={`SHR-2026-${workerUser.id.toString().padStart(4, '0')}`}
                 rating={stats.rating}
                 jobs={stats.total_jobs}
@@ -513,7 +513,7 @@ export default function WorkerDashboard() {
             </div>
 
             <div className="border-t border-line bg-paper px-6 py-3.5 flex flex-wrap items-center justify-between gap-3 text-xs text-muted">
-              <span>Managed transparently by ShramSetu Worker Cooperative Federation</span>
+              <span>Managed transparently by NEED Worker Cooperative Federation</span>
               <button
                 onClick={handleWithdrawalRequest}
                 className="btn btn-primary text-xs py-1.5 px-3.5 shadow-sm"

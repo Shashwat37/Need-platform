@@ -1,5 +1,5 @@
 /**
- * AuthContext.jsx — global login state for ShramSetu.
+ * AuthContext.jsx — global login state for NEED.
  *
  * WHAT: A React context that tells every component who is logged in.
  * WHY:  Without a context, each page would need to re-fetch /api/auth/me

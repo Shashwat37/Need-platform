@@ -5,7 +5,7 @@
  *       Card, or Cash on Delivery, with optional worker tipping and transparent
  *       90/10 cooperative split breakdown.
  *
- * WHY:  On ShramSetu, payment is transparent. The customer sees exactly how
+ * WHY:  On NEED, payment is transparent. The customer sees exactly how
  *       much goes directly to the worker and how much builds their social security.
  *
  * HOW:  Calls checkoutPayment() from api.js and opens the official invoice receipt.

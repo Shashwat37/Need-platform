@@ -1,5 +1,5 @@
 /**
- * ChatbotWidget.jsx — Floating interactive AI Chatbot Assistant ("Setu Mitra").
+ * ChatbotWidget.jsx — Floating interactive AI Chatbot Assistant ("NEED Mitra").
  *
  * WHAT: Provides floating AI Assistant widget for service recommendations, 90/10 split explanation,
  *       emergency rush guidance, and quick booking triggers.
@@ -221,7 +221,7 @@ export default function ChatbotWidget() {
                 </div>
                 <div className="flex items-center gap-1.5 bg-white border border-line rounded-2xl px-3.5 py-2">
                   <Loader2 size={13} className="animate-spin text-brand-600" />
-                  <span>Setu Mitra is thinking...</span>
+                  <span>NEED Mitra is thinking...</span>
                 </div>
               </div>
             )}
@@ -254,7 +254,7 @@ export default function ChatbotWidget() {
               type="text"
               value={input}
               onChange={e => setInput(e.target.value)}
-              placeholder="Ask Setu Mitra AI (e.g. Electrician in Noida)..."
+              placeholder="Ask NEED Mitra AI (e.g. Electrician in Noida)..."
               className="flex-1 rounded-xl border border-line bg-paper px-3.5 py-2.5 text-xs text-ink focus:outline-none focus:ring-2 focus:ring-brand-500"
             />
             <button

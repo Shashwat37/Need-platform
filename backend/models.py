@@ -1,5 +1,5 @@
 """
-models.py — the database tables for ShramSetu.
+models.py — the database tables for NEED.
 
 WHAT: Each Python class below becomes one table in SQLite.
 WHY:  SQLAlchemy lets us describe tables as classes, so we write Python

@@ -94,7 +94,7 @@ export default function InvoiceModal({
                     SS
                   </div>
                   <span className="font-display text-xl font-extrabold tracking-tight text-ink">
-                    ShramSetu
+                    NEED
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-muted">
@@ -218,7 +218,7 @@ export default function InvoiceModal({
             {/* ── Footer Actions (Print / Close) ──────────────────────────── */}
             <div className="flex items-center justify-between border-t border-line pt-4 print:hidden">
               <span className="text-[11px] text-muted">
-                Official Receipt • ShramSetu Digital Invoice
+                Official Receipt • NEED Digital Invoice
               </span>
 
               <div className="flex items-center gap-2">

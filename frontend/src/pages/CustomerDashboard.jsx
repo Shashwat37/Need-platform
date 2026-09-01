@@ -330,7 +330,7 @@ export default function CustomerDashboard() {
           <h1 className="font-display text-3xl font-extrabold text-ink">
             Hello, {profile.name.split(' ')[0]} 👋
           </h1>
-          <p className="mt-1 text-muted">Here's a summary of your activity on ShramSetu.</p>
+          <p className="mt-1 text-muted">Here's a summary of your activity on NEED.</p>
         </div>
 
         <button

@@ -9,13 +9,13 @@ const LanguageContext = createContext()
 
 export function LanguageProvider({ children }) {
   const [lang, setLangState] = useState(() => {
-    return localStorage.getItem('shramsetu_lang') || 'en'
+    return localStorage.getItem('need_lang') || 'en'
   })
 
   function setLanguage(newLang) {
     if (TRANSLATIONS[newLang]) {
       setLangState(newLang)
-      localStorage.setItem('shramsetu_lang', newLang)
+      localStorage.setItem('need_lang', newLang)
     }
   }
 

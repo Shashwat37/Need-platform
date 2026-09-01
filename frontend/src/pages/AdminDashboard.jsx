@@ -4,7 +4,7 @@
  * WHAT: Executive dashboard for platform management, worker verification approval,
  *       booking oversight, welfare fund ledger, and support dispute handling.
  *
- * WHY:  On ShramSetu, the cooperative federation governs the platform transparently,
+ * WHY:  On NEED, the cooperative federation governs the platform transparently,
  *       ensuring service standards through worker verification and safeguarding
  *       the collective welfare fund.
  *
@@ -722,7 +722,7 @@ export default function AdminDashboard() {
           <SectionHeading
             eyebrow="Cooperative Model"
             title="Welfare Fund Social Security Ledger"
-            description="Unlike private gig apps that capture platform surplus, ShramSetu pools 10% of job earnings directly into verified worker welfare wallets."
+            description="Unlike private gig apps that capture platform surplus, NEED pools 10% of job earnings directly into verified worker welfare wallets."
           />
 
           <div className="grid gap-4 sm:grid-cols-3">

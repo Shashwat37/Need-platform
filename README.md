@@ -1,10 +1,10 @@
-# ShramSetu
+# NEED
 
 A cooperative-owned digital marketplace that connects customers with verified
 local service providers — electricians, plumbers, cleaners, carpenters and more.
 
 The idea behind it: on a normal service app, a private company owns the platform
-and takes a large cut of every job. On ShramSetu the workers are members of the
+and takes a large cut of every job. On NEED the workers are members of the
 cooperative that owns the platform, the commission is small, and a slice of each
 job is saved into the worker's own welfare wallet.
 
@@ -102,7 +102,7 @@ each one is something extra to explain and something extra to break.
 ## Project structure
 
 ```
-shramsetu/
+need/
 ├── backend/
 │   ├── app.py              # Creates and starts the Flask app
 │   ├── auth.py             # Register, login, session check, logout
@@ -187,7 +187,7 @@ you can explain what the batch files are doing.
 
 ### Manual installation
 
-From the `shramsetu` folder:
+From the `need` folder:
 
 **1. Backend packages**
 
@@ -254,7 +254,7 @@ Check it is alive by opening <http://localhost:5000/api/health> in a browser.
 You should see:
 
 ```json
-{ "service": "shramsetu-backend", "status": "ok" }
+{ "service": "need-backend", "status": "ok" }
 ```
 
 Leave this terminal running. Closing it stops the API and the frontend will
@@ -320,7 +320,7 @@ mid-presentation.
 
 | Role | Email | Password |
 |---|---|---|
-| Admin | `admin@shramsetu.in` | `admin123` |
+| Admin | `admin@need.in` | `admin123` |
 | Customer | `ananya@example.com` | `demo123` |
 | Worker | `rahul@example.com` | `demo123` |
 

@@ -1,5 +1,5 @@
 """
-routes.py — the API endpoints for ShramSetu.
+routes.py — the API endpoints for NEED.
 
 WHAT: A Flask "Blueprint" is just a group of related routes.
 WHY:  Keeping routes out of app.py means app.py stays tiny and readable.
@@ -182,7 +182,7 @@ def _find_worker_for(service):
 @api.get("/health")
 def health():
     """Quick check that the server is alive. Open this first when debugging."""
-    return jsonify({"status": "ok", "service": "shramsetu-backend"})
+    return jsonify({"status": "ok", "service": "need-backend"})
 
 
 @api.get("/services")
@@ -853,7 +853,7 @@ def get_invoice(invoice_id):
             "id": worker.id if worker else None,
             "name": worker.name if worker else "Cooperative Service Partner",
             "trade": service.name if service else "Service",
-            "society": "ShramSetu Worker Cooperative Federation",
+            "society": "NEED Worker Cooperative Federation",
         },
         "booking": {
             "id": booking.id,
@@ -1079,7 +1079,7 @@ def request_welfare_withdrawal():
 
     return jsonify({
         "request": req.to_dict(),
-        "message": "Emergency withdrawal request submitted successfully! ShramSetu Federation board will review it within 24 hours."
+        "message": "Emergency withdrawal request submitted successfully! NEED Federation board will review it within 24 hours."
     }), 201
 
 
@@ -1523,7 +1523,7 @@ def create_support_ticket():
 
     return jsonify({
         "ticket": ticket.to_dict(),
-        "message": "Support ticket created successfully! ShramSetu Federation team will get back to you shortly."
+        "message": "Support ticket created successfully! NEED Federation team will get back to you shortly."
     }), 201
 
 
@@ -1561,13 +1561,13 @@ def update_ticket_status(ticket_id):
     })
 
 # ---------------------------------------------------------------------------
-# AI Chatbot Assistant (Step 13 — Setu Mitra)
+# AI Chatbot Assistant (Step 13 — NEED Mitra)
 # ---------------------------------------------------------------------------
 
 @api.post("/chat")
 def chat_assistant():
     """
-    AI Assistant (Setu Mitra) endpoint for intelligent service recommendations,
+    AI Assistant (NEED Mitra) endpoint for intelligent service recommendations,
     cooperative welfare queries, emergency dispatch guidance, and platform help.
 
     Expected JSON body:

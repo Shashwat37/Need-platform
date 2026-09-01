@@ -1,5 +1,5 @@
 /**
- * tailwind.config.js — the ShramSetu design system.
+ * tailwind.config.js — the NEED design system.
  *
  * WHAT: Defines our brand colours and fonts as reusable names.
  * WHY:  Writing `bg-brand-600` everywhere means we can change the brand colour

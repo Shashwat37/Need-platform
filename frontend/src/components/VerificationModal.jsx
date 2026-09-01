@@ -6,7 +6,7 @@
  *       experience, and skills.
  *
  * WHY:  Verification requires both document number and uploaded identity/trade proof documents
- *       to be verified by the ShramSetu Federation board.
+ *       to be verified by the NEED Federation board.
  *
  * HOW:  Calls submitWorkerVerification() from api.js and updates state upon submission.
  */
@@ -170,7 +170,7 @@ export default function VerificationModal({
             </div>
             <h3 className="font-display text-xl font-bold text-ink">Application &amp; Documents Submitted!</h3>
             <p className="text-xs text-muted max-w-xs mx-auto">
-              Your identity proof files and trade certificates have been securely transmitted to the ShramSetu Federation board for review.
+              Your identity proof files and trade certificates have been securely transmitted to the NEED Federation board for review.
             </p>
           </div>
         ) : (

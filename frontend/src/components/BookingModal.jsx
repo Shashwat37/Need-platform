@@ -5,7 +5,7 @@
  *       select date/time, provide service address & description, and choose
  *       an optional emergency / rush dispatch.
  *
- * WHY:  On ShramSetu, booking is simple, transparent, and direct. Pricing is
+ * WHY:  On NEED, booking is simple, transparent, and direct. Pricing is
  *       calculated upfront with zero hidden platform surge fees.
  *
  * HOW:  Calls createBooking() from api.js and notifies parent on success.

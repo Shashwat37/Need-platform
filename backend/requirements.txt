@@ -1,4 +1,4 @@
-# Python packages needed by the ShramSetu backend.
+# Python packages needed by the NEED backend.
 # Versions are pinned so the project installs the same way on every laptop.
 # Install with:  pip install -r requirements.txt
 

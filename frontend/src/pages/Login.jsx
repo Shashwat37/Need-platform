@@ -58,7 +58,7 @@ export default function Login() {
 
         <div className="card p-8">
           <h1 className="mb-1 font-display text-2xl font-bold text-ink">Welcome back</h1>
-          <p className="mb-6 text-sm text-muted">Log in to your ShramSetu account</p>
+          <p className="mb-6 text-sm text-muted">Log in to your NEED account</p>
 
           {error && (
             <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -123,7 +123,7 @@ export default function Login() {
             <div className="space-y-1 font-mono text-xs text-ink">
               <p><span className="text-muted">Customer:</span> ananya@example.com</p>
               <p><span className="text-muted">Worker:</span>   rahul@example.com</p>
-              <p><span className="text-muted">Admin:</span>    admin@shramsetu.in</p>
+              <p><span className="text-muted">Admin:</span>    admin@need.in</p>
               <p className="mt-1 text-muted">Password: <span className="text-ink">demo123</span> (admin: admin123)</p>
             </div>
           </div>

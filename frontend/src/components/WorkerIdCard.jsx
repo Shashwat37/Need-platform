@@ -3,7 +3,7 @@ import { MapPin, ShieldCheck, Star } from 'lucide-react'
 /**
  * WorkerIdCard.jsx — the cooperative member card.
  *
- * This is the signature component of ShramSetu. A worker here is not an
+ * This is the signature component of NEED. A worker here is not an
  * anonymous gig contractor: they are a member of a cooperative society, and
  * this card is the artifact that proves it — society name, member ID, and a
  * verification stamp.

@@ -1,5 +1,5 @@
 """
-app.py — the entry point of the ShramSetu backend.
+app.py — the entry point of the NEED backend.
 
 WHAT: Creates the Flask application, connects the database, allows the React
       app to call us, and registers the API routes.
@@ -99,7 +99,7 @@ def create_app():
         """Friendly message if someone opens the backend URL directly."""
         return jsonify(
             {
-                "name": "ShramSetu API",
+                "name": "NEED API",
                 "docs": "Try /api/health, /api/services, /api/stats, /api/auth/me",
             }
         )

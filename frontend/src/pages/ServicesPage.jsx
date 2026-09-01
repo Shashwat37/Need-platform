@@ -438,7 +438,7 @@ export default function ServicesPage() {
                       <WorkerIdCard
                         name={w.name}
                         trade={w.trade}
-                        society="ShramSetu Cooperative Fed."
+                        society="NEED Cooperative Fed."
                         memberId={`SHR-2026-${w.worker_id.toString().padStart(4, '0')}`}
                         rating={w.rating}
                         jobs={w.total_jobs}

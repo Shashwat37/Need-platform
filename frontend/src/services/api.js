@@ -261,10 +261,10 @@ export async function updateTicketStatus(ticketId, status, adminResponse = '') {
 }
 
 // ---------------------------------------------------------------------------
-// AI Chatbot Assistant (Step 13 — Setu Mitra)
+// AI Chatbot Assistant (Step 13 — NEED Mitra)
 // ---------------------------------------------------------------------------
 
-/** Send message to AI Chatbot Assistant (Setu Mitra). */
+/** Send message to AI Chatbot Assistant (NEED Mitra). */
 export async function sendChatMessage(message) {
   const response = await api.post('/chat', { message })
   return response.data
