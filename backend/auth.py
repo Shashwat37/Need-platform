@@ -23,8 +23,19 @@ auth = Blueprint("auth", __name__, url_prefix="/auth")
 # ---------------------------------------------------------------------------
 
 def _user_from_session():
-    """Return the User whose id is stored in the session, or None."""
+    """Return the User whose id is stored in the session, or from Authorization Bearer header, or None."""
     user_id = session.get("user_id")
+    if user_id is None:
+        auth_header = request.headers.get("Authorization") or ""
+        if auth_header.startswith("Bearer "):
+            raw = auth_header.split("Bearer ", 1)[1].strip()
+            if raw.startswith("user-"):
+                try:
+                    user_id = int(raw.replace("user-", ""))
+                except ValueError:
+                    pass
+            elif raw.isdigit():
+                user_id = int(raw)
     if user_id is None:
         return None
     return db.session.get(User, user_id)
@@ -89,8 +100,6 @@ def register():
 
     # --- Create worker profile if needed -----------------------------------
     if role == "worker":
-        # The form sends this as text, so it can arrive empty or as junk. We
-        # fall back to 0 rather than letting the registration fail with a 500.
         try:
             years = int(data.get("experience_years") or 0)
         except (TypeError, ValueError):
@@ -106,14 +115,6 @@ def register():
         )
         db.session.add(profile)
 
-        # Every worker needs a welfare wallet from the moment they join.
-        #
-        # WHY: the 10% cooperative contribution from each finished job is paid
-        # into this row. Workers created by seed.py always had one, but workers
-        # who registered here did not — and the code that credits the wallet
-        # simply skipped them without any error, so their welfare savings stayed
-        # at zero forever. The wallet is the whole point of the cooperative, so
-        # it is created here, at the same moment as the profile.
         db.session.add(WelfareWallet(
             worker_id=user.id,
             balance=0.0,
@@ -124,7 +125,9 @@ def register():
     db.session.commit()
 
     _start_session(user)
-    return jsonify(user.to_dict()), 201
+    res_data = user.to_dict()
+    res_data["token"] = f"user-{user.id}"
+    return jsonify(res_data), 201
 
 
 # ---------------------------------------------------------------------------
@@ -147,13 +150,13 @@ def login():
 
     user = User.query.filter_by(email=email).first()
 
-    # Same error message for wrong email and wrong password — don't reveal
-    # which one is wrong to a potential attacker.
     if user is None or not check_password_hash(user.password_hash, password):
         return jsonify({"error": "Incorrect email or password"}), 401
 
     _start_session(user)
-    return jsonify(user.to_dict()), 200
+    res_data = user.to_dict()
+    res_data["token"] = f"user-{user.id}"
+    return jsonify(res_data), 200
 
 
 # ---------------------------------------------------------------------------

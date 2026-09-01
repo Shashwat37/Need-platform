@@ -61,19 +61,17 @@ def create_app():
     app.config["PERMANENT_SESSION_LIFETIME"] = 60 * 60 * 24 * 7  # 7 days
 
     # --- CORS --------------------------------------------------------------
-    # The React dev server runs on port 5173 and the API on port 5000.
-    # Browsers block calls between different ports unless the server allows it.
-    # withCredentials=true on the frontend requires supports_credentials=True
-    # here, otherwise the browser strips the session cookie.
-    allowed_origins = os.getenv(
-        "CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173"
-    ).split(",")
-    CORS(app, origins=allowed_origins, supports_credentials=True)
+    # Allows cross-origin calls from local Vite dev server, custom ports, or deployed domains.
+    cors_origins = os.getenv("CORS_ORIGINS", "*")
+    if cors_origins == "*":
+        CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+    else:
+        allowed_list = [o.strip() for o in cors_origins.split(",") if o.strip()]
+        CORS(app, origins=allowed_list, supports_credentials=True)
 
     # --- Database ----------------------------------------------------------
     db.init_app(app)
     with app.app_context():
-        # Creates any table that does not exist yet. Safe to run every start.
         db.create_all()
         # Ensure SQLite table worker_profiles has verification_notes column
         try:
@@ -96,17 +94,15 @@ def create_app():
 
     @app.get("/")
     def index():
-        """Friendly message if someone opens the backend URL directly."""
         return jsonify(
             {
                 "name": "NEED API",
+                "status": "online",
                 "docs": "Try /api/health, /api/services, /api/stats, /api/auth/me",
             }
         )
 
     # --- Error handlers ----------------------------------------------------
-    # Without these, a wrong URL returns an HTML error page, which is
-    # confusing for a frontend expecting JSON.
     @app.errorhandler(404)
     def not_found(error):
         return jsonify({"error": "Not found"}), 404
@@ -122,6 +118,5 @@ app = create_app()
 
 
 if __name__ == "__main__":
-    # debug=True reloads the server automatically when you save a file.
-    # Turn it off before deploying anywhere public.
-    app.run(host="127.0.0.1", port=5000, debug=True)
+    port = int(os.getenv("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)

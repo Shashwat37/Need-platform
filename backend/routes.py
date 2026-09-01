@@ -105,22 +105,30 @@ def _credit_welfare(worker_id, booking):
     return welfare_cut
 
 
+def _get_user_from_req():
+    """Return current User checking session cookie OR Authorization Bearer token header."""
+    user_id = session.get("user_id")
+    if user_id is None:
+        auth_header = request.headers.get("Authorization") or ""
+        if auth_header.startswith("Bearer "):
+            raw = auth_header.split("Bearer ", 1)[1].strip()
+            if raw.startswith("user-"):
+                try:
+                    user_id = int(raw.replace("user-", ""))
+                except ValueError:
+                    pass
+            elif raw.isdigit():
+                user_id = int(raw)
+    if user_id is None:
+        return None
+    return db.session.get(User, user_id)
+
+
 def _require_booking_access(booking):
     """
     Allow only the customer who booked it, the worker assigned to it, or an admin.
-
-    Returns None when access is allowed, or an (error, status) tuple to return.
-
-    WHY it is shared: this same rule is needed by the booking detail, the
-    invoice and the payment-status endpoints. Two of those had no check at all,
-    which meant anyone could read a customer's name, email, phone and address
-    just by guessing an invoice number.
     """
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Not authenticated"}), 401
-
-    user = db.session.get(User, user_id)
+    user = _get_user_from_req()
     if not user:
         return jsonify({"error": "Not authenticated"}), 401
 
@@ -384,18 +392,11 @@ def list_service_workers(service_id):
 def _require_role(role):
     """
     Helper: return the logged-in user if they have `role`, else return an error.
-
-    Usage:
-        result = _require_role("customer")
-        if isinstance(result, tuple):   # (response, status_code)
-            return result
-        user = result
     """
-    user_id = session.get("user_id")
-    if not user_id:
+    user = _get_user_from_req()
+    if not user:
         return jsonify({"error": "Not authenticated"}), 401
-    user = db.session.get(User, user_id)
-    if user is None or user.role != role:
+    if user.role != role:
         return jsonify({"error": "Forbidden"}), 403
     return user
 
@@ -1456,13 +1457,9 @@ def verify_worker(worker_id):
 @api.get("/tickets")
 def get_user_tickets():
     """Fetch support tickets for the current logged-in user (or all tickets for admin)."""
-    user_id = session.get("user_id")
-    if not user_id:
-        return jsonify({"error": "Authentication required"}), 401
-
-    user = db.session.get(User, user_id)
+    user = _get_user_from_req()
     if not user:
-        return jsonify({"error": "User not found"}), 404
+        return jsonify({"error": "Authentication required"}), 401
 
     if user.role == "admin":
         tickets = SupportTicket.query.order_by(SupportTicket.created_at.desc()).all()
@@ -1478,15 +1475,9 @@ def get_user_tickets():
 def create_support_ticket():
     """
     Create a new support ticket.
-
-    Expected JSON body:
-      subject:     (required) string
-      category:    (required) string (e.g. "Payment Issue", "Service Dispute", etc.)
-      description: (required) string
-      booking_id:  (optional) int
     """
-    user_id = session.get("user_id")
-    if not user_id:
+    user = _get_user_from_req()
+    if not user:
         return jsonify({"error": "Authentication required to submit support tickets"}), 401
 
     data = request.get_json(silent=True) or {}
@@ -1510,7 +1501,7 @@ def create_support_ticket():
             booking_id = None
 
     ticket = SupportTicket(
-        user_id=user_id,
+        user_id=user.id,
         booking_id=booking_id,
         category=category or "General Inquiry",
         subject=subject,

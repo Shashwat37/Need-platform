@@ -22,6 +22,15 @@ const api = axios.create({
   withCredentials: true, // send session cookie with every request
 })
 
+// Attach Bearer token as header fallback for browsers/environments blocking session cookies
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('need_token')
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+  return config
+})
+
 // ---------------------------------------------------------------------------
 // Services
 // ---------------------------------------------------------------------------
@@ -63,12 +72,18 @@ export async function getWorkersForService(serviceId) {
 /** Register a new account. Returns the created user. */
 export async function registerUser(data) {
   const response = await api.post('/auth/register', data)
+  if (response.data?.token || response.data?.id) {
+    localStorage.setItem('need_token', response.data.token || `user-${response.data.id}`)
+  }
   return response.data
 }
 
 /** Log in with email + password. Returns the user on success. */
 export async function loginUser(email, password) {
   const response = await api.post('/auth/login', { email, password })
+  if (response.data?.token || response.data?.id) {
+    localStorage.setItem('need_token', response.data.token || `user-${response.data.id}`)
+  }
   return response.data
 }
 
@@ -80,8 +95,12 @@ export async function getMe() {
 
 /** Clear the server-side session. */
 export async function logoutUser() {
-  const response = await api.post('/auth/logout')
-  return response.data
+  try {
+    const response = await api.post('/auth/logout')
+    return response.data
+  } finally {
+    localStorage.removeItem('need_token')
+  }
 }
 
 // ---------------------------------------------------------------------------
