@@ -202,17 +202,36 @@ export default function InvoiceModal({
               </div>
             </div>
 
-            {/* ── Transparent Cooperative Welfare Allocation Stamp ───────── */}
-            <div className="rounded-xl border border-verified/30 bg-verified/5 p-4 flex items-center gap-3">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-verified/10 text-verified">
-                <HeartHandshake size={22} />
-              </span>
-              <div className="text-xs">
-                <p className="font-bold text-ink">Cooperative Social Security Contribution</p>
-                <p className="text-muted text-[11px]">
-                  <strong className="text-verified font-semibold font-mono">₹{data.breakdown.welfare_contribution}</strong> (10% of fare) was saved directly into {data.worker.name}'s cooperative emergency & health fund.
-                </p>
+            {/* ── Transparent Cooperative Fee Allocation Box ───────────────────────── */}
+            <div className="rounded-xl border border-brand-200 bg-brand-50/40 p-4 space-y-2">
+              <div className="flex items-center gap-2 font-bold text-xs text-ink uppercase tracking-wider">
+                <HeartHandshake size={16} className="text-brand-700" />
+                Transparent Cooperative Distribution Breakdown
               </div>
+
+              <div className="grid gap-2 sm:grid-cols-3 text-xs pt-1">
+                <div className="rounded-lg bg-white p-2.5 border border-line">
+                  <span className="text-[10px] text-muted block font-semibold">Platform Fee (10%)</span>
+                  <span className="font-mono font-bold text-stone-800">₹{Math.round(data.breakdown.total_paid * 0.10)}</span>
+                </div>
+
+                <div className="rounded-lg bg-amber-50 p-2.5 border border-amber-200">
+                  <span className="text-[10px] text-amber-800 block font-semibold">Cooperative Share (5%)</span>
+                  <span className="font-mono font-bold text-amber-900">₹{Math.round(data.breakdown.total_paid * 0.05)}</span>
+                </div>
+
+                <div className="rounded-lg bg-emerald-50 p-2.5 border border-emerald-200">
+                  <span className="text-[10px] text-emerald-800 block font-semibold">Worker Take-Home (85%)</span>
+                  <span className="font-mono font-bold text-emerald-900">₹{Math.round(data.breakdown.total_paid * 0.85)}</span>
+                </div>
+              </div>
+
+              <p className="text-[11px] text-emerald-800 pt-1 flex items-center gap-1 font-medium">
+                <ShieldCheck size={13} />
+                <span>
+                  <strong className="font-mono">₹{data.breakdown.welfare_contribution}</strong> (10% of fare) was deposited directly into {data.worker.name}'s Welfare Wallet for emergency cash & health insurance.
+                </span>
+              </p>
             </div>
 
             {/* ── Footer Actions (Print / Close) ──────────────────────────── */}

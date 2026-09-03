@@ -377,27 +377,47 @@ export default function BookingModal({
               </div>
 
               {/* Transparent Price Summary Card */}
-              <div className="rounded-xl border border-brand-100 bg-brand-50/40 p-4 space-y-2">
-                <div className="flex justify-between text-xs text-muted">
+              <div className="rounded-xl border border-brand-200 bg-brand-50/50 p-4 space-y-2">
+                <div className="flex justify-between text-xs text-stone-600">
                   <span>Base Service Fare</span>
-                  <span className="font-mono text-ink">₹{basePrice}</span>
+                  <span className="font-mono text-ink font-semibold">₹{basePrice}</span>
                 </div>
 
                 {isEmergency && (
-                  <div className="flex justify-between text-xs text-red-700">
+                  <div className="flex justify-between text-xs text-rose-700 font-medium">
                     <span>Urgent Rush Dispatch Fee</span>
                     <span className="font-mono">+₹100</span>
                   </div>
                 )}
 
-                <div className="border-t border-brand-100 pt-2 flex justify-between text-sm font-bold text-ink">
-                  <span>Total Estimated Amount</span>
-                  <span className="font-mono text-brand-700 text-base">₹{totalPrice}</span>
+                <div className="border-t border-brand-200/80 pt-2 flex justify-between text-sm font-bold text-ink">
+                  <span>Total Amount</span>
+                  <span className="font-mono text-brand-800 text-base">₹{totalPrice}</span>
                 </div>
 
-                <p className="text-[11px] text-muted text-center pt-1">
-                  🔒 Pay after service completion. 10% is saved into the worker's cooperative welfare fund.
-                </p>
+                {/* Transparent Payment Distribution */}
+                <div className="mt-3 rounded-lg bg-white/80 p-2.5 border border-brand-200/60 space-y-1 text-[11px]">
+                  <span className="font-bold text-stone-800 block mb-1 text-[10px] uppercase tracking-wider">
+                    🤝 Transparent Fee Breakdown
+                  </span>
+                  <div className="flex justify-between text-stone-600">
+                    <span>Platform Operations Fee (10%)</span>
+                    <span className="font-mono">₹{Math.round(totalPrice * 0.10)}</span>
+                  </div>
+                  <div className="flex justify-between text-amber-800">
+                    <span>Cooperative / Society Share (5%)</span>
+                    <span className="font-mono">₹{Math.round(totalPrice * 0.05)}</span>
+                  </div>
+                  <div className="flex justify-between text-emerald-800 font-bold">
+                    <span>Worker Direct Net Take-Home (85%)</span>
+                    <span className="font-mono">₹{Math.round(totalPrice * 0.85)}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1 text-[10px] text-emerald-800 pt-1">
+                  <ShieldCheck size={12} />
+                  <span>Includes 10% Social Welfare Wallet deposit for worker emergency insurance.</span>
+                </div>
               </div>
 
               {/* Submit Buttons */}

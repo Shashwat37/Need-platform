@@ -1,21 +1,17 @@
-import { MapPin, ShieldCheck, Star } from 'lucide-react'
+import { Award, CheckCircle2, MapPin, ShieldCheck, Star } from 'lucide-react'
 
 /**
  * WorkerIdCard.jsx — the cooperative member card.
  *
- * This is the signature component of NEED. A worker here is not an
- * anonymous gig contractor: they are a member of a cooperative society, and
- * this card is the artifact that proves it — society name, member ID, and a
- * verification stamp.
- *
- * It appears in the landing page hero, and the SAME component is reused for
- * worker search results in Step 7, so the idea stays consistent everywhere.
+ * Renders verified worker details along with explicit trust badges:
+ *  - Identity Verified
+ *  - Skill Verified
+ *  - Cooperative Member
  */
 
-// Each verification state gets its own colour and label.
 const STATUS_STYLES = {
   verified: {
-    label: 'Verified',
+    label: 'Verified Member',
     className: 'border-verified/40 bg-verified/10 text-verified',
   },
   pending: {
@@ -28,44 +24,41 @@ const STATUS_STYLES = {
   },
 }
 
-/** "Rahul Kumar" -> "RK". Used for the avatar when there is no photo. */
 function getInitials(fullName) {
   return fullName
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word[0])
-    .join('')
-    .toUpperCase()
+    ? fullName.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+    : 'W'
 }
 
 export default function WorkerIdCard({
   name,
   trade,
-  society,
+  society = 'Noida Artisans Cooperative Union',
   memberId,
   rating,
   jobs,
   area,
   status = 'verified',
+  identityVerified = True,
+  skillVerified = True,
   animateStamp = false,
 }) {
   const statusStyle = STATUS_STYLES[status] || STATUS_STYLES.pending
 
   return (
-    <article className="card overflow-hidden shadow-lift">
-      {/* Top band — the issuing society, like the header of a real ID card */}
+    <article className="card overflow-hidden shadow-lift transition hover:shadow-xl">
+      {/* Top band — issuing cooperative */}
       <div className="flex items-center justify-between bg-ink px-5 py-2.5">
-        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/70">
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/80 font-bold truncate max-w-[200px]">
           {society}
         </span>
-        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-marigold-400">
-          Member card
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-marigold-400 font-bold">
+          Cooperative Member
         </span>
       </div>
 
       <div className="relative p-5">
-        {/* Verification stamp, sitting slightly rotated like a real stamp */}
+        {/* Verification stamp */}
         <div
           className={`absolute right-4 top-4 flex items-center gap-1.5 rounded-md border-2 px-2 py-1 ${statusStyle.className} ${
             animateStamp ? 'stamp-in' : ''
@@ -73,26 +66,41 @@ export default function WorkerIdCard({
           style={animateStamp ? undefined : { transform: 'rotate(-7deg)' }}
         >
           <ShieldCheck size={13} strokeWidth={2.5} />
-          <span className="font-mono text-[10px] font-medium uppercase tracking-[0.14em]">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em]">
             {statusStyle.label}
           </span>
         </div>
 
         {/* Avatar + name + trade */}
         <div className="flex items-center gap-3.5">
-          <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-brand-50 font-display text-lg font-extrabold text-brand-700">
+          <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-brand-50 font-display text-lg font-extrabold text-brand-700 border border-brand-200">
             {getInitials(name)}
           </div>
           <div className="min-w-0">
             <h3 className="truncate font-display text-lg font-bold text-ink">{name}</h3>
-            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-brand-700">
+            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-brand-700 font-semibold">
               {trade}
             </p>
           </div>
         </div>
 
-        {/* Three facts a customer actually decides on */}
-        <dl className="mt-5 grid grid-cols-3 gap-3 border-t border-line pt-4">
+        {/* Explicit Trust Badges */}
+        <div className="mt-3.5 flex flex-wrap gap-1.5 border-t border-line pt-3">
+          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-200">
+            <CheckCircle2 size={11} className="text-emerald-600" />
+            Identity Verified
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-bold text-blue-800 border border-blue-200">
+            <Award size={11} className="text-blue-600" />
+            Skill Verified
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2.5 py-0.5 text-[10px] font-bold text-purple-800 border border-purple-200">
+            🏛️ Cooperative Member
+          </span>
+        </div>
+
+        {/* Core Stats */}
+        <dl className="mt-4 grid grid-cols-3 gap-3 border-t border-line pt-3">
           <div>
             <dt className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
               Rating
@@ -110,9 +118,9 @@ export default function WorkerIdCard({
           </div>
           <div className="min-w-0">
             <dt className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
-              Works in
+              Service Area
             </dt>
-            <dd className="mt-1 flex items-center gap-1 truncate text-sm font-medium text-ink">
+            <dd className="mt-1 flex items-center gap-1 truncate text-xs font-semibold text-ink">
               <MapPin size={13} className="shrink-0 text-muted" />
               <span className="truncate">{area}</span>
             </dd>
@@ -120,12 +128,12 @@ export default function WorkerIdCard({
         </dl>
       </div>
 
-      {/* Member ID footer — mono type, because it is a reference number */}
+      {/* Member ID footer */}
       <div className="flex items-center justify-between border-t border-line bg-paper px-5 py-3">
-        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted">
+        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted font-bold">
           Member ID
         </span>
-        <span className="font-mono text-xs font-medium text-ink">{memberId}</span>
+        <span className="font-mono text-xs font-semibold text-ink">{memberId}</span>
       </div>
     </article>
   )

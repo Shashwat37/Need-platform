@@ -289,6 +289,111 @@ export async function sendChatMessage(message) {
   return response.data
 }
 
+/** AI Demand Forecasting & Predictive Analytics. */
+export async function getDemandForecasting() {
+  const response = await api.get('/admin/forecasting')
+  return response.data
+}
+
+// ---------------------------------------------------------------------------
+// Labour Cooperatives & Societies Module
+// ---------------------------------------------------------------------------
+
+/** List all verified Labour Cooperatives. */
+export async function getCooperatives() {
+  const response = await api.get('/cooperatives')
+  return response.data
+}
+
+/** Get detailed Cooperative profile and member workers. */
+export async function getCooperativeDetail(coopId) {
+  const response = await api.get(`/cooperatives/${coopId}`)
+  return response.data
+}
+
+/** Register a new Labour Cooperative. */
+export async function registerCooperative(data) {
+  const response = await api.post('/cooperatives', data)
+  return response.data
+}
+
+/** Get metrics and workers list for Cooperative Admin Dashboard. */
+export async function getCooperativeDashboard() {
+  const response = await api.get('/cooperative/dashboard')
+  return response.data
+}
+
+/** Cooperative admin adds a worker partner. */
+export async function cooperativeAddWorker(data) {
+  const response = await api.post('/cooperative/workers', data)
+  return response.data
+}
+
+/** Cooperative admin verifies worker skill/identity. */
+export async function cooperativeVerifyWorker(workerId, status, notes = '') {
+  const response = await api.post(`/cooperative/workers/${workerId}/verify`, {
+    status,
+    verification_notes: notes,
+  })
+  return response.data
+}
+
+/** Cooperative admin assigns worker to booking. */
+export async function cooperativeAssignWorker(bookingId, workerId) {
+  const response = await api.post(`/cooperative/bookings/${bookingId}/assign`, {
+    worker_id: workerId,
+  })
+  return response.data
+}
+
+// ---------------------------------------------------------------------------
+// Booking Lifecycle & Structured Status Progression
+// ---------------------------------------------------------------------------
+
+/** Update booking status through 8-stage lifecycle. */
+export async function updateBookingStatus(bookingId, status, cancellationReason = '') {
+  const response = await api.post(`/bookings/${bookingId}/status`, {
+    status,
+    cancellation_reason: cancellationReason,
+  })
+  return response.data
+}
+
+// ---------------------------------------------------------------------------
+// Disputes Resolution System
+// ---------------------------------------------------------------------------
+
+/** Fetch disputes for user/cooperative/admin. */
+export async function getDisputes() {
+  const response = await api.get('/disputes')
+  return response.data
+}
+
+/** Create a structured dispute against a booking. */
+export async function createDispute(disputeData) {
+  const response = await api.post('/disputes', disputeData)
+  return response.data
+}
+
+/** Resolve a dispute. */
+export async function resolveDispute(disputeId, status, notes = '') {
+  const response = await api.post(`/disputes/${disputeId}/resolve`, {
+    status,
+    resolution_notes: notes,
+  })
+  return response.data
+}
+
+/** Submit worker rating for customer. */
+export async function reviewCustomer(bookingId, rating, comment = '') {
+  const response = await api.post('/reviews/customer', {
+    booking_id: bookingId,
+    rating,
+    comment,
+  })
+  return response.data
+}
+
 // ---------------------------------------------------------------------------
 // AI Demand Forecasting (Step 14)
 // ---------------------------------------------------------------------------

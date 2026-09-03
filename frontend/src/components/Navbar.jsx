@@ -6,14 +6,16 @@ import { useLanguage } from '../context/LanguageContext'
 import Logo from './Logo'
 
 const LINKS = [
-  { to: '/services', labelKey: 'nav_services', fallback: 'Services' },
-  { to: '/about',    labelKey: 'nav_about',    fallback: 'Cooperative Model' },
-  { to: '/help',     labelKey: 'nav_support',  fallback: 'Help & Support' },
+  { to: '/services',     labelKey: 'nav_services',     fallback: 'Services' },
+  { to: '/cooperatives', labelKey: 'nav_cooperatives', fallback: 'Cooperatives' },
+  { to: '/about',        labelKey: 'nav_about',        fallback: 'Cooperative Model' },
+  { to: '/help',         labelKey: 'nav_support',      fallback: 'Help & Support' },
 ]
 
 const DASHBOARD_PATH = {
   customer: '/customer',
   worker:   '/worker',
+  cooperative_admin: '/cooperative',
   admin:    '/admin',
 }
 

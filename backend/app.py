@@ -73,17 +73,41 @@ def create_app():
     db.init_app(app)
     with app.app_context():
         db.create_all()
-        # Ensure SQLite table worker_profiles has verification_notes column
-        try:
-            db.session.execute(db.text("ALTER TABLE worker_profiles ADD COLUMN verification_notes TEXT;"))
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
 
-        # Ensure SQLite table support_tickets has booking_id and admin_response columns
-        for col_def in ("booking_id INTEGER", "admin_response TEXT"):
+        # Add optional columns dynamically if SQLite database already exists
+        alter_statements = [
+            ("worker_profiles", "verification_notes TEXT"),
+            ("worker_profiles", "cooperative_id INTEGER"),
+            ("worker_profiles", "identity_verified BOOLEAN DEFAULT 1"),
+            ("worker_profiles", "skill_verified BOOLEAN DEFAULT 1"),
+            ("users", "is_verified BOOLEAN DEFAULT 1"),
+            ("users", "trust_badge TEXT DEFAULT 'Verified Member'"),
+            ("bookings", "cooperative_id INTEGER"),
+            ("bookings", "accepted_at DATETIME"),
+            ("bookings", "assigned_at DATETIME"),
+            ("bookings", "on_the_way_at DATETIME"),
+            ("bookings", "arrived_at DATETIME"),
+            ("bookings", "in_progress_at DATETIME"),
+            ("bookings", "completed_at DATETIME"),
+            ("bookings", "confirmed_at DATETIME"),
+            ("bookings", "cancelled_at DATETIME"),
+            ("bookings", "cancellation_reason TEXT"),
+            ("bookings", "cancelled_by TEXT"),
+            ("payments", "platform_fee FLOAT DEFAULT 0.0"),
+            ("payments", "cooperative_share FLOAT DEFAULT 0.0"),
+            ("payments", "worker_earnings FLOAT DEFAULT 0.0"),
+            ("reviews", "quality_score INTEGER DEFAULT 5"),
+            ("reviews", "professionalism_score INTEGER DEFAULT 5"),
+            ("reviews", "timeliness_score INTEGER DEFAULT 5"),
+            ("reviews", "review_type TEXT DEFAULT 'customer_to_worker'"),
+            ("reviews", "is_disputed BOOLEAN DEFAULT 0"),
+            ("support_tickets", "booking_id INTEGER"),
+            ("support_tickets", "admin_response TEXT"),
+        ]
+
+        for table, col_def in alter_statements:
             try:
-                db.session.execute(db.text(f"ALTER TABLE support_tickets ADD COLUMN {col_def};"))
+                db.session.execute(db.text(f"ALTER TABLE {table} ADD COLUMN {col_def};"))
                 db.session.commit()
             except Exception:
                 db.session.rollback()

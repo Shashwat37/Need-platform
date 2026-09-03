@@ -36,9 +36,10 @@ import {
   Wrench,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { getWorkerDashboard, handleWorkerBookingAction, requestWelfareWithdrawal, updateWorkerAvailability } from '../services/api'
+import { getWorkerDashboard, handleWorkerBookingAction, requestWelfareWithdrawal, updateWorkerAvailability, updateBookingStatus } from '../services/api'
 import WorkerIdCard from '../components/WorkerIdCard'
 import SectionHeading from '../components/SectionHeading'
+import BookingLifecycleStepper from '../components/BookingLifecycleStepper'
 
 // ---------------------------------------------------------------------------
 // Status helpers
@@ -584,8 +585,8 @@ export default function WorkerDashboard() {
                                 {isActing ? (
                                   <Loader2 size={16} className="animate-spin text-brand-600" />
                                 ) : (
-                                  <div className="flex items-center gap-1.5">
-                                    {b.status === 'pending' && (
+                                  <div className="flex flex-wrap items-center gap-1.5">
+                                    {(b.status === 'pending' || b.status === 'requested' || b.status === 'worker_assigned') && (
                                       <>
                                         <button
                                           onClick={() => handleJobAction(b.id, 'accept')}
@@ -604,10 +605,44 @@ export default function WorkerDashboard() {
 
                                     {b.status === 'accepted' && (
                                       <button
+                                        onClick={async () => {
+                                          setJobActionLoadingId(b.id)
+                                          try {
+                                            await updateBookingStatus(b.id, 'on_the_way')
+                                            loadDashboard(false)
+                                          } finally {
+                                            setJobActionLoadingId(null)
+                                          }
+                                        }}
+                                        className="rounded-lg bg-blue-600 px-2.5 py-1 text-xs font-bold text-white hover:bg-blue-700 transition shadow-sm"
+                                      >
+                                        On The Way 🚗
+                                      </button>
+                                    )}
+
+                                    {b.status === 'on_the_way' && (
+                                      <button
+                                        onClick={async () => {
+                                          setJobActionLoadingId(b.id)
+                                          try {
+                                            await updateBookingStatus(b.id, 'arrived')
+                                            loadDashboard(false)
+                                          } finally {
+                                            setJobActionLoadingId(null)
+                                          }
+                                        }}
+                                        className="rounded-lg bg-indigo-600 px-2.5 py-1 text-xs font-bold text-white hover:bg-indigo-700 transition shadow-sm"
+                                      >
+                                        Mark Arrived 📍
+                                      </button>
+                                    )}
+
+                                    {b.status === 'arrived' && (
+                                      <button
                                         onClick={() => handleJobAction(b.id, 'start')}
                                         className="rounded-lg bg-teal-600 px-2.5 py-1 text-xs font-bold text-white hover:bg-teal-700 transition shadow-sm"
                                       >
-                                        Start Work
+                                        Start Work ⚡
                                       </button>
                                     )}
 
@@ -616,14 +651,14 @@ export default function WorkerDashboard() {
                                         onClick={() => handleJobAction(b.id, 'complete')}
                                         className="rounded-lg bg-emerald-600 px-2.5 py-1 text-xs font-bold text-white hover:bg-emerald-700 transition shadow-sm"
                                       >
-                                        Complete Job
+                                        Complete Job ✅
                                       </button>
                                     )}
 
-                                    {b.status === 'completed' && (
-                                      <span className="text-xs text-verified font-medium flex items-center gap-1">
+                                    {(b.status === 'completed' || b.status === 'confirmed') && (
+                                      <span className="text-xs text-emerald-700 font-bold flex items-center gap-1">
                                         <CheckCircle2 size={13} />
-                                        Completed
+                                        {b.status === 'confirmed' ? 'Confirmed by Customer' : 'Completed'}
                                       </span>
                                     )}
 

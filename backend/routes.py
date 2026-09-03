@@ -11,11 +11,15 @@ Step 3 adds the customer dashboard endpoint.
 More endpoints (bookings, payments...) get added in later steps.
 """
 
+from datetime import datetime
 import uuid
 from flask import Blueprint, jsonify, request, session
+from werkzeug.security import generate_password_hash
 
 from models import (
     Booking,
+    Cooperative,
+    Dispute,
     Payment,
     Review,
     Service,
@@ -762,6 +766,10 @@ def checkout_payment():
     welfare_contribution = round(booking.amount * WELFARE_RATE, 2)
     total_charged = round(booking.amount + tip_amount, 2)
 
+    platform_fee = round(booking.amount * 0.10, 2)
+    cooperative_share = round(booking.amount * 0.05, 2)
+    worker_earnings = round(booking.amount * 0.85, 2)
+
     # Generate official cooperative invoice ID (e.g. SHR-INV-2026-A1B2C3)
     invoice_id = f"SHR-INV-2026-{uuid.uuid4().hex[:6].upper()}"
 
@@ -771,6 +779,9 @@ def checkout_payment():
         method=method,
         status="successful",
         invoice_id=invoice_id,
+        platform_fee=platform_fee,
+        cooperative_share=cooperative_share,
+        worker_earnings=worker_earnings,
         welfare_contribution=welfare_contribution,
     )
     db.session.add(payment)
@@ -1792,6 +1803,498 @@ def get_demand_forecasting():
         "demand_hotspots": hotspots[:6],
         "forecast_matrix": forecast_matrix,
         "recommendations": recommendations,
+    })
+
+
+# ---------------------------------------------------------------------------
+# Labour Cooperatives & Societies Module
+# ---------------------------------------------------------------------------
+
+@api.get("/cooperatives")
+def list_cooperatives():
+    """List all registered Labour Cooperatives with active worker counts."""
+    cooperatives = Cooperative.query.filter_by(verification_status="verified").order_by(Cooperative.rating.desc()).all()
+    return jsonify([c.to_dict() for c in cooperatives])
+
+
+@api.get("/cooperatives/<int:coop_id>")
+def get_cooperative_detail(coop_id):
+    """Fetch cooperative profile details and affiliated active workers."""
+    coop = db.session.get(Cooperative, coop_id)
+    if not coop:
+        return jsonify({"error": "Cooperative not found"}), 404
+    
+    workers = (
+        db.session.query(WorkerProfile, User)
+        .join(User, WorkerProfile.user_id == User.id)
+        .filter(WorkerProfile.cooperative_id == coop.id)
+        .filter(WorkerProfile.verification_status == "verified")
+        .all()
+    )
+    
+    workers_list = []
+    for wp, u in workers:
+        workers_list.append({
+            "worker_id": u.id,
+            "profile_id": wp.id,
+            "name": u.name,
+            "trade": wp.primary_service,
+            "skills": wp.skills,
+            "rating": wp.rating,
+            "experience_years": wp.experience_years,
+            "total_jobs": wp.total_jobs,
+            "is_available": wp.is_available,
+        })
+
+    result = coop.to_dict()
+    result["workers"] = workers_list
+    return jsonify(result)
+
+
+@api.post("/cooperatives")
+def register_cooperative():
+    """Register a new Labour Cooperative / Society."""
+    user = _get_user_from_req()
+    if not user:
+        return jsonify({"error": "Not authenticated"}), 401
+    
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "").strip()
+    reg_num = (data.get("registration_number") or "").strip()
+    city = (data.get("city") or "").strip()
+    categories = (data.get("service_categories") or "").strip()
+    desc = (data.get("description") or "").strip()
+
+    if not name or not reg_num or not city:
+        return jsonify({"error": "Name, registration number, and city are required"}), 400
+
+    if Cooperative.query.filter_by(name=name).first():
+        return jsonify({"error": "Cooperative name already exists"}), 409
+
+    coop = Cooperative(
+        name=name,
+        registration_number=reg_num,
+        city=city,
+        address=data.get("address", "").strip() or city,
+        service_categories=categories or "Home Services",
+        description=desc,
+        contact_email=user.email,
+        contact_phone=user.phone,
+        admin_user_id=user.id,
+        verification_status="verified",
+    )
+    db.session.add(coop)
+
+    if user.role != "admin":
+        user.role = "cooperative_admin"
+
+    db.session.commit()
+    return jsonify(coop.to_dict()), 201
+
+
+@api.get("/cooperative/dashboard")
+def cooperative_dashboard():
+    """Dashboard metrics and worker management overview for Cooperative Admins."""
+    user = _get_user_from_req()
+    if not user or user.role not in ("cooperative_admin", "admin"):
+        return jsonify({"error": "Forbidden. Cooperative admin access required"}), 403
+
+    coop = Cooperative.query.filter_by(admin_user_id=user.id).first()
+    if not coop and user.role != "admin":
+        coop = Cooperative.query.first()
+
+    coop_id = coop.id if coop else None
+
+    workers_q = (
+        db.session.query(WorkerProfile, User)
+        .join(User, WorkerProfile.user_id == User.id)
+    )
+    if coop_id:
+        workers_q = workers_q.filter(WorkerProfile.cooperative_id == coop_id)
+    
+    worker_rows = workers_q.all()
+    workers_data = []
+    total_coop_earnings = 0.0
+    total_jobs_count = 0
+
+    for wp, u in worker_rows:
+        total_coop_earnings += (wp.earnings or 0.0)
+        total_jobs_count += (wp.total_jobs or 0)
+        workers_data.append({
+            "worker_id": u.id,
+            "profile_id": wp.id,
+            "name": u.name,
+            "email": u.email,
+            "phone": u.phone,
+            "primary_service": wp.primary_service,
+            "skills": wp.skills,
+            "experience_years": wp.experience_years,
+            "verification_status": wp.verification_status,
+            "identity_verified": wp.identity_verified,
+            "skill_verified": wp.skill_verified,
+            "rating": wp.rating,
+            "total_jobs": wp.total_jobs,
+            "earnings": wp.earnings,
+            "is_available": wp.is_available,
+        })
+
+    bookings_q = Booking.query.order_by(Booking.created_at.desc())
+    if coop_id and worker_rows:
+        worker_user_ids = [u.id for _, u in worker_rows]
+        bookings_q = bookings_q.filter(
+            (Booking.cooperative_id == coop_id) | (Booking.worker_id.in_(worker_user_ids))
+        )
+    
+    bookings = bookings_q.limit(25).all()
+
+    disputes_q = Dispute.query.order_by(Dispute.created_at.desc())
+    if coop_id:
+        disputes_q = disputes_q.filter_by(cooperative_id=coop_id)
+    disputes = disputes_q.all()
+
+    return jsonify({
+        "cooperative": coop.to_dict() if coop else None,
+        "stats": {
+            "total_workers": len(workers_data),
+            "verified_workers": len([w for w in workers_data if w["verification_status"] == "verified"]),
+            "total_jobs_completed": total_jobs_count,
+            "total_gmv": round(total_jobs_count * 380.0, 2),
+            "cooperative_share_earnings": round(total_jobs_count * 380.0 * 0.05, 2),
+            "worker_total_earnings": round(total_coop_earnings, 2),
+            "open_disputes_count": len([d for d in disputes if d.status == "open"]),
+        },
+        "workers": workers_data,
+        "bookings": [b.to_dict() for b in bookings],
+        "disputes": [d.to_dict() for d in disputes],
+    })
+
+
+@api.post("/cooperative/workers")
+def cooperative_add_worker():
+    """Cooperative admin adds/registers a new worker partner."""
+    user = _get_user_from_req()
+    if not user or user.role not in ("cooperative_admin", "admin"):
+        return jsonify({"error": "Cooperative admin access required"}), 403
+
+    coop = Cooperative.query.filter_by(admin_user_id=user.id).first()
+    if not coop and user.role != "admin":
+        coop = Cooperative.query.first()
+
+    data = request.get_json(silent=True) or {}
+    name = (data.get("name") or "").strip()
+    email = (data.get("email") or "").lower().strip()
+    phone = (data.get("phone") or "").strip()
+    password = data.get("password") or "demo123"
+    primary_service = (data.get("primary_service") or "").strip()
+    skills = (data.get("skills") or "").strip()
+    experience = int(data.get("experience_years") or 0)
+
+    if not name or not email or not phone or not primary_service:
+        return jsonify({"error": "Name, email, phone, and service category are required"}), 400
+
+    if User.query.filter_by(email=email).first():
+        return jsonify({"error": "Account with email already exists"}), 409
+
+    wuser = User(
+        name=name,
+        email=email,
+        phone=phone,
+        password_hash=generate_password_hash(password),
+        role="worker",
+        address=coop.city if coop else "Noida",
+        language="hi",
+        is_verified=True,
+        trust_badge="Cooperative Member",
+        accepted_terms=True,
+    )
+    db.session.add(wuser)
+    db.session.flush()
+
+    profile = WorkerProfile(
+        user_id=wuser.id,
+        cooperative_id=coop.id if coop else None,
+        primary_service=primary_service,
+        skills=skills,
+        experience_years=experience,
+        verification_status="verified",
+        identity_verified=True,
+        skill_verified=True,
+        city=coop.city if coop else "Noida",
+        is_available=True,
+    )
+    db.session.add(profile)
+    db.session.add(WelfareWallet(worker_id=wuser.id, balance=0.0, total_contribution=0.0, insurance_contribution=0.0))
+
+    db.session.commit()
+    return jsonify({
+        "worker": profile.to_dict(),
+        "user": wuser.to_dict(),
+        "message": f"Worker '{name}' successfully registered under {coop.name if coop else 'Cooperative'}."
+    }), 201
+
+
+@api.post("/cooperative/workers/<int:worker_id>/verify")
+def cooperative_verify_worker(worker_id):
+    """Cooperative admin verifies worker skill and identity status."""
+    user = _get_user_from_req()
+    if not user or user.role not in ("cooperative_admin", "admin"):
+        return jsonify({"error": "Cooperative admin access required"}), 403
+
+    profile = WorkerProfile.query.filter_by(user_id=worker_id).first()
+    if not profile:
+        return jsonify({"error": "Worker profile not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    status = (data.get("status") or "verified").lower().strip()
+    notes = (data.get("verification_notes") or "Verified by Cooperative Administrator.").strip()
+
+    profile.verification_status = status
+    profile.verification_notes = notes
+    profile.skill_verified = status == "verified"
+    profile.identity_verified = status == "verified"
+
+    db.session.commit()
+    return jsonify({
+        "profile": profile.to_dict(),
+        "message": f"Worker verification updated to '{status}'"
+    })
+
+
+@api.post("/cooperative/bookings/<int:booking_id>/assign")
+def cooperative_assign_worker(booking_id):
+    """Cooperative admin assigns an active worker to a customer booking."""
+    user = _get_user_from_req()
+    if not user or user.role not in ("cooperative_admin", "admin"):
+        return jsonify({"error": "Cooperative admin access required"}), 403
+
+    booking = db.session.get(Booking, booking_id)
+    if not booking:
+        return jsonify({"error": "Booking not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    worker_id = data.get("worker_id")
+    if not worker_id:
+        return jsonify({"error": "worker_id is required"}), 400
+
+    worker = db.session.get(User, worker_id)
+    if not worker or worker.role != "worker":
+        return jsonify({"error": "Invalid worker user ID"}), 400
+
+    booking.worker_id = worker.id
+    booking.status = "worker_assigned"
+    booking.assigned_at = datetime.utcnow()
+
+    db.session.commit()
+    return jsonify({
+        "booking": booking.to_dict(),
+        "message": f"Assigned worker '{worker.name}' to Booking #{booking.id}"
+    })
+
+
+# ---------------------------------------------------------------------------
+# Structured Booking Lifecycle & Cancellation Accountability
+# ---------------------------------------------------------------------------
+
+@api.post("/bookings/<int:booking_id>/status")
+def update_booking_status(booking_id):
+    """
+    Advance booking through the 8-stage lifecycle:
+      requested -> accepted -> worker_assigned -> on_the_way -> arrived -> in_progress -> completed -> confirmed (or cancelled)
+    """
+    user = _get_user_from_req()
+    if not user:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    booking = db.session.get(Booking, booking_id)
+    if not booking:
+        return jsonify({"error": "Booking not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    new_status = (data.get("status") or "").lower().strip()
+    reason = (data.get("cancellation_reason") or "").strip()
+
+    valid_statuses = [
+        "requested", "accepted", "worker_assigned", "on_the_way",
+        "arrived", "in_progress", "completed", "confirmed", "cancelled"
+    ]
+    if new_status not in valid_statuses:
+        return jsonify({"error": f"Invalid status '{new_status}'. Allowed: {', '.join(valid_statuses)}"}), 400
+
+    now = datetime.utcnow()
+
+    if new_status == "cancelled":
+        if not reason:
+            return jsonify({"error": "Cancellation reason is required"}), 400
+        booking.status = "cancelled"
+        booking.cancelled_at = now
+        booking.cancellation_reason = reason
+        booking.cancelled_by = user.role
+    else:
+        booking.status = new_status
+        if new_status == "accepted":
+            booking.accepted_at = now
+        elif new_status == "worker_assigned":
+            booking.assigned_at = now
+        elif new_status == "on_the_way":
+            booking.on_the_way_at = now
+        elif new_status == "arrived":
+            booking.arrived_at = now
+        elif new_status == "in_progress":
+            booking.in_progress_at = now
+        elif new_status == "completed":
+            booking.completed_at = now
+            if booking.worker_id:
+                profile = WorkerProfile.query.filter_by(user_id=booking.worker_id).first()
+                if profile:
+                    profile.total_jobs = (profile.total_jobs or 0) + 1
+                    net_earned = round(booking.amount * WORKER_SHARE, 2)
+                    profile.earnings = round((profile.earnings or 0.0) + net_earned, 2)
+                    _credit_welfare(booking.worker_id, booking)
+        elif new_status == "confirmed":
+            booking.confirmed_at = now
+
+    db.session.commit()
+    return jsonify({
+        "booking": booking.to_dict(),
+        "message": f"Booking #{booking.id} status updated to '{new_status}'"
+    })
+
+
+# ---------------------------------------------------------------------------
+# Structured Dispute Resolution System
+# ---------------------------------------------------------------------------
+
+@api.get("/disputes")
+def list_disputes():
+    """List disputes relevant to logged-in user role (Customer, Worker, Cooperative Admin, Platform Admin)."""
+    user = _get_user_from_req()
+    if not user:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    if user.role == "admin":
+        disputes = Dispute.query.order_by(Dispute.created_at.desc()).all()
+    elif user.role == "cooperative_admin":
+        coop = Cooperative.query.filter_by(admin_user_id=user.id).first()
+        if coop:
+            disputes = Dispute.query.filter_by(cooperative_id=coop.id).order_by(Dispute.created_at.desc()).all()
+        else:
+            disputes = Dispute.query.order_by(Dispute.created_at.desc()).all()
+    else:
+        disputes = Dispute.query.filter(
+            (Dispute.raised_by_id == user.id) | (Dispute.against_id == user.id)
+        ).order_by(Dispute.created_at.desc()).all()
+
+    return jsonify([d.to_dict() for d in disputes])
+
+
+@api.post("/disputes")
+def create_dispute():
+    """Raise a structured dispute against a booking."""
+    user = _get_user_from_req()
+    if not user:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    data = request.get_json(silent=True) or {}
+    booking_id = data.get("booking_id")
+    category = (data.get("category") or "Service Quality").strip()
+    description = (data.get("description") or "").strip()
+    evidence_url = (data.get("evidence_url") or "").strip()
+
+    if not booking_id or not description:
+        return jsonify({"error": "booking_id and description are required"}), 400
+
+    booking = db.session.get(Booking, booking_id)
+    if not booking:
+        return jsonify({"error": "Booking not found"}), 404
+
+    against_id = booking.worker_id if user.id == booking.customer_id else booking.customer_id
+    coop_id = booking.cooperative_id
+
+    dispute = Dispute(
+        booking_id=booking.id,
+        raised_by_id=user.id,
+        against_id=against_id,
+        cooperative_id=coop_id,
+        category=category,
+        description=description,
+        evidence_url=evidence_url,
+        status="open",
+    )
+    db.session.add(dispute)
+    db.session.commit()
+
+    return jsonify({
+        "dispute": dispute.to_dict(),
+        "message": f"Dispute #{dispute.id} submitted successfully. NEED Federation will review shortly."
+    }), 201
+
+
+@api.post("/disputes/<int:dispute_id>/resolve")
+def resolve_dispute(dispute_id):
+    """Admin or Cooperative Admin resolves a dispute."""
+    user = _get_user_from_req()
+    if not user or user.role not in ("admin", "cooperative_admin"):
+        return jsonify({"error": "Admin or Cooperative Admin access required"}), 403
+
+    dispute = db.session.get(Dispute, dispute_id)
+    if not dispute:
+        return jsonify({"error": "Dispute not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    status = (data.get("status") or "resolved").lower().strip()
+    notes = (data.get("resolution_notes") or "Reviewed and resolved by Federation authority.").strip()
+
+    if status not in ("resolved", "rejected", "under_review"):
+        status = "resolved"
+
+    dispute.status = status
+    dispute.resolution_notes = notes
+    dispute.resolved_by_id = user.id
+
+    db.session.commit()
+    return jsonify({
+        "dispute": dispute.to_dict(),
+        "message": f"Dispute #{dispute.id} status updated to '{status}'"
+    })
+
+
+# ---------------------------------------------------------------------------
+# Two-Sided Ratings (Worker rates Customer)
+# ---------------------------------------------------------------------------
+
+@api.post("/reviews/customer")
+def review_customer():
+    """Worker rates customer after booking completion."""
+    user = _get_user_from_req()
+    if not user or user.role != "worker":
+        return jsonify({"error": "Worker authentication required"}), 403
+
+    data = request.get_json(silent=True) or {}
+    booking_id = data.get("booking_id")
+    rating = int(data.get("rating") or 5)
+    comment = (data.get("comment") or "").strip()
+
+    if not booking_id:
+        return jsonify({"error": "booking_id is required"}), 400
+
+    booking = db.session.get(Booking, booking_id)
+    if not booking or booking.worker_id != user.id:
+        return jsonify({"error": "Invalid or unauthorized booking"}), 403
+
+    review = Review(
+        booking_id=booking.id,
+        customer_id=booking.customer_id,
+        worker_id=user.id,
+        rating=max(1, min(5, rating)),
+        comment=comment,
+        review_type="worker_to_customer",
+    )
+    db.session.add(review)
+    db.session.commit()
+
+    return jsonify({
+        "review": review.to_dict(),
+        "message": "Customer feedback recorded successfully!"
     })
 
 

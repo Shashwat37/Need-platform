@@ -40,6 +40,8 @@ import BookingModal from '../components/BookingModal'
 import PaymentModal from '../components/PaymentModal'
 import InvoiceModal from '../components/InvoiceModal'
 import ReviewModal from '../components/ReviewModal'
+import DisputeModal from '../components/DisputeModal'
+import BookingLifecycleStepper from '../components/BookingLifecycleStepper'
 
 // ---------------------------------------------------------------------------
 // Status badge
@@ -85,7 +87,7 @@ function StatusBadge({ status }) {
 // We deliberately do NOT offer "Pay Now" before the worker marks the job
 // complete, so a customer can never pay for work that hasn't happened yet.
 // ---------------------------------------------------------------------------
-function RowActions({ booking, cancellingId, onCancel, onPay, onInvoice, onReview }) {
+function RowActions({ booking, cancellingId, onCancel, onPay, onInvoice, onReview, onDispute }) {
   const canCancel  = ['pending', 'accepted'].includes(booking.status)
   const canPay     = booking.status === 'completed' && !booking.is_paid
   const canInvoice = Boolean(booking.is_paid && booking.invoice_id)
@@ -144,6 +146,14 @@ function RowActions({ booking, cancellingId, onCancel, onPay, onInvoice, onRevie
           {booking.review.rating}★ Rated
         </span>
       )}
+
+      {/* Raise Dispute Option */}
+      <button
+        onClick={() => onDispute(booking)}
+        className="rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-800 hover:bg-amber-100 transition"
+      >
+        Raise Dispute
+      </button>
     </div>
   )
 }
@@ -239,6 +249,12 @@ export default function CustomerDashboard() {
 
   // Review Modal State
   const [reviewModal, setReviewModal] = useState({
+    isOpen: false,
+    booking: null,
+  })
+
+  // Dispute Modal State
+  const [disputeModal, setDisputeModal] = useState({
     isOpen: false,
     booking: null,
   })
@@ -448,6 +464,7 @@ export default function CustomerDashboard() {
                             onPay={(booking) => setPaymentModal({ isOpen: true, booking })}
                             onInvoice={(invoiceId) => setInvoiceModal({ isOpen: true, invoiceId })}
                             onReview={(booking) => setReviewModal({ isOpen: true, booking })}
+                            onDispute={(booking) => setDisputeModal({ isOpen: true, booking })}
                           />
                         </td>
                       </tr>
@@ -523,6 +540,16 @@ export default function CustomerDashboard() {
         onClose={() => setReviewModal({ isOpen: false, booking: null })}
         booking={reviewModal.booking}
         onSuccess={() => {
+          fetchDashboard(false)
+        }}
+      />
+
+      {/* ── Dispute Modal (raise structured dispute) ─────────────────────── */}
+      <DisputeModal
+        isOpen={disputeModal.isOpen}
+        onClose={() => setDisputeModal({ isOpen: false, booking: null })}
+        booking={disputeModal.booking}
+        onDisputeCreated={() => {
           fetchDashboard(false)
         }}
       />
