@@ -394,16 +394,6 @@ export async function reviewCustomer(bookingId, rating, comment = '') {
   return response.data
 }
 
-// ---------------------------------------------------------------------------
-// AI Demand Forecasting (Step 14)
-// ---------------------------------------------------------------------------
-
-/** Admin: Fetch AI Demand Forecasting & Predictive Analytics. */
-export async function getDemandForecasting() {
-  const response = await api.get('/admin/forecasting')
-  return response.data
-}
-
 export default api
 
 

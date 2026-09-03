@@ -20,7 +20,6 @@ import {
   DollarSign,
   FileCheck,
   Loader2,
-  PlusCheck,
   ShieldCheck,
   UserCheck,
   UserPlus,
