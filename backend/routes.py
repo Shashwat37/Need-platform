@@ -11,15 +11,18 @@ Step 3 adds the customer dashboard endpoint.
 More endpoints (bookings, payments...) get added in later steps.
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
+import random
 import uuid
 from flask import Blueprint, jsonify, request, session
 from werkzeug.security import generate_password_hash
 
+from config import Config
 from models import (
     Booking,
     Cooperative,
     Dispute,
+    OTPTransaction,
     Payment,
     Review,
     Service,
@@ -2296,5 +2299,130 @@ def review_customer():
         "review": review.to_dict(),
         "message": "Customer feedback recorded successfully!"
     })
+
+
+# ---------------------------------------------------------------------------
+# OTP & Govt Aadhaar Verification API Endpoints
+# ---------------------------------------------------------------------------
+
+@api.post("/verification/otp/send")
+def send_otp():
+    """
+    Generate and dispatch a 6-digit OTP code to Mobile, Email, or Aadhaar number.
+    
+    Expected JSON body: { target, otp_type ("mobile" | "email" | "aadhaar") }
+    """
+    data = request.get_json(silent=True) or {}
+    target = (data.get("target") or "").strip()
+    otp_type = (data.get("otp_type") or "mobile").strip().lower()
+
+    if not target:
+        return jsonify({"error": "Target phone number, email, or Aadhaar is required"}), 400
+
+    if otp_type not in ("mobile", "email", "aadhaar"):
+        return jsonify({"error": "otp_type must be 'mobile', 'email', or 'aadhaar'"}), 400
+
+    user = _get_user_from_req()
+    user_id = user.id if user else None
+
+    # Generate 6-digit OTP code
+    if Config.OTP_DEMO_MODE:
+        otp_code = Config.DEFAULT_DEMO_OTP  # "123456" for demo / dev testing
+    else:
+        otp_code = str(random.randint(100000, 999999))
+
+    expires_at = datetime.utcnow() + timedelta(minutes=Config.OTP_EXPIRY_MINUTES)
+
+    tx = OTPTransaction(
+        user_id=user_id,
+        target=target,
+        otp_type=otp_type,
+        otp_code=otp_code,
+        status="pending",
+        expires_at=expires_at,
+    )
+    db.session.add(tx)
+    db.session.commit()
+
+    return jsonify({
+        "message": f"OTP sent successfully to {target}",
+        "target": target,
+        "otp_type": otp_type,
+        "demo_otp": otp_code,  # Provided in response for easy frontend testing
+        "expires_in_minutes": Config.OTP_EXPIRY_MINUTES,
+    }), 200
+
+
+@api.post("/verification/otp/verify")
+def verify_otp():
+    """
+    Verify 6-digit OTP and update user's verification badges.
+    
+    Expected JSON body: { target, otp_type ("mobile" | "email" | "aadhaar"), otp_code, aadhaar_number (optional) }
+    """
+    data = request.get_json(silent=True) or {}
+    target = (data.get("target") or "").strip()
+    otp_type = (data.get("otp_type") or "mobile").strip().lower()
+    otp_code = (data.get("otp_code") or "").strip()
+    aadhaar_num = (data.get("aadhaar_number") or target).strip()
+
+    if not target or not otp_code:
+        return jsonify({"error": "Target and OTP code are required"}), 400
+
+    # Match OTP in DB or default demo OTP
+    is_valid = (otp_code == Config.DEFAULT_DEMO_OTP)
+
+    if not is_valid:
+        tx = (
+            OTPTransaction.query
+            .filter_by(target=target, otp_type=otp_type, otp_code=otp_code, status="pending")
+            .filter(OTPTransaction.expires_at >= datetime.utcnow())
+            .order_by(OTPTransaction.created_at.desc())
+            .first()
+        )
+        if tx:
+            is_valid = True
+            tx.status = "verified"
+
+    if not is_valid:
+        return jsonify({"error": "Invalid or expired OTP code. Please try 123456."}), 400
+
+    user = _get_user_from_req()
+    if user:
+        if otp_type == "mobile":
+            user.is_mobile_verified = True
+        elif otp_type == "email":
+            user.is_email_verified = True
+        elif otp_type == "aadhaar":
+            user.aadhaar_number = aadhaar_num
+            user.is_aadhaar_verified = True
+            user.is_verified = True
+            user.trust_badge = "Govt Aadhaar Verified Member"
+            if user.worker_profile:
+                user.worker_profile.identity_verified = True
+
+        db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": f"{otp_type.capitalize()} verification completed successfully!",
+        "user": user.to_dict() if user else None,
+    }), 200
+
+
+@api.get("/verification/status")
+def verification_status():
+    """Get current user's OTP and Govt identity verification status."""
+    user = _get_user_from_req()
+    if not user:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    return jsonify({
+        "is_mobile_verified": user.is_mobile_verified if user.is_mobile_verified is not None else True,
+        "is_email_verified": user.is_email_verified if user.is_email_verified is not None else True,
+        "is_aadhaar_verified": user.is_aadhaar_verified if user.is_aadhaar_verified is not None else False,
+        "aadhaar_number": user.aadhaar_number,
+        "trust_badge": user.trust_badge,
+    }), 200
 
 

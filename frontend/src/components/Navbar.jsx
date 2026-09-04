@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { Globe, LogOut, Menu, User, X } from 'lucide-react'
+import { Globe, LogOut, Menu, ShieldCheck, User, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import Logo from './Logo'
+import OTPVerificationModal from './OTPVerificationModal'
 
 const LINKS = [
   { to: '/services',     labelKey: 'nav_services',     fallback: 'Services' },
@@ -34,6 +35,7 @@ export default function Navbar() {
   // `false` = mobile menu closed. Clicking the hamburger flips it.
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
+  const [isOtpModalOpen, setIsOtpModalOpen] = useState(false)
 
   const closeMenu = () => setIsMenuOpen(false)
 
@@ -90,6 +92,15 @@ export default function Navbar() {
 
           {user ? (
             <>
+              {/* Verify OTP & Aadhaar Badge Button */}
+              <button
+                onClick={() => setIsOtpModalOpen(true)}
+                className="flex items-center gap-1.5 rounded-full border border-purple-200 bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700 hover:bg-purple-100 transition"
+              >
+                <ShieldCheck size={14} className="text-purple-600" />
+                {user.is_aadhaar_verified ? 'Aadhaar Verified' : 'Verify OTP / Aadhaar'}
+              </button>
+
               <Link
                 to={dashboardPath}
                 className="flex items-center gap-1.5 text-sm font-medium text-ink hover:text-brand-700"
@@ -97,6 +108,7 @@ export default function Navbar() {
                 <User size={16} />
                 {user.name.split(' ')[0]}
               </Link>
+
               <button
                 onClick={handleLogout}
                 disabled={loggingOut}
@@ -125,6 +137,18 @@ export default function Navbar() {
           {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
       </nav>
+
+      {/* OTP & Aadhaar Verification Modal */}
+      {user && (
+        <OTPVerificationModal
+          isOpen={isOtpModalOpen}
+          onClose={() => setIsOtpModalOpen(false)}
+          initialMode="mobile"
+          userPhone={user.phone}
+          userEmail={user.email}
+          userAadhaar={user.aadhaar_number || ''}
+        />
+      )}
 
       {/* Mobile dropdown panel */}
       {isMenuOpen && (

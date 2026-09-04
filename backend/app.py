@@ -15,54 +15,23 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 
 from auth import auth
+from config import Config
 from models import db
 from routes import api
 
-# Read the .env file (if there is one) into environment variables.
-load_dotenv()
-
-# Absolute path to this backend folder, so the database is always the same file
-# no matter which folder you launch the server from.
+# Absolute path to this backend folder
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-
-# Where the database actually lives: backend/instance/database.db
-#
-# WHY it is spelled out as an absolute path: when DATABASE_URL is a *relative*
-# path like "sqlite:///database.db", Flask-SQLAlchemy resolves it inside the
-# instance folder. The fallback used to point next to app.py instead, one level
-# up. So running with a .env file and running without one opened two different
-# database files — and the one without looked like the app had lost all its
-# data, with no error to explain why. Both now resolve to the same file.
-DEFAULT_DB_PATH = os.path.join(BASE_DIR, "instance", "database.db")
-os.makedirs(os.path.dirname(DEFAULT_DB_PATH), exist_ok=True)
 
 
 def create_app():
     """Build and configure the Flask app."""
     app = Flask(__name__)
 
-    # --- Configuration -----------------------------------------------------
-    # Secrets and settings come from .env, never hardcoded.
-    # The second argument to os.getenv is the fallback used in development.
-    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret-change-me")
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv(
-        "DATABASE_URL", f"sqlite:///{DEFAULT_DB_PATH}"
-    )
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-
-    # --- Session -----------------------------------------------------------
-    # Sessions are stored server-side in a signed cookie. The secret key
-    # signs the cookie so clients cannot forge it.
-    # SameSite=Lax stops cross-site request forgery in most cases.
-    # HttpOnly hides the cookie from JavaScript (not readable by XSS).
-    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-    app.config["SESSION_COOKIE_HTTPONLY"] = True
-    app.config["SESSION_COOKIE_SECURE"] = False  # True in production (HTTPS)
-    app.config["PERMANENT_SESSION_LIFETIME"] = 60 * 60 * 24 * 7  # 7 days
+    # --- Load Master Configuration & API Keys ------------------------------
+    app.config.from_object(Config)
 
     # --- CORS --------------------------------------------------------------
-    # Allows cross-origin calls from local Vite dev server, custom ports, or deployed domains.
-    cors_origins = os.getenv("CORS_ORIGINS", "*")
+    cors_origins = app.config.get("CORS_ORIGINS", "*")
     if cors_origins == "*":
         CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
     else:
@@ -82,6 +51,10 @@ def create_app():
             ("worker_profiles", "skill_verified BOOLEAN DEFAULT 1"),
             ("users", "is_verified BOOLEAN DEFAULT 1"),
             ("users", "trust_badge TEXT DEFAULT 'Verified Member'"),
+            ("users", "is_mobile_verified BOOLEAN DEFAULT 1"),
+            ("users", "is_email_verified BOOLEAN DEFAULT 1"),
+            ("users", "aadhaar_number TEXT"),
+            ("users", "is_aadhaar_verified BOOLEAN DEFAULT 0"),
             ("bookings", "cooperative_id INTEGER"),
             ("bookings", "accepted_at DATETIME"),
             ("bookings", "assigned_at DATETIME"),

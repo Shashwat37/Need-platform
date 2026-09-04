@@ -93,9 +93,13 @@ class User(db.Model):
     latitude = db.Column(db.Float)
     longitude = db.Column(db.Float)
 
-    # Two-sided trust & verification
+    # Two-sided trust & OTP verification
     is_verified = db.Column(db.Boolean, default=True)
     trust_badge = db.Column(db.String(80), default="Verified Member")
+    is_mobile_verified = db.Column(db.Boolean, default=True)
+    is_email_verified = db.Column(db.Boolean, default=True)
+    aadhaar_number = db.Column(db.String(20))
+    is_aadhaar_verified = db.Column(db.Boolean, default=False)
 
     accepted_terms = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -116,6 +120,36 @@ class User(db.Model):
             "language": self.language,
             "is_verified": self.is_verified,
             "trust_badge": self.trust_badge,
+            "is_mobile_verified": self.is_mobile_verified if self.is_mobile_verified is not None else True,
+            "is_email_verified": self.is_email_verified if self.is_email_verified is not None else True,
+            "aadhaar_number": self.aadhaar_number,
+            "is_aadhaar_verified": self.is_aadhaar_verified if self.is_aadhaar_verified is not None else False,
+        }
+
+
+class OTPTransaction(db.Model):
+    """Tracks active and historical 6-digit OTP transactions for Mobile, Email, and Govt Aadhaar verification."""
+
+    __tablename__ = "otp_transactions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    target = db.Column(db.String(120), nullable=False)  # Mobile phone, Email address, or Aadhaar number
+    otp_type = db.Column(db.String(20), nullable=False)  # "mobile", "email", "aadhaar"
+    otp_code = db.Column(db.String(10), nullable=False)  # 6-digit code e.g. "123456"
+    status = db.Column(db.String(20), default="pending")  # "pending", "verified", "expired"
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    expires_at = db.Column(db.DateTime)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "target": self.target,
+            "otp_type": self.otp_type,
+            "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "expires_at": self.expires_at.isoformat() if self.expires_at else None,
         }
 
 
