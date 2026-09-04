@@ -2330,6 +2330,37 @@ def send_otp():
         otp_code = Config.DEFAULT_DEMO_OTP  # "123456" for demo / dev testing
     else:
         otp_code = str(random.randint(100000, 999999))
+        
+        # Live Mobile SMS Gateway Dispatch (Fast2SMS / MSG91 / Twilio)
+        if otp_type == "mobile":
+            try:
+                import requests
+                # Fast2SMS Quick OTP API Endpoint
+                sms_payload = {
+                    "variables_values": otp_code,
+                    "route": "otp",
+                    "numbers": target
+                }
+                sms_headers = {"authorization": Config.SMS_GATEWAY_API_KEY}
+                requests.post("https://www.fast2sms.com/dev/bulkV2", data=sms_payload, headers=sms_headers, timeout=5)
+            except Exception as exc:
+                print(f"[SMS Gateway Notice] Live SMS dispatch attempt: {exc}")
+
+        # Live Email SMTP Dispatch (Gmail / SMTP)
+        elif otp_type == "email":
+            try:
+                import smtplib
+                from email.mime.text import MIMEText
+                msg = MIMEText(f"Your NEED verification OTP code is: {otp_code}. Valid for 10 minutes.")
+                msg['Subject'] = 'NEED Verification OTP Code'
+                msg['From'] = Config.SMTP_EMAIL
+                msg['To'] = target
+                with smtplib.SMTP(Config.SMTP_SERVER, Config.SMTP_PORT, timeout=5) as server:
+                    server.starttls()
+                    server.login(Config.SMTP_EMAIL, Config.SMTP_PASSWORD)
+                    server.sendmail(Config.SMTP_EMAIL, [target], msg.as_string())
+            except Exception as exc:
+                print(f"[SMTP Email Notice] Live Email dispatch attempt: {exc}")
 
     expires_at = datetime.utcnow() + timedelta(minutes=Config.OTP_EXPIRY_MINUTES)
 
@@ -2348,7 +2379,7 @@ def send_otp():
         "message": f"OTP sent successfully to {target}",
         "target": target,
         "otp_type": otp_type,
-        "demo_otp": otp_code,  # Provided in response for easy frontend testing
+        "demo_otp": otp_code if Config.OTP_DEMO_MODE else "Sent to Mobile SMS / Email",
         "expires_in_minutes": Config.OTP_EXPIRY_MINUTES,
     }), 200
 
