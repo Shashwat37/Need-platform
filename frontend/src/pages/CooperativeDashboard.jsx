@@ -175,13 +175,22 @@ export default function CooperativeDashboard() {
             </div>
           </div>
 
-          <button
-            onClick={() => setShowAddWorker(true)}
-            className="flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-2.5 text-xs font-bold text-brand-900 shadow-md hover:bg-stone-100 transition"
-          >
-            <UserPlus size={16} />
-            Add Worker Member
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => setShowAddWorker(true)}
+              className="flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-2.5 text-xs font-bold text-brand-900 shadow-md hover:bg-stone-100 transition"
+            >
+              <UserPlus size={16} />
+              + Register Local Labourer
+            </button>
+            <button
+              onClick={() => setActiveTab('bookings')}
+              className="flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white px-5 py-2.5 text-xs font-bold shadow-md transition"
+            >
+              <Wrench size={16} />
+              ⚡ Assign Work & Dispatch
+            </button>
+          </div>
         </div>
 
         {/* Top KPIs */}
