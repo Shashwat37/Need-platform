@@ -13,7 +13,7 @@ HOW:  Registered in app.py under the /api prefix, so endpoints are:
 from flask import Blueprint, jsonify, request, session
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from models import User, WelfareWallet, WorkerProfile, db
+from models import Cooperative, User, WelfareWallet, WorkerProfile, db
 
 auth = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -58,10 +58,12 @@ def register():
     Create a new account and immediately log the user in.
 
     Expected JSON body:
-      name, email, phone, password, role ("customer" | "worker"),
+      name, email, phone, password, role ("customer" | "worker" | "cooperative_admin"),
       address (optional)
       --- worker only ---
       skills (optional), experience_years (optional), city (optional)
+      --- cooperative admin / contractor only ---
+      cooperative_name (optional), registration_number (optional), city (optional)
     """
     data = request.get_json(silent=True) or {}
 
@@ -72,8 +74,8 @@ def register():
         return jsonify({"error": f"Missing fields: {', '.join(missing)}"}), 400
 
     role = data["role"]
-    if role not in ("customer", "worker"):
-        return jsonify({"error": "Role must be 'customer' or 'worker'"}), 400
+    if role not in ("customer", "worker", "cooperative_admin"):
+        return jsonify({"error": "Role must be 'customer', 'worker', or 'cooperative_admin'"}), 400
 
     if User.query.filter_by(email=data["email"].lower().strip()).first():
         return jsonify({"error": "An account with that email already exists"}), 409
@@ -94,6 +96,8 @@ def register():
         role=role,
         address=data.get("address", "").strip() or None,
         accepted_terms=data.get("accepted_terms", False),
+        is_verified=True,
+        trust_badge="Cooperative Administrator" if role == "cooperative_admin" else "Registered Member",
     )
     db.session.add(user)
     db.session.flush()          # gives user.id before commit
@@ -121,6 +125,29 @@ def register():
             total_contribution=0.0,
             insurance_contribution=0.0,
         ))
+
+    # --- Create cooperative society if registering as contractor/cooperative_admin ---
+    elif role == "cooperative_admin":
+        coop_name = (data.get("cooperative_name") or f"{user.name}'s Labour Union").strip()
+        reg_num = (data.get("registration_number") or f"COOP-REG-{user.id:04d}").strip()
+        city = (data.get("city") or "Noida").strip()
+        categories = (data.get("service_categories") or "Home Services, Electrician, Plumber").strip()
+
+        coop = Cooperative(
+            name=coop_name,
+            registration_number=reg_num,
+            verification_status="verified",
+            city=city,
+            address=data.get("address", "").strip() or city,
+            service_categories=categories,
+            description=f"Registered Labour Cooperative represented by {user.name}.",
+            contact_email=user.email,
+            contact_phone=user.phone,
+            admin_user_id=user.id,
+            platform_fee_percent=10.0,
+            cooperative_fee_percent=5.0,
+        )
+        db.session.add(coop)
 
     db.session.commit()
 

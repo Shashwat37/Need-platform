@@ -13,13 +13,14 @@
 
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Briefcase, User } from 'lucide-react'
+import { Briefcase, Building2, User } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import Logo from '../components/Logo'
 
 const DASHBOARD = {
   customer: '/customer',
   worker:   '/worker',
+  cooperative_admin: '/cooperative',
 }
 
 // ---------------------------------------------------------------------------
@@ -31,30 +32,43 @@ function RoleStep({ onChoose }) {
       <h1 className="mb-1 font-display text-2xl font-bold text-ink">Create an account</h1>
       <p className="mb-8 text-sm text-muted">I am joining NEED as a…</p>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-3">
         <button
           onClick={() => onChoose('customer')}
-          className="flex flex-col items-center gap-3 rounded-2xl border-2 border-line bg-white p-6 text-center transition hover:border-brand-500 hover:shadow-card focus:outline-none focus:ring-2 focus:ring-brand-500"
+          className="flex flex-col items-center gap-3 rounded-2xl border-2 border-line bg-white p-5 text-center transition hover:border-brand-500 hover:shadow-card focus:outline-none focus:ring-2 focus:ring-brand-500"
         >
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-brand-600">
-            <User size={28} />
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand-600">
+            <User size={24} />
           </div>
           <div>
-            <p className="font-display font-bold text-ink">Customer</p>
-            <p className="mt-0.5 text-xs text-muted">Book services for my home</p>
+            <p className="font-display font-bold text-ink text-sm">Customer</p>
+            <p className="mt-0.5 text-[11px] text-muted leading-tight">Book services for my home</p>
           </div>
         </button>
 
         <button
           onClick={() => onChoose('worker')}
-          className="flex flex-col items-center gap-3 rounded-2xl border-2 border-line bg-white p-6 text-center transition hover:border-brand-500 hover:shadow-card focus:outline-none focus:ring-2 focus:ring-brand-500"
+          className="flex flex-col items-center gap-3 rounded-2xl border-2 border-line bg-white p-5 text-center transition hover:border-brand-500 hover:shadow-card focus:outline-none focus:ring-2 focus:ring-brand-500"
         >
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-marigold-50 text-marigold-600">
-            <Briefcase size={28} />
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-marigold-50 text-marigold-600">
+            <Briefcase size={24} />
           </div>
           <div>
-            <p className="font-display font-bold text-ink">Worker</p>
-            <p className="mt-0.5 text-xs text-muted">Offer my skills and earn</p>
+            <p className="font-display font-bold text-ink text-sm">Worker Partner</p>
+            <p className="mt-0.5 text-[11px] text-muted leading-tight">Offer skills &amp; earn directly</p>
+          </div>
+        </button>
+
+        <button
+          onClick={() => onChoose('cooperative_admin')}
+          className="flex flex-col items-center gap-3 rounded-2xl border-2 border-line bg-white p-5 text-center transition hover:border-brand-500 hover:shadow-card focus:outline-none focus:ring-2 focus:ring-brand-500"
+        >
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-50 text-purple-600 border border-purple-200">
+            <Building2 size={24} />
+          </div>
+          <div>
+            <p className="font-display font-bold text-ink text-sm">Contractor / Coop</p>
+            <p className="mt-0.5 text-[11px] text-muted leading-tight">Manage worker team &amp; society</p>
           </div>
         </button>
       </div>
@@ -78,6 +92,8 @@ function DetailsStep({ role, onBack, onSubmit, busy, error }) {
     address: '',
     // Worker extras
     skills: '', experience_years: '', city: '', primary_service: '',
+    // Cooperative Admin / Contractor extras
+    cooperative_name: '', registration_number: '', service_categories: '',
     accepted_terms: false,
   })
   const [localError, setLocalError] = useState('')
@@ -119,7 +135,11 @@ function DetailsStep({ role, onBack, onSubmit, busy, error }) {
       </button>
 
       <h1 className="mb-1 font-display text-2xl font-bold text-ink">
-        {role === 'worker' ? 'Join as a Worker' : 'Join as a Customer'}
+        {role === 'worker'
+          ? 'Join as a Worker Partner'
+          : role === 'cooperative_admin'
+          ? 'Register Labour Cooperative / Contractor'
+          : 'Join as a Customer'}
       </h1>
       <p className="mb-6 text-sm text-muted">Fill in your details to get started</p>
 
@@ -131,7 +151,7 @@ function DetailsStep({ role, onBack, onSubmit, busy, error }) {
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
         {/* Common fields */}
-        <Field label="Full name" id="name" type="text" value={form.name}
+        <Field label="Full name / Administrator Name" id="name" type="text" value={form.name}
           onChange={set('name')} placeholder="Riya Sharma" autoComplete="name" />
 
         <Field label="Email address" id="email" type="email" value={form.email}
@@ -156,7 +176,24 @@ function DetailsStep({ role, onBack, onSubmit, busy, error }) {
               value={form.experience_years} onChange={set('experience_years')}
               placeholder="0" />
             <Field label="City" id="city" type="text"
-              value={form.city} onChange={set('city')} placeholder="Mumbai" />
+              value={form.city} onChange={set('city')} placeholder="Noida" />
+          </>
+        )}
+
+        {/* Contractor / Cooperative Admin fields */}
+        {role === 'cooperative_admin' && (
+          <>
+            <Field label="Labour Union / Contractor Organization Name" id="cooperative_name" type="text"
+              value={form.cooperative_name} onChange={set('cooperative_name')}
+              placeholder="e.g. Noida Artisans & Electricians Cooperative" />
+            <Field label="Society / Licence Registration Number (Optional)" id="registration_number" type="text"
+              value={form.registration_number} onChange={set('registration_number')}
+              placeholder="e.g. COOP-UP-2026-901" />
+            <Field label="City / Operating Region" id="city" type="text"
+              value={form.city} onChange={set('city')} placeholder="Noida & Greater Noida" />
+            <Field label="Service Categories Provided" id="service_categories" type="text"
+              value={form.service_categories} onChange={set('service_categories')}
+              placeholder="e.g. Electrician, Plumber, AC Repair" />
           </>
         )}
 
