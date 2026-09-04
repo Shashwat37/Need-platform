@@ -11,7 +11,7 @@
  *       On success the user is automatically logged in and redirected.
  */
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Briefcase, Building2, User } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
@@ -274,9 +274,9 @@ function OtpStep({ phone, onVerifyAndSubmit, onBack, busy, error }) {
   }
 
   // Initial send on component mount
-  useState(() => {
+  useEffect(() => {
     triggerSend()
-  })
+  }, [])
 
   async function handleConfirm(e) {
     e.preventDefault()
