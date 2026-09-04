@@ -14,27 +14,27 @@ export default {
         // Deep ink navy — headings and dark sections. Like the ink on an
         // official cooperative document.
         ink: {
-          DEFAULT: '#15243B',
-          900: '#0D172A',
-          800: '#15243B',
-          700: '#1F3555',
-          600: '#2E4A70',
+          DEFAULT: '#131B2E',
+          900: '#0F172A',
+          800: '#131B2E',
+          700: '#334155',
+          600: '#475569',
         },
         // Cooperative teal — every main button and link.
         brand: {
-          50: '#E8F3F1',
-          100: '#C8E4DF',
-          200: '#A5D3CB',
-          500: '#12897A',
-          600: '#0E6E62',
-          700: '#0B584E',
+          50: '#E6F7F0',
+          100: '#B8EBD7',
+          200: '#8DDEC0',
+          500: '#007A55',
+          600: '#005F41',
+          700: '#005137',
         },
         // Marigold — our single accent colour, used sparingly.
         marigold: {
-          50: '#FEF6E5',
-          400: '#F7B733',
-          500: '#F2A104',
-          600: '#D18A00',
+          50: '#FFF4DF',
+          400: '#FFB95F',
+          500: '#FEA619',
+          600: '#855300',
         },
         // Status colours. Green is reserved ONLY for "verified", so that
         // green always means one thing in this app and never decorates.
@@ -42,26 +42,26 @@ export default {
         pending: '#C98A04',
         rejected: '#C0392B',
 
-        paper: '#F4F6F5', // page background
-        line: '#DDE4E1',  // borders
-        muted: '#5B6B72', // secondary text
+        paper: '#FAF8FF', // page background
+        line: '#BDC9C1',  // borders
+        muted: '#64748B', // secondary text
       },
       fontFamily: {
         // Archivo is bold and squarish, like hand-painted tradesmen signboards.
-        display: ['Archivo', 'system-ui', 'sans-serif'],
+        display: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
         // IBM Plex Sans reads cleanly and has a matching Devanagari family,
         // which we will need when Hindi is added in Step 16.
-        sans: ['"IBM Plex Sans"', 'system-ui', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
         // Monospace for IDs, prices and invoice numbers — the "receipt" feel.
-        mono: ['"IBM Plex Mono"', 'ui-monospace', 'monospace'],
+        mono: ['"Plus Jakarta Sans"', 'ui-monospace', 'monospace'],
       },
       borderRadius: {
         '2xl': '1rem',
         '3xl': '1.5rem',
       },
       boxShadow: {
-        card: '0 1px 2px rgba(21,36,59,0.04), 0 8px 24px -12px rgba(21,36,59,0.14)',
-        lift: '0 2px 4px rgba(21,36,59,0.05), 0 16px 40px -16px rgba(21,36,59,0.22)',
+        card: '0 1px 4px rgba(19,27,46,0.04), 0 8px 24px -12px rgba(19,27,46,0.14)',
+        lift: '0 2px 8px rgba(19,27,46,0.06), 0 16px 40px -16px rgba(19,27,46,0.18)',
       },
       maxWidth: {
         content: '1180px',

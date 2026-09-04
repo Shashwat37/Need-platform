@@ -57,7 +57,7 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-paper/85 backdrop-blur">
-      <nav className="container-page flex h-16 items-center justify-between gap-4">
+      <nav className="container-page flex h-20 items-center justify-between gap-4">
         <Link to="/" onClick={closeMenu} aria-label="NEED home">
           <Logo />
         </Link>
@@ -141,7 +141,7 @@ export default function Navbar() {
                   }`
                 }
               >
-                {link.label}
+                {t(link.labelKey, link.fallback)}
               </NavLink>
             ))}
 

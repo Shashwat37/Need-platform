@@ -13,6 +13,12 @@
 @layer base {
   body {
     @apply bg-paper font-sans text-ink antialiased;
+    background-image: linear-gradient(180deg, #faf8ff 0%, #f7f8fc 100%);
+    font-size: 15px;
+  }
+
+  ::selection {
+    @apply bg-brand-100 text-ink;
   }
 
   h1,
@@ -20,6 +26,12 @@
   h3,
   h4 {
     @apply font-display tracking-tight;
+  }
+
+  input,
+  select,
+  textarea {
+    @apply transition-colors duration-150;
   }
 
   /* Keyboard users must always be able to see where they are. */
@@ -31,17 +43,17 @@
 @layer components {
   /* Buttons ---------------------------------------------------------- */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3
-           text-sm font-semibold transition-colors duration-150;
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3
+           text-sm font-semibold transition-all duration-150;
   }
   .btn-primary {
-    @apply bg-brand-600 text-white hover:bg-brand-700;
+    @apply bg-brand-600 text-white shadow-sm hover:-translate-y-px hover:bg-brand-700 hover:shadow-card;
   }
   .btn-outline {
-    @apply border border-ink/15 bg-white text-ink hover:border-ink/35;
+    @apply border border-line bg-white text-ink shadow-sm hover:-translate-y-px hover:border-brand-500 hover:text-brand-700;
   }
   .btn-ghost {
-    @apply text-ink hover:bg-ink/5;
+    @apply text-ink hover:bg-brand-50;
   }
   .btn-light {
     @apply bg-white text-ink hover:bg-white/90;
@@ -49,7 +61,12 @@
 
   /* Cards ------------------------------------------------------------ */
   .card {
-    @apply rounded-2xl border border-line bg-white;
+    @apply rounded-2xl border border-line/70 bg-white shadow-card;
+    transition: box-shadow 180ms ease, transform 180ms ease;
+  }
+
+  .card:hover {
+    box-shadow: 0 8px 28px -14px rgba(19, 27, 46, .28);
   }
 
   /* Small uppercase label above a section heading.
@@ -60,7 +77,55 @@
 
   /* Shared layout width so every section lines up. */
   .container-page {
-    @apply mx-auto w-full max-w-content px-5 sm:px-8;
+    @apply mx-auto w-full max-w-content px-4 sm:px-6;
+  }
+}
+
+/* Shared Stitch-style chrome. Pages retain their existing structure and
+   behavior, while these primitives give every route one coherent visual
+   language. */
+header.sticky {
+  @apply border-b-0 bg-paper/90 shadow-[0_1px_8px_rgba(19,27,46,0.05)];
+}
+
+header.sticky nav {
+  max-width: 1280px;
+}
+
+header.sticky select {
+  @apply text-xs;
+}
+
+main {
+  min-height: 60vh;
+}
+
+/* The marketplace landing screen uses the Stitch tonal canvas: a quiet
+   lavender surface behind elevated white service cards. */
+main > section:first-child {
+  background-color: #f2f3ff;
+}
+
+main > section:first-child h1 {
+  letter-spacing: -0.03em;
+}
+
+main > section:first-child .card {
+  background: #ffffff;
+}
+
+/* Auth and content pages use the same centered, high-trust panel treatment. */
+main > div.container-page > div > .card {
+  background: #ffffff;
+}
+
+main a {
+  transition: color 150ms ease;
+}
+
+@media (max-width: 640px) {
+  .card {
+    border-radius: 1rem;
   }
 }
 
