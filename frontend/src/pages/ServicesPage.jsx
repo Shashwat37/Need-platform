@@ -38,6 +38,7 @@ import { getServiceIcon } from '../components/serviceIcons'
 import WorkerIdCard from '../components/WorkerIdCard'
 import SectionHeading from '../components/SectionHeading'
 import BookingModal from '../components/BookingModal'
+import { useLanguage } from '../context/LanguageContext'
 
 const CATEGORIES = [
   'All',
@@ -47,6 +48,7 @@ const CATEGORIES = [
 ]
 
 export default function ServicesPage() {
+  const { t } = useLanguage()
   const [searchParams, setSearchParams] = useSearchParams()
   const initialCategory = searchParams.get('category') || 'All'
   const initialTrade    = searchParams.get('trade') || ''
@@ -164,11 +166,11 @@ export default function ServicesPage() {
           </p>
 
           <h1 className="mt-3 font-display text-3xl font-extrabold text-ink sm:text-4xl">
-            Find Trusted Local Service Providers
+            {t('services_page_title', 'Verified Home & Trade Services')}
           </h1>
 
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-muted sm:text-base">
-            Transparent pricing, cooperative-verified tradesmen, and zero hidden platform commissions.
+            {t('services_page_subtitle', 'Book certified artisans and skilled technicians supported by local Labour Cooperatives')}
           </p>
 
           {/* Unified Search Input */}
@@ -179,7 +181,7 @@ export default function ServicesPage() {
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search services (e.g. Electrician, AC repair, Deep cleaning, Painter)..."
+                placeholder={t('search_placeholder', 'Search services (e.g. Electrician, Plumber, AC Repair)...')}
                 className="w-full rounded-2xl border border-line bg-white py-3.5 pl-11 pr-10 text-sm text-ink shadow-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand-500"
               />
               {searchQuery && (

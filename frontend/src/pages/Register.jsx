@@ -15,6 +15,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Briefcase, Building2, User } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { useLanguage } from '../context/LanguageContext'
 import { sendOTP, verifyOTP } from '../services/api'
 import Logo from '../components/Logo'
 
@@ -28,10 +29,12 @@ const DASHBOARD = {
 // Step 1 — Choose role
 // ---------------------------------------------------------------------------
 function RoleStep({ onChoose }) {
+  const { t } = useLanguage()
+
   return (
     <div className="card p-8">
-      <h1 className="mb-1 font-display text-2xl font-bold text-ink">Create an account</h1>
-      <p className="mb-8 text-sm text-muted">I am joining NEED as a…</p>
+      <h1 className="mb-1 font-display text-2xl font-bold text-ink">{t('register_title', 'Create an Account')}</h1>
+      <p className="mb-8 text-sm text-muted">{t('choose_role', 'I am joining NEED as a...')}</p>
 
       <div className="grid gap-4 sm:grid-cols-3">
         <button
@@ -42,8 +45,8 @@ function RoleStep({ onChoose }) {
             <User size={24} />
           </div>
           <div>
-            <p className="font-display font-bold text-ink text-sm">Customer</p>
-            <p className="mt-0.5 text-[11px] text-muted leading-tight">Book services for my home</p>
+            <p className="font-display font-bold text-ink text-sm">{t('role_customer', 'Customer')}</p>
+            <p className="mt-0.5 text-[11px] text-muted leading-tight">{t('role_customer_desc', 'Book services for my home')}</p>
           </div>
         </button>
 
@@ -55,8 +58,8 @@ function RoleStep({ onChoose }) {
             <Briefcase size={24} />
           </div>
           <div>
-            <p className="font-display font-bold text-ink text-sm">Worker Partner</p>
-            <p className="mt-0.5 text-[11px] text-muted leading-tight">Offer skills &amp; earn directly</p>
+            <p className="font-display font-bold text-ink text-sm">{t('role_worker', 'Worker Partner')}</p>
+            <p className="mt-0.5 text-[11px] text-muted leading-tight">{t('role_worker_desc', 'Offer skills & earn directly')}</p>
           </div>
         </button>
 
@@ -68,8 +71,8 @@ function RoleStep({ onChoose }) {
             <Building2 size={24} />
           </div>
           <div>
-            <p className="font-display font-bold text-ink text-sm">Contractor / Coop</p>
-            <p className="mt-0.5 text-[11px] text-muted leading-tight">Manage worker team &amp; society</p>
+            <p className="font-display font-bold text-ink text-sm">{t('role_contractor', 'Contractor / Coop')}</p>
+            <p className="mt-0.5 text-[11px] text-muted leading-tight">{t('role_contractor_desc', 'Manage worker team & society')}</p>
           </div>
         </button>
       </div>

@@ -5,8 +5,10 @@
 import { useEffect, useState } from 'react'
 import { Award, Building2, CheckCircle2, Loader2, MapPin, Phone, ShieldCheck, Users, Wrench } from 'lucide-react'
 import { getCooperatives } from '../services/api'
+import { useLanguage } from '../context/LanguageContext'
 
 export default function CooperativesPage() {
+  const { t } = useLanguage()
   const [cooperatives, setCooperatives] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -27,10 +29,10 @@ export default function CooperativesPage() {
           Federation Network
         </div>
         <h1 className="font-display text-2xl sm:text-3xl lg:text-4xl font-extrabold text-ink tracking-tight">
-          Registered Labour Cooperatives & Societies
+          {t('coop_page_title', 'Registered Labour Cooperatives & Unions')}
         </h1>
         <p className="mt-3 text-sm text-muted">
-          NEED empowers worker-owned cooperatives. Instead of an anonymous gig app, hire skilled partners represented by democratic local labor unions.
+          {t('coop_page_subtitle', 'Explore worker-owned societies providing certified, background-checked service partners')}
         </p>
       </div>
 

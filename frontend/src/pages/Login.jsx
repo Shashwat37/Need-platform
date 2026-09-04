@@ -11,17 +11,20 @@
 import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useLanguage } from '../context/LanguageContext'
 import Logo from '../components/Logo'
 
 // Where each role lands after login.
 const DASHBOARD = {
   customer: '/customer',
   worker:   '/worker',
+  cooperative_admin: '/cooperative',
   admin:    '/admin',
 }
 
 export default function Login() {
   const { login } = useAuth()
+  const { t }     = useLanguage()
   const navigate  = useNavigate()
   const location  = useLocation()
 
@@ -57,8 +60,8 @@ export default function Login() {
         </div>
 
         <div className="card p-8">
-          <h1 className="mb-1 font-display text-2xl font-bold text-ink">Welcome back</h1>
-          <p className="mb-6 text-sm text-muted">Log in to your NEED account</p>
+          <h1 className="mb-1 font-display text-2xl font-bold text-ink">{t('login_title', 'Welcome back')}</h1>
+          <p className="mb-6 text-sm text-muted">{t('login_subtitle', 'Log in to your NEED account')}</p>
 
           {error && (
             <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -69,7 +72,7 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
             <div>
               <label htmlFor="email" className="mb-1 block text-sm font-medium text-ink">
-                Email address
+                {t('email_address', 'Email address')}
               </label>
               <input
                 id="email"
@@ -85,7 +88,7 @@ export default function Login() {
 
             <div>
               <label htmlFor="password" className="mb-1 block text-sm font-medium text-ink">
-                Password
+                {t('password', 'Password')}
               </label>
               <input
                 id="password"
@@ -104,7 +107,7 @@ export default function Login() {
               disabled={busy}
               className="btn btn-primary w-full disabled:opacity-60"
             >
-              {busy ? 'Logging in…' : 'Log in'}
+              {busy ? 'Logging in…' : t('login_button', 'Log in')}
             </button>
           </form>
 

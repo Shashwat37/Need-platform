@@ -1,13 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Mail, Phone } from 'lucide-react'
 import Logo from './Logo'
-
-/**
- * Footer.jsx — site footer.
- *
- * The last line is important and deliberate: this is a student prototype, so
- * we say so plainly instead of pretending to be a live commercial service.
- */
+import { useLanguage } from '../context/LanguageContext'
 
 const COLUMNS = [
   {
@@ -37,6 +31,8 @@ const COLUMNS = [
 ]
 
 export default function Footer() {
+  const { t } = useLanguage()
+
   return (
     <footer className="mt-24 border-t border-line bg-white">
       <div className="container-page py-14">
@@ -44,8 +40,7 @@ export default function Footer() {
           <div>
             <Logo />
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted">
-              A cooperative-owned marketplace where verified local workers keep a
-              fairer share of what they earn.
+              {t('footer_tagline', 'NEED — A Cooperative-Owned Digital Home-Service Marketplace.')}
             </p>
             <div className="mt-5 space-y-2 text-sm text-muted">
               <p className="flex items-center gap-2">

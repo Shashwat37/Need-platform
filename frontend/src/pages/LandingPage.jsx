@@ -14,6 +14,7 @@ import SectionHeading from '../components/SectionHeading'
 import ServiceCard from '../components/ServiceCard'
 import WorkerIdCard from '../components/WorkerIdCard'
 import { getServicesByCategory, getStats } from '../services/api'
+import { useLanguage } from '../context/LanguageContext'
 
 /**
  * LandingPage.jsx — the home page.
@@ -71,6 +72,7 @@ const PILLARS = [
 ]
 
 export default function LandingPage() {
+  const { t } = useLanguage()
   const [stats, setStats] = useState(null)
   const [categories, setCategories] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -116,30 +118,24 @@ export default function LandingPage() {
 
         <div className="container-page relative grid items-center gap-14 py-16 lg:grid-cols-[1.05fr_0.95fr] lg:py-24">
           <div className="rise">
-            <p className="eyebrow">Cooperative-owned &middot; Worker-first</p>
+            <p className="eyebrow">{t('hero_badge', '🇮🇳 India’s 1st Worker-Owned Cooperative Platform')}</p>
 
             <h1 className="mt-5 text-4xl font-extrabold leading-[1.05] tracking-tight text-ink sm:text-5xl lg:text-[3.4rem]">
-              Trusted Local Services.
-              <br />
-              Fair Work.
-              <br />
-              <span className="text-brand-600">Stronger Communities.</span>
+              {t('hero_title', 'Empowering India’s Blue-Collar Service Partners')}
             </h1>
 
             <p className="mt-6 max-w-xl text-[17px] leading-relaxed text-muted">
-              NEED connects you with verified electricians, plumbers, cleaners
-              and more from your own neighbourhood. The workers own the platform,
-              so the money stays with the people doing the work.
+              {t('hero_subtitle', 'NEED is a cooperative home-service marketplace. 85% goes directly to the worker, 5% to their Labour Cooperative Union, and 10% auto-funds their Welfare Wallet.')}
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link to="/register" className="btn btn-primary">
-                Get started
+              <Link to="/services" className="btn btn-primary">
+                {t('hero_cta_book', 'Explore Services & Book')}
                 <ArrowRight size={17} />
               </Link>
-              <Link to="/services" className="btn btn-outline">
+              <Link to="/cooperatives" className="btn btn-outline">
                 <Search size={17} />
-                Find a service
+                {t('hero_cta_coop', 'Browse Labour Cooperatives')}
               </Link>
             </div>
 
