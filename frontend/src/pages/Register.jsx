@@ -15,6 +15,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Briefcase, Building2, User } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import { sendOTP, verifyOTP } from '../services/api'
 import Logo from '../components/Logo'
 
 const DASHBOARD = {
@@ -86,7 +87,7 @@ function RoleStep({ onChoose }) {
 // ---------------------------------------------------------------------------
 // Step 2 — Fill details
 // ---------------------------------------------------------------------------
-function DetailsStep({ role, onBack, onSubmit, busy, error }) {
+function DetailsStep({ role, onBack, onProceedToOtp, busy, error }) {
   const [form, setForm] = useState({
     name: '', email: '', phone: '', password: '', confirm: '',
     address: '',
@@ -120,7 +121,7 @@ function DetailsStep({ role, onBack, onSubmit, busy, error }) {
     if (err) { setLocalError(err); return }
     setLocalError('')
     const { confirm, ...rest } = form
-    onSubmit({ ...rest, role })
+    onProceedToOtp({ ...rest, role })
   }
 
   const displayError = localError || error
@@ -223,7 +224,7 @@ function DetailsStep({ role, onBack, onSubmit, busy, error }) {
           disabled={busy}
           className="btn btn-primary w-full disabled:opacity-60"
         >
-          {busy ? 'Creating account…' : 'Create account'}
+          {busy ? 'Sending OTP…' : 'Continue to Phone OTP Verification →'}
         </button>
       </form>
     </div>
@@ -248,14 +249,131 @@ function Field({ label, id, ...inputProps }) {
 }
 
 // ---------------------------------------------------------------------------
+// Step 3 — Mandatory OTP Verification
+// ---------------------------------------------------------------------------
+function OtpStep({ phone, onVerifyAndSubmit, onBack, busy, error }) {
+  const [otpCode, setOtpCode] = useState('')
+  const [demoOtp, setDemoOtp] = useState('')
+  const [localError, setLocalError] = useState('')
+  const [sentMsg, setSentMsg] = useState('')
+  const [sending, setSending] = useState(false)
+
+  // Auto-trigger OTP send when entering Step 3
+  const triggerSend = async () => {
+    setSending(true)
+    setLocalError('')
+    try {
+      const res = await sendOTP(phone, 'mobile')
+      setDemoOtp(res.demo_otp || '123456')
+      setSentMsg(`OTP sent to +91 ${phone}! Demo OTP: ${res.demo_otp || '123456'}`)
+    } catch (err) {
+      setLocalError('Failed to send OTP to mobile. Please try again.')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  // Initial send on component mount
+  useState(() => {
+    triggerSend()
+  })
+
+  async function handleConfirm(e) {
+    e.preventDefault()
+    if (!otpCode.trim() || otpCode.length < 4) {
+      setLocalError('Please enter the 6-digit OTP code')
+      return
+    }
+    setLocalError('')
+
+    try {
+      await verifyOTP(phone, 'mobile', otpCode)
+      onVerifyAndSubmit()
+    } catch (err) {
+      setLocalError(err?.response?.data?.error || 'Invalid or expired OTP. Try 123456.')
+    }
+  }
+
+  const displayError = localError || error
+
+  return (
+    <div className="card p-8">
+      <button
+        onClick={onBack}
+        className="mb-4 flex items-center gap-1 text-sm text-muted hover:text-ink"
+      >
+        ← Back to Details
+      </button>
+
+      <h1 className="mb-1 font-display text-2xl font-bold text-ink">Verify Mobile Number</h1>
+      <p className="mb-6 text-sm text-muted">
+        We sent a 6-digit verification OTP code to <strong className="text-ink">+91 {phone}</strong>
+      </p>
+
+      {displayError && (
+        <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 font-medium">
+          {displayError}
+        </div>
+      )}
+
+      {sentMsg && (
+        <div className="mb-4 rounded-lg bg-emerald-50 px-4 py-3 text-xs text-emerald-800 font-medium">
+          {sentMsg}
+        </div>
+      )}
+
+      <form onSubmit={handleConfirm} className="flex flex-col gap-4">
+        <div>
+          <label className="mb-1 block text-sm font-medium text-ink">Enter 6-Digit OTP</label>
+          <input
+            type="text"
+            maxLength={6}
+            value={otpCode}
+            onChange={(e) => setOtpCode(e.target.value)}
+            placeholder="123456"
+            autoFocus
+            required
+            className="w-full rounded-xl border-2 border-brand-500 bg-white px-4 py-3 text-center font-mono text-xl font-bold tracking-[0.3em] text-ink focus:outline-none focus:ring-2 focus:ring-brand-500"
+          />
+          {demoOtp && (
+            <div className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-center text-xs text-amber-900 font-mono">
+              🔑 Demo Auto-Generated OTP: <strong>{demoOtp}</strong>
+            </div>
+          )}
+        </div>
+
+        <div className="flex gap-2 pt-2">
+          <button
+            type="button"
+            onClick={triggerSend}
+            disabled={sending || busy}
+            className="btn btn-secondary flex-1 py-2.5 text-xs"
+          >
+            {sending ? 'Sending…' : 'Resend OTP'}
+          </button>
+          <button
+            type="submit"
+            disabled={busy}
+            className="btn btn-primary flex-[2] py-2.5 text-xs font-bold disabled:opacity-60"
+          >
+            {busy ? 'Verifying & Registering…' : 'Confirm OTP & Complete Signup ✓'}
+          </button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Main page
 // ---------------------------------------------------------------------------
 export default function Register() {
   const { register } = useAuth()
   const navigate     = useNavigate()
 
-  const [step,  setStep]  = useState(1)       // 1 = role choice, 2 = details
+  const [step,  setStep]  = useState(1)       // 1 = role choice, 2 = details, 3 = OTP
   const [role,  setRole]  = useState(null)
+  const [formData, setFormData] = useState(null)
   const [busy,  setBusy]  = useState(false)
   const [error, setError] = useState('')
 
@@ -264,15 +382,25 @@ export default function Register() {
     setStep(2)
   }
 
-  async function handleSubmit(data) {
+  function handleProceedToOtp(data) {
+    setFormData(data)
+    setStep(3)
+  }
+
+  async function handleFinalRegister() {
+    if (!formData) return
     setError('')
     setBusy(true)
     try {
-      const user = await register(data)
+      const user = await register({
+        ...formData,
+        is_mobile_verified: true,
+      })
       navigate(DASHBOARD[user.role] || '/', { replace: true })
     } catch (err) {
-      const msg = err?.response?.data?.error || 'Something went wrong. Please try again.'
+      const msg = err?.response?.data?.error || 'Something went wrong during registration.'
       setError(msg)
+      setStep(2) // return to details if registration fails
     } finally {
       setBusy(false)
     }
@@ -285,13 +413,25 @@ export default function Register() {
           <Logo />
         </div>
 
-        {step === 1 ? (
+        {step === 1 && (
           <RoleStep onChoose={chooseRole} />
-        ) : (
+        )}
+
+        {step === 2 && (
           <DetailsStep
             role={role}
             onBack={() => setStep(1)}
-            onSubmit={handleSubmit}
+            onProceedToOtp={handleProceedToOtp}
+            busy={busy}
+            error={error}
+          />
+        )}
+
+        {step === 3 && formData && (
+          <OtpStep
+            phone={formData.phone}
+            onVerifyAndSubmit={handleFinalRegister}
+            onBack={() => setStep(2)}
             busy={busy}
             error={error}
           />
