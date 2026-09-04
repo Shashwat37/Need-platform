@@ -39,8 +39,8 @@ export default function WorkerIdCard({
   jobs,
   area,
   status = 'verified',
-  identityVerified = True,
-  skillVerified = True,
+  identityVerified = true,
+  skillVerified = true,
   animateStamp = false,
 }) {
   const statusStyle = STATUS_STYLES[status] || STATUS_STYLES.pending
