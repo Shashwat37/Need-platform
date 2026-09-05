@@ -73,7 +73,7 @@ export default function Navbar() {
         </div>
 
         {/* Center Desktop Navigation */}
-        <nav className="hidden xl:flex items-center gap-1.5">
+        <nav className="hidden lg:flex items-center gap-1.5">
           {LINKS.map((link) => (
             <NavLink key={link.to} to={link.to} className={linkClasses}>
               {t(link.labelKey, link.fallback)}
@@ -84,13 +84,13 @@ export default function Navbar() {
         {/* Right Desktop Utilities */}
         <div className="hidden md:flex items-center gap-3 flex-shrink-0">
           {/* Location / Civic Hub */}
-          <div className="hidden sm:flex items-center gap-1.5 bg-surface-container-lowest px-3 py-1.5 rounded-full border border-outline-variant/50 shadow-sm text-xs text-on-surface font-semibold">
+          <div className="hidden xl:flex items-center gap-1.5 bg-surface-container-lowest px-3 py-1.5 rounded-full border border-outline-variant/50 shadow-sm text-xs text-on-surface font-semibold">
             <span className="material-symbols-outlined text-secondary text-[17px]">location_on</span>
             <span>Noida &amp; NCR</span>
           </div>
 
           {/* Language Switcher */}
-          <div className="flex items-center gap-1 bg-surface-container-lowest px-2.5 py-1.5 rounded-full border border-outline-variant/50 shadow-sm text-xs">
+          <div className="hidden xl:flex items-center gap-1 bg-surface-container-lowest px-2.5 py-1.5 rounded-full border border-outline-variant/50 shadow-sm text-xs">
             <span className="material-symbols-outlined text-on-surface-variant text-[17px]">translate</span>
             <select
               value={lang}
@@ -148,7 +148,7 @@ export default function Navbar() {
         </div>
 
         {/* Mobile Hamburger Button */}
-        <div className="flex items-center gap-2 xl:hidden">
+        <div className="flex items-center gap-2 lg:hidden">
           <button
             type="button"
             onClick={() => setIsMenuOpen((open) => !open)}
@@ -162,7 +162,7 @@ export default function Navbar() {
 
       {/* Mobile Drawer */}
       {isMenuOpen && (
-        <div className="border-t border-outline-variant/60 bg-surface px-4 py-4 xl:hidden shadow-lg animate-fade-in">
+        <div className="border-t border-outline-variant/60 bg-surface px-4 py-4 lg:hidden shadow-lg animate-fade-in">
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between pb-3 border-b border-outline-variant/40 text-xs">
               <span className="flex items-center gap-1 font-semibold text-on-surface">
