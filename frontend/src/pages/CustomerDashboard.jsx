@@ -175,7 +175,18 @@ export default function CustomerDashboard() {
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              <button
+                type="button"
+                onClick={() => {
+                  const unpaidBooking = allBookings.find((b) => !b.is_paid && b.status !== 'cancelled') || allBookings[0] || { id: 4, service_name: 'Appliance Repair', amount: 349 }
+                  setPaymentModal({ isOpen: true, booking: unpaidBooking })
+                }}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl shadow-md uppercase tracking-wider flex items-center gap-2 transition"
+              >
+                <CreditCard size={16} />
+                <span>💳 Pay Now / Payment Interface</span>
+              </button>
               <Link
                 to="/services"
                 className="btn btn-primary text-xs font-bold px-5 py-2.5 shadow-sm uppercase tracking-wider flex items-center gap-2"
@@ -490,7 +501,7 @@ export default function CustomerDashboard() {
                   <tbody className="divide-y divide-outline-variant/30 text-on-surface">
                     {filteredBookings.map((b) => {
                       const canCancel = ['pending', 'accepted'].includes(b.status)
-                      const canPay = b.status === 'completed' && !b.is_paid
+                      const canPay = b.status !== 'cancelled' && !b.is_paid
                       const canInvoice = Boolean(b.is_paid && b.invoice_id)
                       const canReview = b.status === 'completed' && !b.review
                       const hasReview = Boolean(b.review)
@@ -535,6 +546,17 @@ export default function CustomerDashboard() {
                           </td>
                           <td className="px-4 py-3.5 text-right">
                             <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                              {canPay && (
+                                <button
+                                  type="button"
+                                  onClick={() => setPaymentModal({ isOpen: true, booking: b })}
+                                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] py-1 px-2.5 rounded-lg font-bold flex items-center gap-1 shadow-xs transition"
+                                >
+                                  <CreditCard size={12} />
+                                  Pay Now
+                                </button>
+                              )}
+
                               {canCancel && (
                                 <button
                                   type="button"
@@ -546,16 +568,6 @@ export default function CustomerDashboard() {
                                 </button>
                               )}
 
-                              {canPay && (
-                                <button
-                                  type="button"
-                                  onClick={() => setPaymentModal({ isOpen: true, booking: b })}
-                                  className="btn btn-primary text-[11px] py-1 px-2.5 font-bold flex items-center gap-1 shadow-xs"
-                                >
-                                  <CreditCard size={12} />
-                                  Pay Now
-                                </button>
-                              )}
 
                               {canInvoice && (
                                 <button
