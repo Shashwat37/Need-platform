@@ -66,14 +66,14 @@ export default function Navbar() {
           <Link to="/" onClick={closeMenu} aria-label="NEED Federation Home" className="flex items-center">
             <Logo />
           </Link>
-          <div className="hidden xl:flex items-center gap-1.5 bg-surface-container-low px-3 py-1.5 rounded-full border border-outline-variant/40">
+          <div className="hidden 2xl:flex items-center gap-1.5 bg-surface-container-low px-3 py-1.5 rounded-full border border-outline-variant/40">
             <span className="material-symbols-outlined text-primary text-[17px]">verified</span>
             <span className="font-label-md text-xs text-on-surface font-medium">India Cooperative Act • Verified</span>
           </div>
         </div>
 
         {/* Center Desktop Navigation */}
-        <nav className="hidden lg:flex items-center gap-1.5">
+        <nav className="hidden xl:flex items-center gap-1.5">
           {LINKS.map((link) => (
             <NavLink key={link.to} to={link.to} className={linkClasses}>
               {t(link.labelKey, link.fallback)}
@@ -148,7 +148,7 @@ export default function Navbar() {
         </div>
 
         {/* Mobile Hamburger Button */}
-        <div className="flex items-center gap-2 lg:hidden">
+        <div className="flex items-center gap-2 xl:hidden">
           <button
             type="button"
             onClick={() => setIsMenuOpen((open) => !open)}
@@ -162,7 +162,7 @@ export default function Navbar() {
 
       {/* Mobile Drawer */}
       {isMenuOpen && (
-        <div className="border-t border-outline-variant/60 bg-surface px-4 py-4 lg:hidden shadow-lg animate-fade-in">
+        <div className="border-t border-outline-variant/60 bg-surface px-4 py-4 xl:hidden shadow-lg animate-fade-in">
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between pb-3 border-b border-outline-variant/40 text-xs">
               <span className="flex items-center gap-1 font-semibold text-on-surface">
