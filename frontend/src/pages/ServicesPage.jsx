@@ -393,6 +393,7 @@ export default function ServicesPage() {
                           </button>
                         </div>
                       </div>
+                      </div>
                     </article>
                   )
                 })}
