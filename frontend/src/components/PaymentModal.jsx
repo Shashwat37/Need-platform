@@ -402,13 +402,34 @@ export default function PaymentModal({
                   </span>
                 </div>
 
-                <div className="pt-2 text-xs space-y-1">
+                <div className="pt-2 text-xs space-y-2">
                   <div className="font-mono text-on-surface">
                     Direct Payout Beneficiary: <strong className="text-emerald-800 font-mono">{workerUpiId}</strong> ({workerName})
                   </div>
                   <p className="text-[11px] text-on-surface-variant font-medium">
                     Open GPay, PhonePe, Paytm, BHIM, or Cred to scan &amp; complete payment.
                   </p>
+
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={handlePay}
+                      disabled={busy || timeLeft === 0}
+                      className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md transition flex items-center justify-center gap-1.5"
+                    >
+                      {busy ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin text-white" />
+                          <span>Confirming UPI Payment…</span>
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 size={16} />
+                          <span>I Have Completed UPI Payment • Confirm ⚡</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
