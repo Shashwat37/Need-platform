@@ -476,6 +476,53 @@ export default function WorkerDashboard() {
           onOpenModal={() => setVerificationModal({ isOpen: true })}
         />
 
+        {/* ── Active Incoming Dispatch Alert Banner ─────────────────────── */}
+        {bookings.filter((b) => ['pending', 'requested', 'worker_assigned'].includes(b.status)).map((job) => (
+          <div
+            key={job.id}
+            className="bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-800 text-white rounded-2xl p-5 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4 border-2 border-emerald-400/50 animate-bounce"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center text-white shrink-0 backdrop-blur-md">
+                <span className="material-symbols-outlined text-[28px]">notifications_active</span>
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="bg-emerald-400 text-emerald-950 text-[10px] font-black uppercase px-2 py-0.5 rounded-full">
+                    NEW DISPATCH REQUEST
+                  </span>
+                  <span className="text-xs font-mono text-emerald-200">Booking #{job.id}</span>
+                </div>
+                <h3 className="text-lg font-bold text-white mt-0.5">
+                  {job.service_name} — ₹{job.amount || 299}
+                </h3>
+                <p className="text-xs text-emerald-100">
+                  Customer: <strong>{job.customer_name || 'Resident Customer'}</strong> • {job.address || 'Noida Sector 62'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <button
+                type="button"
+                onClick={() => handleJobAction(job.id, 'accept')}
+                disabled={jobActionLoadingId === job.id}
+                className="flex-1 md:flex-initial bg-white hover:bg-emerald-50 text-emerald-950 font-extrabold px-5 py-2.5 rounded-xl shadow-md transition text-xs flex items-center justify-center gap-1.5"
+              >
+                <span>Accept Dispatch</span> ✅
+              </button>
+              <button
+                type="button"
+                onClick={() => handleJobAction(job.id, 'decline')}
+                disabled={jobActionLoadingId === job.id}
+                className="bg-black/20 hover:bg-black/40 text-white font-bold px-4 py-2.5 rounded-xl transition text-xs"
+              >
+                Decline
+              </button>
+            </div>
+          </div>
+        ))}
+
         {/* ── 4-Stat Metrics Bar with Cooperative Transparency Callouts ───── */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Stat 1: Earnings */}
