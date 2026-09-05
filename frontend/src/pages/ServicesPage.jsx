@@ -38,9 +38,9 @@ export default function ServicesPage() {
   const initialTrade    = searchParams.get('trade') || ''
   const initialMode     = searchParams.get('mode') || (initialTrade ? 'workers' : 'services')
 
-  const [mode, setMode]                         = useState(initialMode) // 'services' | 'workers'
-  const [selectedCategory, setSelectedCategory] = useState(initialCategory)
-  const [selectedTrade, setSelectedTrade]       = useState(initialTrade)
+  const [mode, setMode]                         = useState(() => searchParams.get('mode') || (searchParams.get('trade') ? 'workers' : 'services'))
+  const [selectedCategory, setSelectedCategory] = useState(() => searchParams.get('category') || 'all')
+  const [selectedTrade, setSelectedTrade]       = useState(() => searchParams.get('trade') || '')
   const [searchQuery, setSearchQuery]           = useState('')
   const [sortBy, setSortBy]                     = useState('rated')
 
@@ -62,17 +62,28 @@ export default function ServicesPage() {
   const [loading, setLoading]   = useState(true)
   const [error, setError]       = useState('')
 
+  // Sync state when URL search parameters change
+  useEffect(() => {
+    const tradeFromUrl = searchParams.get('trade') || ''
+    const categoryFromUrl = searchParams.get('category') || 'all'
+    const modeFromUrl = searchParams.get('mode') || (tradeFromUrl ? 'workers' : 'services')
+
+    setMode(modeFromUrl)
+    setSelectedTrade(tradeFromUrl)
+    setSelectedCategory(categoryFromUrl)
+  }, [searchParams])
+
   function loadAllData() {
     setLoading(true)
     setError('')
     Promise.all([getServices(), getWorkers({ verified_only: true })])
       .then(([servicesData, workersData]) => {
-        setServices(servicesData)
-        setWorkers(workersData)
-        if (servicesData.length > 0 && !activeServiceForDrawer) {
+        setServices(servicesData || [])
+        setWorkers(workersData || [])
+        if (servicesData && servicesData.length > 0 && !activeServiceForDrawer) {
           setActiveServiceForDrawer(servicesData[0])
         }
-        if (workersData.length > 0 && !activeWorkerForDrawer) {
+        if (workersData && workersData.length > 0 && !activeWorkerForDrawer) {
           setActiveWorkerForDrawer(workersData[0])
         }
       })
@@ -86,30 +97,47 @@ export default function ServicesPage() {
 
   function handleSelectMode(newMode) {
     setMode(newMode)
-    if (newMode === 'services' && selectedTrade) {
+    if (newMode === 'services') {
       setSelectedTrade('')
+      setSearchParams({ mode: 'services' })
+    } else {
+      const params = { mode: 'workers' }
+      if (selectedTrade) params.trade = selectedTrade
+      setSearchParams(params)
     }
   }
 
   function handleViewWorkersForService(serviceName) {
-    setSelectedTrade(serviceName)
+    const tradeName = serviceName || ''
+    setSelectedTrade(tradeName)
     setMode('workers')
+    setSearchParams({ mode: 'workers', trade: tradeName })
+  }
+
+  function handleClearTradeFilter() {
+    setSelectedTrade('')
+    setSearchParams({ mode: 'workers' })
   }
 
   // Filtered Services
   const filteredServices = useMemo(() => {
+    if (!Array.isArray(services)) return []
     return services.filter((s) => {
       let matchesCat = true
-      if (selectedCategory === 'home') matchesCat = s.category === 'Home Services'
-      else if (selectedCategory === 'appliance') matchesCat = s.category === 'Appliance Services'
-      else if (selectedCategory === 'personal') matchesCat = s.category === 'Other Services'
+      const cat = (s?.category || '').toLowerCase()
+      if (selectedCategory === 'home') matchesCat = cat.includes('home')
+      else if (selectedCategory === 'appliance') matchesCat = cat.includes('appliance')
+      else if (selectedCategory === 'personal') matchesCat = cat.includes('other') || cat.includes('personal') || cat.includes('sanitation')
 
-      const query = searchQuery.toLowerCase()
+      const query = (searchQuery || '').toLowerCase()
+      const sName = (s?.name || '').toLowerCase()
+      const sDesc = (s?.description || '').toLowerCase()
+
       const matchesSearch =
         !query ||
-        s.name.toLowerCase().includes(query) ||
-        (s.description && s.description.toLowerCase().includes(query)) ||
-        s.category.toLowerCase().includes(query)
+        sName.includes(query) ||
+        sDesc.includes(query) ||
+        cat.includes(query)
 
       return matchesCat && matchesSearch
     })
@@ -117,20 +145,26 @@ export default function ServicesPage() {
 
   // Filtered Workers
   const filteredWorkers = useMemo(() => {
+    if (!Array.isArray(workers)) return []
     let result = workers.filter((w) => {
-      const workerTrade = (w?.trade || w?.primary_service || '').toString()
-      const workerName = (w?.name || '').toString()
-      const workerSkills = (w?.skills || '').toString()
-      const workerArea = (w?.area || '').toString()
+      const workerTrade = (w?.trade || w?.primary_service || '').toString().toLowerCase()
+      const workerName = (w?.name || '').toString().toLowerCase()
+      const workerSkills = (w?.skills || '').toString().toLowerCase()
+      const workerArea = (w?.area || '').toString().toLowerCase()
+      const targetTrade = (selectedTrade || '').toString().toLowerCase()
 
-      const matchesTrade = !selectedTrade || workerTrade.toLowerCase() === selectedTrade.toLowerCase()
+      const matchesTrade =
+        !targetTrade ||
+        workerTrade.includes(targetTrade) ||
+        targetTrade.includes(workerTrade)
+
       const query = (searchQuery || '').toLowerCase()
       const matchesSearch =
         !query ||
-        workerName.toLowerCase().includes(query) ||
-        workerTrade.toLowerCase().includes(query) ||
-        workerSkills.toLowerCase().includes(query) ||
-        workerArea.toLowerCase().includes(query)
+        workerName.includes(query) ||
+        workerTrade.includes(query) ||
+        workerSkills.includes(query) ||
+        workerArea.includes(query)
       return matchesTrade && matchesSearch
     })
 
@@ -235,7 +269,7 @@ export default function ServicesPage() {
             </div>
           </div>
 
-          {/* Category Tabs */}
+          {/* Category Tabs when viewing services */}
           {mode === 'services' && (
             <div className="flex items-center gap-2 overflow-x-auto pt-2 border-t border-outline-variant/40 scrollbar-none">
               {CATEGORIES.map((cat) => (
@@ -253,6 +287,41 @@ export default function ServicesPage() {
                   <span>{cat.label}</span>
                 </button>
               ))}
+            </div>
+          )}
+
+          {/* Active Trade Filter Badge when viewing workers */}
+          {mode === 'workers' && (
+            <div className="flex items-center justify-between gap-2 overflow-x-auto pt-2 border-t border-outline-variant/40 text-xs">
+              <div className="flex items-center gap-2">
+                <span className="font-semibold text-on-surface-variant">Active Trade Filter:</span>
+                {selectedTrade ? (
+                  <span className="inline-flex items-center gap-1.5 bg-primary/10 text-primary px-3 py-1 rounded-full font-bold border border-primary/20">
+                    <span>{selectedTrade}</span>
+                    <button
+                      type="button"
+                      onClick={handleClearTradeFilter}
+                      className="hover:bg-primary/20 rounded-full p-0.5 transition"
+                      title="Clear trade filter"
+                    >
+                      <X size={14} />
+                    </button>
+                  </span>
+                ) : (
+                  <span className="font-bold text-primary">All Verified Trades</span>
+                )}
+              </div>
+
+              {selectedTrade && (
+                <button
+                  type="button"
+                  onClick={() => handleSelectMode('services')}
+                  className="font-bold text-primary hover:underline flex items-center gap-1 shrink-0"
+                >
+                  <Wrench size={14} />
+                  View All Services Instead
+                </button>
+              )}
             </div>
           )}
         </section>
