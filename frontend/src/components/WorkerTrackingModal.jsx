@@ -101,7 +101,18 @@ export default function WorkerTrackingModal({
           </button>
         </div>
 
-        {/* Live OpenStreetMap Visualizer Container */}
+        {/* Acceptance & Origin Announcement Banner */}
+        <div className="bg-emerald-600 text-white px-5 py-2.5 flex items-center justify-between text-xs font-bold shadow-md">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={16} className="text-white shrink-0 animate-bounce" />
+            <span>
+              Job Accepted by <strong>{workerName}</strong>! Coming from <strong className="font-mono underline">{workerOrigin}</strong>
+            </span>
+          </div>
+          <span className="bg-white/20 text-white font-mono text-[10px] px-2.5 py-0.5 rounded-full font-bold">
+            LIVE GPS ACTIVE
+          </span>
+        </div>
         <div className="relative w-full h-72 sm:h-80 bg-slate-900 overflow-hidden select-none">
           {/* Map Base Tiles */}
           <div
