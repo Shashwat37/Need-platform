@@ -77,8 +77,9 @@ export default function PaymentModal({
       setSelectedTip(30)
       setCustomTip('')
       setTimeLeft(600)
+      setUpiId(booking?.worker_upi_id || 'thakuraayush@fam')
     }
-  }, [isOpen, booking?.id])
+  }, [isOpen, booking?.id, booking?.worker_upi_id])
 
   useEffect(() => {
     if (!isOpen || completedPayment) return
@@ -386,27 +387,27 @@ export default function PaymentModal({
                 <div className="flex items-center justify-center gap-2">
                   <span className="font-semibold text-xs text-on-surface">Scan &amp; Pay via Any UPI App</span>
                   <span className="bg-emerald-500/10 text-emerald-700 font-bold text-[10px] px-2 py-0.5 rounded-full border border-emerald-500/20">
-                    Live Escrow QR
+                    Live Dynamic QR
                   </span>
                 </div>
 
                 <div className="mx-auto w-48 h-48 bg-white p-2.5 rounded-2xl shadow-lg border border-outline-variant/60 flex flex-col items-center justify-center relative group">
                   <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`upi://pay?pa=need.escrow@icici&pn=NEED%20Federation%20Escrow&am=${totalAmount}&cu=INR&tn=EscrowBooking${booking.id}-PayoutTo-${encodeURIComponent(workerUpiId)}`)}`}
-                    alt="Platform Escrow UPI QR Code"
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`upi://pay?pa=${workerUpiId}&pn=${encodeURIComponent(workerName)}&am=${totalAmount}&cu=INR&tn=${encodeURIComponent(`NEED Booking #${booking.id}`)}`)}`}
+                    alt="Direct UPI QR Code"
                     className="w-full h-full object-contain rounded-lg"
                   />
-                  <span className="absolute -bottom-2 bg-blue-900 text-white text-[10px] font-bold px-3 py-0.5 rounded-full shadow-md font-mono">
-                    Pay ₹{totalAmount} to Escrow
+                  <span className="absolute -bottom-2 bg-emerald-700 text-white text-[10px] font-bold px-3 py-0.5 rounded-full shadow-md font-mono">
+                    Pay ₹{totalAmount} via UPI
                   </span>
                 </div>
 
                 <div className="pt-2 text-xs space-y-1">
                   <div className="font-mono text-on-surface">
-                    Escrow Recipient: <strong className="text-blue-800 font-mono">need.escrow@icici</strong>
+                    Direct Payout Beneficiary: <strong className="text-emerald-800 font-mono">{workerUpiId}</strong> ({workerName})
                   </div>
-                  <p className="text-[11px] text-emerald-700 font-semibold">
-                    Target Artisan Payout: <strong>{workerName}</strong> (UPI: <span className="font-mono font-bold">{workerUpiId}</span>)
+                  <p className="text-[11px] text-on-surface-variant font-medium">
+                    Open GPay, PhonePe, Paytm, BHIM, or Cred to scan &amp; complete payment.
                   </p>
                 </div>
               </div>
