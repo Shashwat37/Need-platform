@@ -121,32 +121,6 @@ export default function PaymentModal({
     return () => clearInterval(pollInterval)
   }, [isOpen, completedPayment, booking?.id])
 
-  // 3. Hands-Free Automated UPI QR Payment Auto-Detector
-  useEffect(() => {
-    if (!isOpen || completedPayment || method !== 'qr' || busy || !booking?.id) return
-
-    const autoDetectTimeout = setTimeout(async () => {
-      try {
-        setBusy(true)
-        const payload = {
-          booking_id: booking.id,
-          method:     'upi',
-          tip_amount: customTip !== '' ? Math.max(0, Number(customTip) || 0) : selectedTip,
-        }
-        const res = await checkoutPayment(payload)
-        setCompletedPayment(res)
-        playSuccessChime()
-        if (onSuccess) onSuccess(res)
-      } catch (err) {
-        // If already paid, poll will pick it up
-      } finally {
-        setBusy(false)
-      }
-    }, 5000)
-
-    return () => clearTimeout(autoDetectTimeout)
-  }, [isOpen, completedPayment, method, booking?.id])
-
   if (!isOpen || !booking) return null
 
   // Dynamic Worker Payout & Escrow Calculations
