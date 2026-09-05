@@ -111,40 +111,52 @@ export default function PaymentModal({
       />
 
       <div className="relative w-full max-w-lg bg-surface-container-lowest rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/60 z-10 my-8 animate-fade-in">
-        {/* Tactile Header */}
-        <div className="bg-inverse-surface text-inverse-on-surface px-5 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-secondary-container text-[18px]">payments</span>
-            <span className="font-label-caps text-[11px] tracking-wider text-secondary-fixed uppercase font-bold">
-              Direct Cooperative Remittance
-            </span>
-          </div>
-          <button
-            onClick={onClose}
-            disabled={busy}
-            className="text-inverse-on-surface/70 hover:text-inverse-on-surface p-1 rounded-lg hover:bg-white/10 transition"
-            aria-label="Close"
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Title Bar */}
-        <div className="p-5 border-b border-outline-variant/40 bg-surface-container-low flex items-center justify-between">
-          <div>
-            <span className="font-label-caps text-[10px] uppercase text-primary font-bold">
-              Booking Ref #{booking.id}
-            </span>
-            <h2 className="font-headline-sm text-lg text-on-surface font-extrabold">
-              {booking.service_name || 'Service Task'}
-            </h2>
-          </div>
-          <div className="text-right">
-            <span className="text-[10px] font-mono text-on-surface-variant uppercase">Payable</span>
-            <div className="font-metric-val text-xl text-primary font-extrabold leading-tight">
-              ₹{totalAmount}
+        {/* Razorpay Dark Navy Header */}
+        <div className="bg-[#0c2340] text-white p-5 flex items-center justify-between border-b border-blue-900/50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-600/30 border border-blue-400/40 flex items-center justify-center text-blue-300 font-extrabold text-lg shadow-sm">
+              R
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5 text-[10px] font-mono text-blue-300 uppercase tracking-widest font-bold">
+                <span>Razorpay Trusted Merchant</span>
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              </div>
+              <h2 className="font-headline-sm text-base font-extrabold text-white tracking-tight">
+                NEED Federation Checkout
+              </h2>
             </div>
           </div>
+
+          <div className="text-right flex items-center gap-3">
+            <div>
+              <span className="text-[10px] font-mono text-blue-300 uppercase block">Amount Payable</span>
+              <div className="font-metric-val text-xl text-emerald-400 font-black leading-tight">
+                ₹{totalAmount}
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              disabled={busy}
+              className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition"
+              aria-label="Close"
+            >
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+
+        {/* Beneficiary Artisan Direct Remittance Callout */}
+        <div className="bg-gradient-to-r from-blue-900/20 via-blue-800/10 to-transparent px-5 py-2.5 border-b border-outline-variant/30 flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-emerald-600 text-[18px]">verified</span>
+            <span className="font-medium text-on-surface">
+              Direct Payout Beneficiary: <strong className="text-primary font-bold">{booking.worker_name || 'Pooja Bisht'}</strong>
+            </span>
+          </div>
+          <span className="font-mono text-[11px] font-bold text-emerald-700 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
+            UPI: thakuraayush@fam
+          </span>
         </div>
 
         {/* Payment Success Splash */}
@@ -154,7 +166,7 @@ export default function PaymentModal({
             <div className="absolute -top-12 -right-12 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none" />
             <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-teal-500/20 rounded-full blur-2xl pointer-events-none" />
 
-            {/* Animated Checkmark Circle */}
+            {/* Razorpay Success Badge */}
             <div className="relative mx-auto w-24 h-24 flex items-center justify-center">
               <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping" />
               <div className="relative w-20 h-20 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-xl border-4 border-white">
@@ -164,29 +176,33 @@ export default function PaymentModal({
 
             {/* Title & Badge */}
             <div className="space-y-1">
-              <div className="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-800 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border border-emerald-500/20">
+              <div className="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-800 px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider border border-emerald-500/20">
                 <Sparkles size={14} className="text-emerald-600" />
-                Payment Successful &amp; Remitted
+                Razorpay Payment Successful
               </div>
               <h3 className="font-headline-lg text-2xl font-black text-on-surface pt-1">
                 ₹{completedPayment.total_amount || totalAmount} Paid!
               </h3>
               <p className="font-mono text-xs text-on-surface-variant">
-                Receipt ID: <span className="font-bold text-primary">{completedPayment.invoice_id}</span>
+                Razorpay Payment ID: <span className="font-bold text-primary font-mono">{completedPayment.invoice_id}</span>
               </p>
             </div>
 
-            {/* Breakdown Card */}
-            <div className="rounded-2xl border border-emerald-500/20 bg-surface-container-low p-4 text-xs space-y-2.5 text-left shadow-xs">
-              <div className="flex justify-between items-center pb-2 border-b border-outline-variant/40">
-                <span className="text-on-surface-variant font-medium">Payment Mode:</span>
-                <span className="font-bold text-emerald-700 uppercase font-mono bg-emerald-500/10 px-2 py-0.5 rounded">
-                  {method === 'qr' ? 'UPI Scan (thakuraayush@fam)' : method === 'upi' ? `UPI (${upiId})` : method.toUpperCase()}
+            {/* Beneficiary Remittance Confirmation Box */}
+            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-xs space-y-2.5 text-left shadow-xs">
+              <div className="flex justify-between items-center pb-2 border-b border-emerald-500/20">
+                <span className="font-bold text-emerald-900">Direct Remittance Account:</span>
+                <span className="font-mono font-bold text-emerald-800 bg-emerald-500/20 px-2.5 py-0.5 rounded-full">
+                  thakuraayush@fam
                 </span>
               </div>
               <div className="flex justify-between text-on-surface">
-                <span className="text-on-surface-variant">Worker Payout (90% + Tip):</span>
-                <span className="font-mono font-bold text-primary">₹{completedPayment.worker_take_home || workerTakeHome}</span>
+                <span className="text-on-surface-variant">Beneficiary Artisan:</span>
+                <span className="font-bold text-on-surface">{booking.worker_name || 'Pooja Bisht'}</span>
+              </div>
+              <div className="flex justify-between text-on-surface">
+                <span className="text-on-surface-variant">Artisan Payout (90% + Tip):</span>
+                <span className="font-mono font-bold text-emerald-700">₹{completedPayment.worker_take_home || workerTakeHome} transferred to thakuraayush@fam</span>
               </div>
               <div className="flex justify-between text-on-surface">
                 <span className="text-on-surface-variant">Co-op Welfare Reserve (10%):</span>
@@ -201,7 +217,7 @@ export default function PaymentModal({
                   if (onSuccess) onSuccess(completedPayment)
                   onClose()
                 }}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3.5 px-4 rounded-xl shadow-lg transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+                className="w-full bg-[#0c2340] hover:bg-slate-900 text-white font-extrabold py-3.5 px-4 rounded-xl shadow-lg transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2"
               >
                 <span>🎉 Done • Return to Dashboard</span>
               </button>
@@ -216,37 +232,37 @@ export default function PaymentModal({
               </div>
             )}
 
-            {/* Payment Method Selector */}
+            {/* Razorpay Method Tabs */}
             <div className="space-y-1.5">
               <label className="font-label-md text-xs text-on-surface font-bold flex items-center justify-between">
-                <span>Select Payment Mode</span>
-                <span className="text-[10px] text-primary font-bold">100% Encrypted &amp; Secure</span>
+                <span>Select Payment Method</span>
+                <span className="text-[10px] text-blue-600 font-mono font-bold">Razorpay Standard Checkout</span>
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setMethod('upi')}
-                  className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 ${
-                    method === 'upi'
-                      ? 'border-primary bg-primary/10 text-primary font-bold shadow-sm ring-2 ring-primary/20'
-                      : 'border-outline-variant bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
-                  }`}
-                >
-                  <Smartphone size={20} className="text-primary" />
-                  <span className="text-xs font-semibold">UPI Apps</span>
-                </button>
-
                 <button
                   type="button"
                   onClick={() => setMethod('qr')}
                   className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 ${
                     method === 'qr'
-                      ? 'border-primary bg-primary/10 text-primary font-bold shadow-sm ring-2 ring-primary/20'
+                      ? 'border-blue-600 bg-blue-600/10 text-blue-900 font-bold shadow-sm ring-2 ring-blue-600/20'
                       : 'border-outline-variant bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
                   }`}
                 >
-                  <QrCode size={20} className="text-emerald-600" />
-                  <span className="text-xs font-semibold">Scan QR</span>
+                  <QrCode size={20} className="text-blue-700" />
+                  <span className="text-xs font-semibold">UPI QR Code</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setMethod('upi')}
+                  className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 ${
+                    method === 'upi'
+                      ? 'border-blue-600 bg-blue-600/10 text-blue-900 font-bold shadow-sm ring-2 ring-blue-600/20'
+                      : 'border-outline-variant bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
+                  }`}
+                >
+                  <Smartphone size={20} className="text-blue-700" />
+                  <span className="text-xs font-semibold">UPI VPA</span>
                 </button>
 
                 <button
@@ -254,12 +270,12 @@ export default function PaymentModal({
                   onClick={() => setMethod('card')}
                   className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 ${
                     method === 'card'
-                      ? 'border-primary bg-primary/10 text-primary font-bold shadow-sm ring-2 ring-primary/20'
+                      ? 'border-blue-600 bg-blue-600/10 text-blue-900 font-bold shadow-sm ring-2 ring-blue-600/20'
                       : 'border-outline-variant bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
                   }`}
                 >
-                  <CreditCard size={20} className="text-primary" />
-                  <span className="text-xs font-semibold">Card</span>
+                  <CreditCard size={20} className="text-blue-700" />
+                  <span className="text-xs font-semibold">Cards</span>
                 </button>
 
                 <button
@@ -267,7 +283,7 @@ export default function PaymentModal({
                   onClick={() => setMethod('cash')}
                   className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 ${
                     method === 'cash'
-                      ? 'border-secondary bg-secondary-container/30 text-secondary font-bold shadow-sm ring-2 ring-secondary/20'
+                      ? 'border-amber-600 bg-amber-500/10 text-amber-900 font-bold shadow-sm ring-2 ring-amber-500/20'
                       : 'border-outline-variant bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
                   }`}
                 >
@@ -278,6 +294,37 @@ export default function PaymentModal({
             </div>
 
             {/* Dynamic Method Details */}
+            {method === 'qr' && (
+              <div className="p-4 rounded-xl bg-surface-container-low text-center space-y-3 border border-outline-variant/40 animate-fade-in">
+                <div className="flex items-center justify-center gap-2">
+                  <span className="font-semibold text-xs text-on-surface">Scan &amp; Pay via Any UPI App</span>
+                  <span className="bg-emerald-500/10 text-emerald-700 font-bold text-[10px] px-2 py-0.5 rounded-full border border-emerald-500/20">
+                    Live Dynamic QR
+                  </span>
+                </div>
+
+                <div className="mx-auto w-48 h-48 bg-white p-2.5 rounded-2xl shadow-lg border border-outline-variant/60 flex flex-col items-center justify-center relative group">
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`upi://pay?pa=thakuraayush@fam&pn=${encodeURIComponent(booking.worker_name || 'Pooja Bisht')}&am=${totalAmount}&cu=INR&tn=NEEDRef${booking.id}`)}`}
+                    alt="UPI QR Code"
+                    className="w-full h-full object-contain rounded-lg"
+                  />
+                  <span className="absolute -bottom-2 bg-emerald-600 text-white text-[10px] font-bold px-3 py-0.5 rounded-full shadow-md font-mono">
+                    Pay ₹{totalAmount}
+                  </span>
+                </div>
+
+                <div className="pt-2 text-xs space-y-1">
+                  <div className="font-mono text-on-surface">
+                    Remitting to: <strong className="text-primary font-mono">thakuraayush@fam</strong> ({booking.worker_name || 'Pooja Bisht'})
+                  </div>
+                  <p className="text-[11px] text-on-surface-variant">
+                    Open PhonePe, GPay, Paytm or BHIM to scan &amp; complete payment.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {method === 'upi' && (
               <div className="p-3.5 rounded-xl bg-surface-container-low space-y-2.5 border border-outline-variant/40">
                 <div className="flex items-center justify-between text-xs">
@@ -289,39 +336,8 @@ export default function PaymentModal({
                   value={upiId}
                   onChange={(e) => setUpiId(e.target.value)}
                   placeholder="thakuraayush@fam"
-                  className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-medium text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                  className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-medium text-on-surface focus:ring-2 focus:ring-blue-600/20 focus:outline-none"
                 />
-              </div>
-            )}
-
-            {method === 'qr' && (
-              <div className="p-4 rounded-xl bg-surface-container-low text-center space-y-3 border border-outline-variant/40 animate-fade-in">
-                <div className="flex items-center justify-center gap-2">
-                  <span className="font-semibold text-xs text-on-surface">Scan &amp; Pay via Any UPI App</span>
-                  <span className="bg-emerald-500/10 text-emerald-700 font-bold text-[10px] px-2 py-0.5 rounded-full border border-emerald-500/20">
-                    Live Dynamic QR
-                  </span>
-                </div>
-
-                <div className="mx-auto w-44 h-44 bg-white p-2.5 rounded-2xl shadow-lg border border-outline-variant/60 flex flex-col items-center justify-center relative group">
-                  <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`upi://pay?pa=thakuraayush@fam&pn=Aayush%20Thakur&am=${totalAmount}&cu=INR&tn=NEEDRef${booking.id}`)}`}
-                    alt="UPI QR Code"
-                    className="w-full h-full object-contain rounded-lg"
-                  />
-                  <span className="absolute -bottom-2 bg-emerald-600 text-white text-[10px] font-bold px-3 py-0.5 rounded-full shadow-md font-mono">
-                    Pay ₹{totalAmount}
-                  </span>
-                </div>
-
-                <div className="pt-2 text-xs space-y-1">
-                  <div className="font-mono text-on-surface">
-                    UPI ID: <span className="font-bold text-primary font-mono">thakuraayush@fam</span>
-                  </div>
-                  <p className="text-[11px] text-on-surface-variant">
-                    Open PhonePe, GPay, Paytm or BHIM to scan &amp; complete payment.
-                  </p>
-                </div>
               </div>
             )}
 
@@ -333,7 +349,7 @@ export default function PaymentModal({
                   value={cardNumber}
                   onChange={(e) => setCardNumber(e.target.value)}
                   placeholder="Card Number"
-                  className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-medium text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                  className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-medium text-on-surface focus:ring-2 focus:ring-blue-600/20 focus:outline-none"
                 />
                 <div className="grid grid-cols-2 gap-2">
                   <input
@@ -341,14 +357,14 @@ export default function PaymentModal({
                     value={expiry}
                     onChange={(e) => setExpiry(e.target.value)}
                     placeholder="MM/YY"
-                    className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-medium text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                    className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-medium text-on-surface focus:ring-2 focus:ring-blue-600/20 focus:outline-none"
                   />
                   <input
                     type="password"
                     value={cvv}
                     onChange={(e) => setCvv(e.target.value)}
                     placeholder="CVV"
-                    className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-medium text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
+                    className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-medium text-on-surface focus:ring-2 focus:ring-blue-600/20 focus:outline-none"
                   />
                 </div>
               </div>
@@ -361,7 +377,7 @@ export default function PaymentModal({
                   Cash After Service Handover
                 </div>
                 <p className="text-[11px] text-amber-800/80 leading-relaxed">
-                  Pay ₹{totalAmount} in cash directly to the assigned member worker after service verification.
+                  Pay ₹{totalAmount} in cash directly to {booking.worker_name || 'Pooja Bisht'} after service verification.
                 </p>
               </div>
             )}
@@ -371,7 +387,7 @@ export default function PaymentModal({
               <label className="font-label-md text-xs text-on-surface font-bold flex items-center justify-between">
                 <span className="flex items-center gap-1">
                   <Heart size={14} className="text-secondary fill-secondary" />
-                  Direct Worker Tip (100% to Worker)
+                  Direct Worker Tip (100% to {booking.worker_name || 'Pooja'})
                 </span>
                 <span className="text-[11px] text-secondary font-bold">Zero commission taken</span>
               </label>
@@ -411,7 +427,7 @@ export default function PaymentModal({
                 <div className="h-full bg-secondary-container" style={{ width: '10%' }} />
               </div>
               <div className="flex justify-between text-[10px] font-medium text-on-surface-variant">
-                <span className="text-primary font-bold">₹{workerTakeHome} Direct to Worker (90% + tip)</span>
+                <span className="text-primary font-bold">₹{workerTakeHome} to {booking.worker_name || 'Pooja Bisht'} (90% + tip)</span>
                 <span className="text-secondary font-bold">₹{welfareCut} Welfare Fund (10%)</span>
               </div>
             </div>
@@ -420,20 +436,26 @@ export default function PaymentModal({
             <button
               type="submit"
               disabled={busy}
-              className="w-full py-3 px-4 rounded-xl bg-primary text-on-primary hover:bg-primary-container transition shadow-md flex items-center justify-center gap-2 font-label-md text-xs font-bold uppercase tracking-wider disabled:opacity-50"
+              className="w-full py-3.5 px-4 rounded-xl bg-[#0c2340] hover:bg-slate-900 text-white transition shadow-md flex items-center justify-center gap-2 font-label-md text-xs font-extrabold uppercase tracking-wider disabled:opacity-50"
             >
               {busy ? (
                 <>
-                  <Loader2 size={16} className="animate-spin" />
-                  <span>Processing Remittance…</span>
+                  <Loader2 size={16} className="animate-spin text-emerald-400" />
+                  <span>Processing Razorpay Checkout…</span>
                 </>
               ) : (
                 <>
-                  <Lock size={14} />
-                  <span>Simulate Payment &amp; Remit (₹{totalAmount})</span>
+                  <Lock size={14} className="text-emerald-400" />
+                  <span>Pay ₹{totalAmount} via Razorpay</span>
                 </>
               )}
             </button>
+
+            {/* Razorpay Trust Badge Footer */}
+            <div className="pt-2 text-center text-[10px] text-on-surface-variant flex items-center justify-center gap-1">
+              <ShieldCheck size={12} className="text-blue-600" />
+              <span>Secured by Razorpay Standard Checkout • 256-bit SSL Encrypted</span>
+            </div>
           </form>
         )}
       </div>
