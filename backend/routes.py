@@ -700,6 +700,71 @@ def worker_booking_action(booking_id):
     })
 
 
+@api.get("/worker/payout-details")
+def get_worker_payout_details():
+    """Get logged-in worker's dynamic UPI and bank account payout settings."""
+    result = _require_role("worker")
+    if isinstance(result, tuple):
+        return result
+    worker = result
+
+    wp = WorkerProfile.query.filter_by(user_id=worker.id).first()
+    if not wp:
+        return jsonify({"error": "Worker profile not found"}), 404
+
+    return jsonify({
+        "upi_id": wp.upi_id or "thakuraayush@fam",
+        "bank_account_number": wp.bank_account_number or "919876543210",
+        "bank_ifsc": wp.bank_ifsc or "PUNB0123400",
+        "bank_name": wp.bank_name or "Punjab National Bank",
+        "account_holder_name": wp.account_holder_name or worker.name,
+    })
+
+
+@api.post("/worker/payout-details")
+def update_worker_payout_details():
+    """Update logged-in worker's dynamic UPI and bank account payout settings."""
+    result = _require_role("worker")
+    if isinstance(result, tuple):
+        return result
+    worker = result
+
+    wp = WorkerProfile.query.filter_by(user_id=worker.id).first()
+    if not wp:
+        return jsonify({"error": "Worker profile not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    upi_id = (data.get("upi_id") or "").strip()
+    bank_account_number = (data.get("bank_account_number") or "").strip()
+    bank_ifsc = (data.get("bank_ifsc") or "").strip()
+    bank_name = (data.get("bank_name") or "").strip()
+    account_holder_name = (data.get("account_holder_name") or "").strip()
+
+    if upi_id:
+        wp.upi_id = upi_id
+    if bank_account_number:
+        wp.bank_account_number = bank_account_number
+    if bank_ifsc:
+        wp.bank_ifsc = bank_ifsc
+    if bank_name:
+        wp.bank_name = bank_name
+    if account_holder_name:
+        wp.account_holder_name = account_holder_name
+
+    db.session.commit()
+
+    return jsonify({
+        "message": "Payout & Bank details updated successfully!",
+        "payout_details": {
+            "upi_id": wp.upi_id or "thakuraayush@fam",
+            "bank_account_number": wp.bank_account_number or "919876543210",
+            "bank_ifsc": wp.bank_ifsc or "PUNB0123400",
+            "bank_name": wp.bank_name or "Punjab National Bank",
+            "account_holder_name": wp.account_holder_name or worker.name,
+        }
+    })
+
+
 # ---------------------------------------------------------------------------
 # Payments & Invoicing (Step 8)
 # ---------------------------------------------------------------------------

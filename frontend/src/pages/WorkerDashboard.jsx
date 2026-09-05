@@ -56,6 +56,8 @@ import {
   requestWelfareWithdrawal,
   updateWorkerAvailability,
   updateBookingStatus,
+  getWorkerPayoutDetails,
+  updateWorkerPayoutDetails,
 } from '../services/api'
 import WorkerIdCard from '../components/WorkerIdCard'
 import SectionHeading from '../components/SectionHeading'
@@ -247,6 +249,45 @@ export default function WorkerDashboard() {
   const [verificationModal, setVerificationModal] = useState({ isOpen: false })
   const [selectedInvoiceBooking, setSelectedInvoiceBooking] = useState(null)
   const [qrModalOpen, setQrModalOpen] = useState(false)
+
+  // Dynamic Payout & Bank Settings Modal state
+  const [payoutModalOpen, setPayoutModalOpen] = useState(false)
+  const [savingPayout, setSavingPayout] = useState(false)
+  const [payoutForm, setPayoutForm] = useState({
+    upi_id: '',
+    bank_account_number: '',
+    bank_ifsc: '',
+    bank_name: '',
+    account_holder_name: '',
+  })
+
+  function openPayoutModal() {
+    if (data?.profile) {
+      setPayoutForm({
+        upi_id: data.profile.upi_id || 'thakuraayush@fam',
+        bank_account_number: data.profile.bank_account_number || '919876543210',
+        bank_ifsc: data.profile.bank_ifsc || 'PUNB0123400',
+        bank_name: data.profile.bank_name || 'Punjab National Bank',
+        account_holder_name: data.profile.account_holder_name || data.user.name || 'Pooja Bisht',
+      })
+    }
+    setPayoutModalOpen(true)
+  }
+
+  async function handleSavePayoutDetails(e) {
+    e.preventDefault()
+    setSavingPayout(true)
+    try {
+      const res = await updateWorkerPayoutDetails(payoutForm)
+      alert(res.message || 'Payout & Bank details updated successfully!')
+      setPayoutModalOpen(false)
+      loadDashboard(false)
+    } catch (err) {
+      alert(err?.response?.data?.error || 'Failed to update payout details.')
+    } finally {
+      setSavingPayout(false)
+    }
+  }
 
   function loadDashboard(showSkeleton = true) {
     if (showSkeleton) setLoading(true)
@@ -453,6 +494,16 @@ export default function WorkerDashboard() {
                 )}
               </button>
             </div>
+
+            <button
+              onClick={openPayoutModal}
+              className="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-2 rounded-xl font-label-md text-xs sm:text-sm font-bold transition-all shadow-sm"
+              type="button"
+              title="Update dynamic UPI ID & Bank Account for customer payments"
+            >
+              <span className="material-symbols-outlined text-[18px]">account_balance_wallet</span>
+              <span>Payout Settings 💳</span>
+            </button>
 
             <button
               onClick={() => setVerificationModal({ isOpen: true })}
@@ -1249,6 +1300,124 @@ export default function WorkerDashboard() {
             >
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Dynamic Payout & Bank Settings Modal ──────────────────────── */}
+      {payoutModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/70 backdrop-blur-sm animate-fadeIn">
+          <div className="bg-surface-container-lowest rounded-3xl p-6 max-w-md w-full shadow-2xl border border-surface-container-high space-y-5 animate-scaleUp">
+            <div className="flex justify-between items-center pb-3 border-b border-surface-container-high">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-emerald-600 text-[24px]">account_balance_wallet</span>
+                <span className="font-bold text-base text-on-surface">Dynamic Payout &amp; Bank Settings</span>
+              </div>
+              <button
+                onClick={() => setPayoutModalOpen(false)}
+                className="text-on-surface-variant hover:text-on-surface"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSavePayoutDetails} className="space-y-4 text-xs">
+              <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 text-emerald-900 leading-relaxed">
+                <p className="font-bold flex items-center gap-1 text-emerald-800">
+                  <span className="material-symbols-outlined text-[16px]">verified</span>
+                  Direct Bank &amp; UPI Remittance Account
+                </p>
+                <p className="text-[11px] mt-0.5 text-emerald-800/80">
+                  Customer payments deposited into Platform Escrow will be remitted to your updated UPI ID and Bank Account after fee deductions.
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <label className="font-bold text-on-surface block">Primary Payout UPI ID (VPA)</label>
+                <input
+                  type="text"
+                  required
+                  value={payoutForm.upi_id}
+                  onChange={(e) => setPayoutForm({ ...payoutForm, upi_id: e.target.value })}
+                  placeholder="e.g. thakuraayush@fam"
+                  className="w-full rounded-xl border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-bold text-primary focus:ring-2 focus:ring-emerald-500/20 focus:outline-none"
+                />
+                <span className="text-[10px] text-on-surface-variant">Default set to: thakuraayush@fam</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-on-surface block">Account Holder Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={payoutForm.account_holder_name}
+                    onChange={(e) => setPayoutForm({ ...payoutForm, account_holder_name: e.target.value })}
+                    placeholder="Pooja Bisht"
+                    className="w-full rounded-xl border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-bold text-on-surface focus:ring-2 focus:ring-emerald-500/20 focus:outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-on-surface block">Bank Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={payoutForm.bank_name}
+                    onChange={(e) => setPayoutForm({ ...payoutForm, bank_name: e.target.value })}
+                    placeholder="Punjab National Bank"
+                    className="w-full rounded-xl border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-bold text-on-surface focus:ring-2 focus:ring-emerald-500/20 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="font-bold text-on-surface block">Bank Account Number</label>
+                  <input
+                    type="text"
+                    required
+                    value={payoutForm.bank_account_number}
+                    onChange={(e) => setPayoutForm({ ...payoutForm, bank_account_number: e.target.value })}
+                    placeholder="919876543210"
+                    className="w-full rounded-xl border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-bold text-on-surface focus:ring-2 focus:ring-emerald-500/20 focus:outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="font-bold text-on-surface block">IFSC Code</label>
+                  <input
+                    type="text"
+                    required
+                    value={payoutForm.bank_ifsc}
+                    onChange={(e) => setPayoutForm({ ...payoutForm, bank_ifsc: e.target.value })}
+                    placeholder="PUNB0123400"
+                    className="w-full rounded-xl border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-bold text-on-surface focus:ring-2 focus:ring-emerald-500/20 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPayoutModalOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-outline-variant font-bold text-on-surface hover:bg-surface-container transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingPayout}
+                  className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition shadow-md flex items-center justify-center gap-1.5"
+                >
+                  {savingPayout ? (
+                    <Loader2 size={16} className="animate-spin text-white" />
+                  ) : (
+                    <span>Save Payout Details 💾</span>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

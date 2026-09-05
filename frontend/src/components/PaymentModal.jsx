@@ -1,18 +1,21 @@
 /**
- * PaymentModal.jsx — Stitch Cooperative Checkout & Transparent Remittance.
+ * PaymentModal.jsx — Razorpay Standard Checkout with Platform Escrow & 10-Minute Session Timer.
  */
 
 import { useEffect, useState } from 'react'
 import {
   AlertCircle,
   Banknote,
+  Building2,
   CheckCircle2,
+  Clock,
   CreditCard,
   Heart,
   Loader2,
   Lock,
   QrCode,
   Receipt,
+  RefreshCw,
   ShieldCheck,
   Smartphone,
   Sparkles,
@@ -51,10 +54,10 @@ export default function PaymentModal({
   booking,
   onSuccess,
 }) {
-  const [method, setMethod]           = useState('upi')
+  const [method, setMethod]           = useState('qr')
   const [selectedTip, setSelectedTip] = useState(30)
   const [customTip, setCustomTip]     = useState('')
-  const [upiId, setUpiId]             = useState('thakuraayush@fam')
+  const [upiId, setUpiId]             = useState('')
   const [cardNumber, setCardNumber]   = useState('4532 •••• •••• 8821')
   const [expiry, setExpiry]           = useState('08/28')
   const [cvv, setCvv]                 = useState('742')
@@ -62,6 +65,9 @@ export default function PaymentModal({
   const [busy, setBusy]               = useState(false)
   const [error, setError]             = useState('')
   const [completedPayment, setCompletedPayment] = useState(null)
+  
+  // 10-Minute Dynamic Session Countdown Timer (600 seconds)
+  const [timeLeft, setTimeLeft]       = useState(600)
 
   useEffect(() => {
     if (isOpen) {
@@ -70,19 +76,56 @@ export default function PaymentModal({
       setError('')
       setSelectedTip(30)
       setCustomTip('')
+      setTimeLeft(600)
     }
   }, [isOpen, booking?.id])
 
+  useEffect(() => {
+    if (!isOpen || completedPayment) return
+
+    const timerInterval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerInterval)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(timerInterval)
+  }, [isOpen, completedPayment, booking?.id])
+
   if (!isOpen || !booking) return null
+
+  // Dynamic Worker Payout & Escrow Calculations
+  const workerUpiId = booking.worker_upi_id || 'thakuraayush@fam'
+  const workerName = booking.worker_account_holder || booking.worker_name || 'Pooja Bisht'
+  const workerBankAccount = booking.worker_bank_account || '919876543210'
+  const workerBankIfsc = booking.worker_bank_ifsc || 'PUNB0123400'
+  const workerBankName = booking.worker_bank_name || 'Punjab National Bank'
 
   const serviceAmount = booking.amount || 299
   const tipAmount     = customTip !== '' ? Math.max(0, Number(customTip) || 0) : selectedTip
   const totalAmount   = serviceAmount + tipAmount
-  const workerTakeHome = Math.round((serviceAmount * 0.90 + tipAmount) * 100) / 100
-  const welfareCut    = Math.round((serviceAmount * 0.10) * 100) / 100
+  
+  // Charges & Deductions Breakdown
+  const platformFee   = Math.round(serviceAmount * 0.05)
+  const welfareCut    = Math.round(serviceAmount * 0.10)
+  const workerNetEarned = Math.round(serviceAmount * 0.85 + tipAmount)
+
+  const minutes = Math.floor(timeLeft / 60)
+  const seconds = timeLeft % 60
+  const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+  const timerPercentage = (timeLeft / 600) * 100
 
   async function handlePay(e) {
     e.preventDefault()
+    if (timeLeft === 0) {
+      setError('Payment session expired. Please reset the timer to proceed.')
+      return
+    }
+
     setError('')
     setBusy(true)
 
@@ -119,18 +162,18 @@ export default function PaymentModal({
             </div>
             <div>
               <div className="flex items-center gap-1.5 text-[10px] font-mono text-blue-300 uppercase tracking-widest font-bold">
-                <span>Razorpay Trusted Merchant</span>
+                <span>NEED Federation Escrow</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
               </div>
               <h2 className="font-headline-sm text-base font-extrabold text-white tracking-tight">
-                NEED Federation Checkout
+                Razorpay Platform Escrow Checkout
               </h2>
             </div>
           </div>
 
           <div className="text-right flex items-center gap-3">
             <div>
-              <span className="text-[10px] font-mono text-blue-300 uppercase block">Amount Payable</span>
+              <span className="text-[10px] font-mono text-blue-300 uppercase block">Total Payable</span>
               <div className="font-metric-val text-xl text-emerald-400 font-black leading-tight">
                 ₹{totalAmount}
               </div>
@@ -146,27 +189,47 @@ export default function PaymentModal({
           </div>
         </div>
 
-        {/* Beneficiary Artisan Direct Remittance Callout */}
-        <div className="bg-gradient-to-r from-blue-900/20 via-blue-800/10 to-transparent px-5 py-2.5 border-b border-outline-variant/30 flex items-center justify-between text-xs">
+        {/* 10-Minute Live Session Timer Bar */}
+        <div className="bg-slate-900 text-white px-5 py-2.5 flex items-center justify-between text-xs border-b border-slate-800">
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-emerald-600 text-[18px]">verified</span>
-            <span className="font-medium text-on-surface">
-              Direct Payout Beneficiary: <strong className="text-primary font-bold">{booking.worker_name || 'Pooja Bisht'}</strong>
+            <Clock size={15} className={timeLeft < 120 ? 'text-red-400 animate-bounce' : 'text-amber-400'} />
+            <span className="font-mono font-bold text-slate-200">
+              Session Expires In: <span className={`font-black ${timeLeft < 120 ? 'text-red-400' : 'text-amber-400'}`}>{formattedTime}</span>
             </span>
           </div>
-          <span className="font-mono text-[11px] font-bold text-emerald-700 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20">
-            UPI: thakuraayush@fam
-          </span>
+          <div className="w-28 h-2 rounded-full bg-slate-800 overflow-hidden border border-slate-700">
+            <div
+              className={`h-full transition-all duration-1000 ${
+                timeLeft < 120 ? 'bg-red-500' : 'bg-emerald-500'
+              }`}
+              style={{ width: `${timerPercentage}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Dynamic Recipient & Escrow Banner */}
+        <div className="bg-gradient-to-r from-blue-900/20 via-blue-800/10 to-transparent px-5 py-3 border-b border-outline-variant/30 text-xs space-y-1">
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1.5 font-bold text-on-surface">
+              <Building2 size={15} className="text-blue-600" />
+              <span>1. Escrow Recipient:</span>
+              <strong className="text-blue-900">NEED Platform Treasury</strong>
+            </span>
+            <span className="font-mono text-[10px] font-bold text-blue-800 bg-blue-500/15 px-2 py-0.5 rounded border border-blue-500/30">
+              need.escrow@icici
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-on-surface-variant text-[11px] pt-0.5">
+            <span>2. Dynamic Worker Transfer Payout:</span>
+            <span className="font-mono font-bold text-emerald-800 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+              {workerName} ({workerUpiId})
+            </span>
+          </div>
         </div>
 
         {/* Payment Success Splash */}
         {completedPayment ? (
           <div className="p-8 text-center space-y-6 animate-scale-up relative overflow-hidden bg-gradient-to-b from-emerald-500/10 via-surface-container-lowest to-surface-container-lowest">
-            {/* Floating celebratory glow rings */}
-            <div className="absolute -top-12 -right-12 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none" />
-            <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-teal-500/20 rounded-full blur-2xl pointer-events-none" />
-
-            {/* Razorpay Success Badge */}
             <div className="relative mx-auto w-24 h-24 flex items-center justify-center">
               <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping" />
               <div className="relative w-20 h-20 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-xl border-4 border-white">
@@ -174,39 +237,45 @@ export default function PaymentModal({
               </div>
             </div>
 
-            {/* Title & Badge */}
             <div className="space-y-1">
               <div className="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-800 px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider border border-emerald-500/20">
                 <Sparkles size={14} className="text-emerald-600" />
-                Razorpay Payment Successful
+                Payment Received in Platform Escrow
               </div>
               <h3 className="font-headline-lg text-2xl font-black text-on-surface pt-1">
-                ₹{completedPayment.total_amount || totalAmount} Paid!
+                ₹{completedPayment.total_amount || totalAmount} Deposited!
               </h3>
               <p className="font-mono text-xs text-on-surface-variant">
-                Razorpay Payment ID: <span className="font-bold text-primary font-mono">{completedPayment.invoice_id}</span>
+                Escrow Transaction ID: <span className="font-bold text-primary font-mono">{completedPayment.invoice_id}</span>
               </p>
             </div>
 
-            {/* Beneficiary Remittance Confirmation Box */}
-            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-xs space-y-2.5 text-left shadow-xs">
-              <div className="flex justify-between items-center pb-2 border-b border-emerald-500/20">
-                <span className="font-bold text-emerald-900">Direct Remittance Account:</span>
-                <span className="font-mono font-bold text-emerald-800 bg-emerald-500/20 px-2.5 py-0.5 rounded-full">
-                  thakuraayush@fam
+            {/* Escrow & Worker Transfer Summary Box */}
+            <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-xs space-y-2 text-left shadow-xs">
+              <div className="flex justify-between items-center pb-2 border-b border-emerald-500/20 font-bold text-emerald-900">
+                <span>Escrow Status:</span>
+                <span className="bg-emerald-600 text-white px-2.5 py-0.5 rounded-full text-[10px]">
+                  Funds Secured in NEED Escrow ✅
                 </span>
               </div>
-              <div className="flex justify-between text-on-surface">
-                <span className="text-on-surface-variant">Beneficiary Artisan:</span>
-                <span className="font-bold text-on-surface">{booking.worker_name || 'Pooja Bisht'}</span>
+              <div className="flex justify-between text-on-surface pt-1">
+                <span className="text-on-surface-variant">Gross Amount:</span>
+                <span className="font-mono font-bold text-on-surface">₹{totalAmount}</span>
               </div>
               <div className="flex justify-between text-on-surface">
-                <span className="text-on-surface-variant">Artisan Payout (90% + Tip):</span>
-                <span className="font-mono font-bold text-emerald-700">₹{completedPayment.worker_take_home || workerTakeHome} transferred to thakuraayush@fam</span>
+                <span className="text-on-surface-variant">Platform Co-op Admin Fee (5%):</span>
+                <span className="font-mono text-red-600 font-medium">-₹{platformFee}</span>
               </div>
               <div className="flex justify-between text-on-surface">
-                <span className="text-on-surface-variant">Co-op Welfare Reserve (10%):</span>
-                <span className="font-mono font-bold text-secondary">₹{completedPayment.welfare_contribution || welfareCut}</span>
+                <span className="text-on-surface-variant">Social Security Welfare Trust (10%):</span>
+                <span className="font-mono text-secondary font-medium">-₹{welfareCut}</span>
+              </div>
+              <div className="flex justify-between text-on-surface pt-2 border-t border-emerald-500/20">
+                <span className="font-bold text-emerald-900">Net Worker Remittance Transferred:</span>
+                <span className="font-mono font-black text-emerald-700 text-sm">₹{workerNetEarned}</span>
+              </div>
+              <div className="text-[11px] text-emerald-800/80 pt-1 font-mono">
+                Transfer Target: <strong>{workerName}</strong> (UPI: <span className="underline">{workerUpiId}</span> • Bank A/c: ••••{workerBankAccount.slice(-4)})
               </div>
             </div>
 
@@ -219,12 +288,30 @@ export default function PaymentModal({
                 }}
                 className="w-full bg-[#0c2340] hover:bg-slate-900 text-white font-extrabold py-3.5 px-4 rounded-xl shadow-lg transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2"
               >
-                <span>🎉 Done • Return to Dashboard</span>
+                <span>🎉 Return to Dashboard</span>
               </button>
             </div>
           </div>
         ) : (
           <form onSubmit={handlePay} className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
+            {timeLeft === 0 ? (
+              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 text-xs text-center space-y-2">
+                <AlertCircle size={24} className="mx-auto text-amber-600" />
+                <p className="font-bold">Payment Session Expired (10-Minute Limit Exceeded)</p>
+                <p className="text-[11px] text-amber-800">
+                  For platform security and live rate protection, checkout sessions expire after 10 minutes.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setTimeLeft(600)}
+                  className="px-4 py-2 bg-amber-600 text-white rounded-lg font-bold text-xs hover:bg-amber-700 transition inline-flex items-center gap-1.5 shadow-sm"
+                >
+                  <RefreshCw size={14} />
+                  Reset 10-Min Payment Timer
+                </button>
+              </div>
+            ) : null}
+
             {error && (
               <div className="p-3 rounded-xl bg-error-container/40 border border-error/30 text-on-error-container text-xs flex items-center gap-2 font-medium">
                 <AlertCircle size={16} className="text-error shrink-0" />
@@ -236,7 +323,7 @@ export default function PaymentModal({
             <div className="space-y-1.5">
               <label className="font-label-md text-xs text-on-surface font-bold flex items-center justify-between">
                 <span>Select Payment Method</span>
-                <span className="text-[10px] text-blue-600 font-mono font-bold">Razorpay Standard Checkout</span>
+                <span className="text-[10px] text-blue-600 font-mono font-bold">Razorpay Escrow Gateway</span>
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <button
@@ -299,27 +386,27 @@ export default function PaymentModal({
                 <div className="flex items-center justify-center gap-2">
                   <span className="font-semibold text-xs text-on-surface">Scan &amp; Pay via Any UPI App</span>
                   <span className="bg-emerald-500/10 text-emerald-700 font-bold text-[10px] px-2 py-0.5 rounded-full border border-emerald-500/20">
-                    Live Dynamic QR
+                    Live Escrow QR
                   </span>
                 </div>
 
                 <div className="mx-auto w-48 h-48 bg-white p-2.5 rounded-2xl shadow-lg border border-outline-variant/60 flex flex-col items-center justify-center relative group">
                   <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`upi://pay?pa=thakuraayush@fam&pn=${encodeURIComponent(booking.worker_name || 'Pooja Bisht')}&am=${totalAmount}&cu=INR&tn=NEEDRef${booking.id}`)}`}
-                    alt="UPI QR Code"
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`upi://pay?pa=need.escrow@icici&pn=NEED%20Federation%20Escrow&am=${totalAmount}&cu=INR&tn=EscrowBooking${booking.id}-PayoutTo-${encodeURIComponent(workerUpiId)}`)}`}
+                    alt="Platform Escrow UPI QR Code"
                     className="w-full h-full object-contain rounded-lg"
                   />
-                  <span className="absolute -bottom-2 bg-emerald-600 text-white text-[10px] font-bold px-3 py-0.5 rounded-full shadow-md font-mono">
-                    Pay ₹{totalAmount}
+                  <span className="absolute -bottom-2 bg-blue-900 text-white text-[10px] font-bold px-3 py-0.5 rounded-full shadow-md font-mono">
+                    Pay ₹{totalAmount} to Escrow
                   </span>
                 </div>
 
                 <div className="pt-2 text-xs space-y-1">
                   <div className="font-mono text-on-surface">
-                    Remitting to: <strong className="text-primary font-mono">thakuraayush@fam</strong> ({booking.worker_name || 'Pooja Bisht'})
+                    Escrow Recipient: <strong className="text-blue-800 font-mono">need.escrow@icici</strong>
                   </div>
-                  <p className="text-[11px] text-on-surface-variant">
-                    Open PhonePe, GPay, Paytm or BHIM to scan &amp; complete payment.
+                  <p className="text-[11px] text-emerald-700 font-semibold">
+                    Target Artisan Payout: <strong>{workerName}</strong> (UPI: <span className="font-mono font-bold">{workerUpiId}</span>)
                   </p>
                 </div>
               </div>
@@ -329,13 +416,13 @@ export default function PaymentModal({
               <div className="p-3.5 rounded-xl bg-surface-container-low space-y-2.5 border border-outline-variant/40">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-on-surface">Enter VPA / UPI ID</span>
-                  <span className="text-[10px] text-emerald-600 font-bold">Google Pay / PhonePe / Paytm / FamPay</span>
+                  <span className="text-[10px] text-emerald-600 font-bold">Google Pay / PhonePe / Paytm</span>
                 </div>
                 <input
                   type="text"
                   value={upiId}
                   onChange={(e) => setUpiId(e.target.value)}
-                  placeholder="thakuraayush@fam"
+                  placeholder={workerUpiId || 'customer@upi'}
                   className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-medium text-on-surface focus:ring-2 focus:ring-blue-600/20 focus:outline-none"
                 />
               </div>
@@ -374,10 +461,10 @@ export default function PaymentModal({
               <div className="p-3.5 rounded-xl bg-amber-500/10 text-amber-900 border border-amber-500/20 text-xs space-y-1">
                 <div className="font-bold flex items-center gap-1.5 text-amber-800">
                   <Banknote size={16} />
-                  Cash After Service Handover
+                  Cash Handover After Verification
                 </div>
                 <p className="text-[11px] text-amber-800/80 leading-relaxed">
-                  Pay ₹{totalAmount} in cash directly to {booking.worker_name || 'Pooja Bisht'} after service verification.
+                  Pay ₹{totalAmount} in cash. Platform fee (5%) and Welfare cut (10%) will be settled from worker's ledger wallet.
                 </p>
               </div>
             )}
@@ -387,7 +474,7 @@ export default function PaymentModal({
               <label className="font-label-md text-xs text-on-surface font-bold flex items-center justify-between">
                 <span className="flex items-center gap-1">
                   <Heart size={14} className="text-secondary fill-secondary" />
-                  Direct Worker Tip (100% to {booking.worker_name || 'Pooja'})
+                  Direct Worker Tip (100% to {workerName})
                 </span>
                 <span className="text-[11px] text-secondary font-bold">Zero commission taken</span>
               </label>
@@ -412,41 +499,58 @@ export default function PaymentModal({
               </div>
             </div>
 
-            {/* Live Transparent Split Breakdown */}
-            <div className="p-3 rounded-xl bg-surface-container-low border border-outline-variant/40 space-y-1.5">
+            {/* Live Transparent Charges Breakdown */}
+            <div className="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/40 space-y-2">
               <div className="flex justify-between items-center text-xs">
                 <span className="font-label-caps text-[10px] text-on-surface-variant uppercase font-bold">
-                  Cooperative Split Formula
+                  Escrow Payout &amp; Fee Deduction Breakdown
                 </span>
-                <span className="font-bold text-primary text-xs">
-                  ₹{totalAmount} Total
+                <span className="font-extrabold text-primary text-xs">
+                  ₹{totalAmount} Gross Total
                 </span>
               </div>
-              <div className="w-full h-2 rounded-full overflow-hidden bg-surface-container flex">
-                <div className="h-full bg-primary" style={{ width: '90%' }} />
-                <div className="h-full bg-secondary-container" style={{ width: '10%' }} />
-              </div>
-              <div className="flex justify-between text-[10px] font-medium text-on-surface-variant">
-                <span className="text-primary font-bold">₹{workerTakeHome} to {booking.worker_name || 'Pooja Bisht'} (90% + tip)</span>
-                <span className="text-secondary font-bold">₹{welfareCut} Welfare Fund (10%)</span>
+
+              <div className="space-y-1 text-xs text-on-surface">
+                <div className="flex justify-between text-on-surface-variant">
+                  <span>Gross Booking Fare:</span>
+                  <span className="font-mono">₹{serviceAmount}</span>
+                </div>
+                <div className="flex justify-between text-red-700">
+                  <span>Platform Co-op Admin Charge (5%):</span>
+                  <span className="font-mono">-₹{platformFee}</span>
+                </div>
+                <div className="flex justify-between text-secondary font-medium">
+                  <span>Social Security Welfare Trust (10%):</span>
+                  <span className="font-mono">-₹{welfareCut}</span>
+                </div>
+                {tipAmount > 0 && (
+                  <div className="flex justify-between text-emerald-700 font-medium">
+                    <span>100% Direct Worker Tip:</span>
+                    <span className="font-mono">+₹{tipAmount}</span>
+                  </div>
+                )}
+                <div className="flex justify-between pt-1 border-t border-outline-variant/40 font-bold text-emerald-800 text-xs">
+                  <span>Net Payout Remitted to {workerName}:</span>
+                  <span className="font-mono font-black text-emerald-700 text-sm">₹{workerNetEarned}</span>
+                </div>
               </div>
             </div>
 
             {/* Submit Action */}
             <button
               type="submit"
-              disabled={busy}
+              disabled={busy || timeLeft === 0}
               className="w-full py-3.5 px-4 rounded-xl bg-[#0c2340] hover:bg-slate-900 text-white transition shadow-md flex items-center justify-center gap-2 font-label-md text-xs font-extrabold uppercase tracking-wider disabled:opacity-50"
             >
               {busy ? (
                 <>
                   <Loader2 size={16} className="animate-spin text-emerald-400" />
-                  <span>Processing Razorpay Checkout…</span>
+                  <span>Processing Platform Escrow Payment…</span>
                 </>
               ) : (
                 <>
                   <Lock size={14} className="text-emerald-400" />
-                  <span>Pay ₹{totalAmount} via Razorpay</span>
+                  <span>Deposit ₹{totalAmount} into Platform Escrow</span>
                 </>
               )}
             </button>
@@ -454,7 +558,7 @@ export default function PaymentModal({
             {/* Razorpay Trust Badge Footer */}
             <div className="pt-2 text-center text-[10px] text-on-surface-variant flex items-center justify-center gap-1">
               <ShieldCheck size={12} className="text-blue-600" />
-              <span>Secured by Razorpay Standard Checkout • 256-bit SSL Encrypted</span>
+              <span>Secured by Razorpay Platform Escrow • 256-bit SSL Encrypted</span>
             </div>
           </form>
         )}

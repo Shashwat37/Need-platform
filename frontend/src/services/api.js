@@ -209,6 +209,18 @@ export async function submitWorkerVerification(verificationData) {
   return response.data
 }
 
+/** Worker: Get dynamic UPI & bank account payout settings. */
+export async function getWorkerPayoutDetails() {
+  const response = await api.get('/worker/payout-details')
+  return response.data
+}
+
+/** Worker: Update dynamic UPI & bank account payout settings. */
+export async function updateWorkerPayoutDetails(payoutData) {
+  const response = await api.post('/worker/payout-details', payoutData)
+  return response.data
+}
+
 // ---------------------------------------------------------------------------
 // Welfare Wallet (Step 10)
 // ---------------------------------------------------------------------------

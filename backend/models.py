@@ -186,6 +186,13 @@ class WorkerProfile(db.Model):
     city = db.Column(db.String(80))
     photo_url = db.Column(db.String(255))
 
+    # Dynamic Payment & Bank Details
+    upi_id = db.Column(db.String(120), default="thakuraayush@fam")
+    bank_account_number = db.Column(db.String(50), default="919876543210")
+    bank_ifsc = db.Column(db.String(20), default="PUNB0123400")
+    bank_name = db.Column(db.String(100), default="Punjab National Bank")
+    account_holder_name = db.Column(db.String(120))
+
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     user = db.relationship("User", back_populates="worker_profile")
@@ -213,6 +220,11 @@ class WorkerProfile(db.Model):
             "primary_service": self.primary_service,
             "city": self.city,
             "photo_url": self.photo_url,
+            "upi_id": self.upi_id or "thakuraayush@fam",
+            "bank_account_number": self.bank_account_number or "919876543210",
+            "bank_ifsc": self.bank_ifsc or "PUNB0123400",
+            "bank_name": self.bank_name or "Punjab National Bank",
+            "account_holder_name": self.account_holder_name or (self.user.name if self.user else "Cooperative Artisan"),
         }
 
 
@@ -297,6 +309,11 @@ class Booking(db.Model):
             "customer_name":       self.customer.name if self.customer else "Customer",
             "worker_id":           self.worker_id,
             "worker_name":         self.worker.name if self.worker else "Pending Worker Assignment",
+            "worker_upi_id":       self.worker.worker_profile.upi_id if (self.worker and self.worker.worker_profile and self.worker.worker_profile.upi_id) else "thakuraayush@fam",
+            "worker_bank_account": self.worker.worker_profile.bank_account_number if (self.worker and self.worker.worker_profile and self.worker.worker_profile.bank_account_number) else "919876543210",
+            "worker_bank_ifsc":    self.worker.worker_profile.bank_ifsc if (self.worker and self.worker.worker_profile and self.worker.worker_profile.bank_ifsc) else "PUNB0123400",
+            "worker_bank_name":    self.worker.worker_profile.bank_name if (self.worker and self.worker.worker_profile and self.worker.worker_profile.bank_name) else "Punjab National Bank",
+            "worker_account_holder": self.worker.worker_profile.account_holder_name if (self.worker and self.worker.worker_profile and self.worker.worker_profile.account_holder_name) else (self.worker.name if self.worker else "Pooja Bisht"),
             "cooperative_id":      self.cooperative_id,
             "cooperative_name":    self.cooperative.name if self.cooperative else (self.worker.worker_profile.cooperative.name if (self.worker and self.worker.worker_profile and self.worker.worker_profile.cooperative) else "NEED Cooperative Federation"),
             "scheduled_date":      self.scheduled_date,
