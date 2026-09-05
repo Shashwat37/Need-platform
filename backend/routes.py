@@ -648,22 +648,22 @@ def worker_booking_action(booking_id):
     action = data.get("action", "").lower().strip()
 
     if action == "accept":
-        if booking.status != "pending":
+        if booking.status not in ("pending", "requested", "worker_assigned"):
             return jsonify({"error": f"Cannot accept booking with status '{booking.status}'"}), 400
         booking.status = "accepted"
 
     elif action == "decline":
-        if booking.status != "pending":
+        if booking.status not in ("pending", "requested", "worker_assigned"):
             return jsonify({"error": f"Cannot decline booking with status '{booking.status}'"}), 400
         booking.status = "rejected"
 
     elif action == "start":
-        if booking.status != "accepted":
-            return jsonify({"error": "Can only start jobs that have been accepted"}), 400
+        if booking.status not in ("accepted", "on_the_way", "arrived"):
+            return jsonify({"error": f"Cannot start job with status '{booking.status}'"}), 400
         booking.status = "in_progress"
 
     elif action == "complete":
-        if booking.status not in ("accepted", "in_progress"):
+        if booking.status not in ("accepted", "on_the_way", "arrived", "in_progress"):
             return jsonify({"error": "Can only complete active jobs"}), 400
         booking.status = "completed"
         booking.completion_note = data.get("completion_note", "Service completed as requested.")
