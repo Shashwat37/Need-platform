@@ -32,7 +32,7 @@ const STATUS_STYLES = {
   pending:     'bg-secondary-container/20 text-secondary border-secondary/40 font-bold',
   accepted:    'bg-primary-fixed/50 text-on-primary-fixed font-bold border-primary/30',
   in_progress: 'bg-primary text-on-primary font-bold shadow-xs',
-  completed:   'bg-primary-fixed/40 text-primary font-bold border-primary/20',
+  completed:   'bg-emerald-500/15 text-emerald-800 font-bold border-emerald-500/30',
   cancelled:   'bg-surface-container text-on-surface-variant font-medium border-outline-variant',
   rejected:    'bg-error-container text-on-error-container font-medium border-error/20',
 }
@@ -41,12 +41,29 @@ const STATUS_LABELS = {
   pending:     'Pending Dispatch',
   accepted:    'Artisan Assigned',
   in_progress: 'In Progress',
-  completed:   'Completed',
+  completed:   'Completed & Paid',
   cancelled:   'Cancelled',
   rejected:    'Declined',
 }
 
-function StatusBadge({ status }) {
+function StatusBadge({ status, isPaid }) {
+  if (status === 'completed' && !isPaid) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/15 text-amber-900 px-2.5 py-0.5 text-[11px] font-extrabold shadow-xs">
+        <span className="w-2 h-2 rounded-full bg-amber-600 animate-pulse"></span>
+        Payment Pending
+      </span>
+    )
+  }
+  if (status === 'completed' && isPaid) {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/40 bg-emerald-500/15 text-emerald-800 px-2.5 py-0.5 text-[11px] font-bold">
+        <span className="material-symbols-outlined text-[14px] text-emerald-600">check_circle</span>
+        Paid &amp; Completed
+      </span>
+    )
+  }
+
   const style = STATUS_STYLES[status] || 'bg-surface-container text-on-surface-variant'
   return (
     <span className={`inline-block rounded-full border px-2.5 py-0.5 text-[11px] ${style}`}>
@@ -501,7 +518,7 @@ export default function CustomerDashboard() {
                   <tbody className="divide-y divide-outline-variant/30 text-on-surface">
                     {filteredBookings.map((b) => {
                       const canCancel = ['pending', 'accepted'].includes(b.status)
-                      const canPay = b.status !== 'cancelled' && !b.is_paid
+                      const canPay = b.status === 'completed' && !b.is_paid
                       const canInvoice = Boolean(b.is_paid && b.invoice_id)
                       const canReview = b.status === 'completed' && !b.review
                       const hasReview = Boolean(b.review)
@@ -542,7 +559,7 @@ export default function CustomerDashboard() {
                             ₹{b.amount || 299}
                           </td>
                           <td className="px-4 py-3.5 text-center">
-                            <StatusBadge status={b.status} />
+                            <StatusBadge status={b.status} isPaid={b.is_paid} />
                           </td>
                           <td className="px-4 py-3.5 text-right">
                             <div className="flex items-center justify-end gap-1.5 flex-wrap">

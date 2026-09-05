@@ -124,7 +124,24 @@ const STATUS_BADGES = {
   },
 }
 
-function BookingStatusBadge({ status }) {
+function BookingStatusBadge({ status, isPaid }) {
+  if (status === 'completed' && !isPaid) {
+    return (
+      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-amber-500/40 bg-amber-500/15 text-amber-900 text-xs font-extrabold shadow-xs">
+        <span className="w-2 h-2 rounded-full bg-amber-600 animate-pulse"></span>
+        Payment Pending ⏳
+      </span>
+    )
+  }
+  if (status === 'completed' && isPaid) {
+    return (
+      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border border-emerald-500/40 bg-emerald-500/15 text-emerald-800 text-xs font-bold">
+        <span className="material-symbols-outlined text-[14px] text-emerald-600">task_alt</span>
+        Completed &amp; Paid 🏆
+      </span>
+    )
+  }
+
   const badge = STATUS_BADGES[status] || {
     bg: 'bg-surface-container-high text-on-surface-variant border-outline-variant',
     label: status,
@@ -1007,7 +1024,7 @@ export default function WorkerDashboard() {
 
                           {/* Col 5: Dispatch Status */}
                           <td className="py-4 px-4">
-                            <BookingStatusBadge status={b.status} />
+                            <BookingStatusBadge status={b.status} isPaid={b.is_paid} />
                           </td>
 
                           {/* Col 6: Actions & Invoice */}
