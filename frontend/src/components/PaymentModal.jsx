@@ -76,6 +76,26 @@ export default function PaymentModal({
   const [autoTimerSeconds, setAutoTimerSeconds] = useState(5)
   const [autoTimerActive, setAutoTimerActive]   = useState(true)
 
+  // Dynamic Worker Payout & Escrow Calculations (must be declared before useEffect dependency evaluation)
+  const workerUpiId = booking?.worker_upi_id || 'thakuraayush@fam'
+  const workerName = booking?.worker_account_holder || booking?.worker_name || 'Pooja Bisht'
+  const workerBankAccount = booking?.worker_bank_account || '919876543210'
+  const workerBankIfsc = booking?.worker_bank_ifsc || 'PUNB0123400'
+
+  const serviceAmount = booking?.amount || 299
+  const tipAmount     = customTip !== '' ? Math.max(0, Number(customTip) || 0) : selectedTip
+  const totalAmount   = serviceAmount + tipAmount
+
+  // Charges & Deductions Breakdown
+  const platformFee   = Math.round(serviceAmount * 0.05)
+  const welfareCut    = Math.round(serviceAmount * 0.10)
+  const workerNetEarned = Math.round(serviceAmount * 0.85 + tipAmount)
+
+  const minutes = Math.floor(timeLeft / 60)
+  const seconds = timeLeft % 60
+  const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+  const timerPercentage = (timeLeft / 600) * 100
+
   useEffect(() => {
     if (isOpen) {
       setCompletedPayment(null)
@@ -155,26 +175,6 @@ export default function PaymentModal({
   }, [isOpen, completedPayment, booking?.id])
 
   if (!isOpen || !booking) return null
-
-  // Dynamic Worker Payout & Escrow Calculations
-  const workerUpiId = booking.worker_upi_id || 'thakuraayush@fam'
-  const workerName = booking.worker_account_holder || booking.worker_name || 'Pooja Bisht'
-  const workerBankAccount = booking.worker_bank_account || '919876543210'
-  const workerBankIfsc = booking.worker_bank_ifsc || 'PUNB0123400'
-
-  const serviceAmount = booking.amount || 299
-  const tipAmount     = customTip !== '' ? Math.max(0, Number(customTip) || 0) : selectedTip
-  const totalAmount   = serviceAmount + tipAmount
-  
-  // Charges & Deductions Breakdown
-  const platformFee   = Math.round(serviceAmount * 0.05)
-  const welfareCut    = Math.round(serviceAmount * 0.10)
-  const workerNetEarned = Math.round(serviceAmount * 0.85 + tipAmount)
-
-  const minutes = Math.floor(timeLeft / 60)
-  const seconds = timeLeft % 60
-  const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-  const timerPercentage = (timeLeft / 600) * 100
 
   async function handlePay(e) {
     if (e && e.preventDefault) e.preventDefault()
