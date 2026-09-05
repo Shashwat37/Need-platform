@@ -103,7 +103,7 @@ export default function CustomerDashboard() {
     }
   }
 
-  const allBookings = data?.recent_bookings || []
+  const allBookings = data?.bookings || []
 
   // Active in-flight booking (if any)
   const inFlightBooking = useMemo(() => {
