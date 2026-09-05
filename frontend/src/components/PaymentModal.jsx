@@ -30,7 +30,7 @@ export default function PaymentModal({
   const [method, setMethod]           = useState('upi')
   const [selectedTip, setSelectedTip] = useState(30)
   const [customTip, setCustomTip]     = useState('')
-  const [upiId, setUpiId]             = useState('ananya@okhdfcbank')
+  const [upiId, setUpiId]             = useState('thakuraayush@fam')
   const [cardNumber, setCardNumber]   = useState('4532 •••• •••• 8821')
   const [expiry, setExpiry]           = useState('08/28')
   const [cvv, setCvv]                 = useState('742')
@@ -236,13 +236,13 @@ export default function PaymentModal({
               <div className="p-3.5 rounded-xl bg-surface-container-low space-y-2.5 border border-outline-variant/40">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-on-surface">Enter VPA / UPI ID</span>
-                  <span className="text-[10px] text-emerald-600 font-bold">Google Pay / PhonePe / Paytm</span>
+                  <span className="text-[10px] text-emerald-600 font-bold">Google Pay / PhonePe / Paytm / FamPay</span>
                 </div>
                 <input
                   type="text"
                   value={upiId}
                   onChange={(e) => setUpiId(e.target.value)}
-                  placeholder="name@okhdfcbank"
+                  placeholder="thakuraayush@fam"
                   className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-medium text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
                 />
               </div>
@@ -259,7 +259,7 @@ export default function PaymentModal({
 
                 <div className="mx-auto w-44 h-44 bg-white p-2.5 rounded-2xl shadow-lg border border-outline-variant/60 flex flex-col items-center justify-center relative group">
                   <img
-                    src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`upi://pay?pa=need.cooperative@upi&pn=NEED%20Cooperative%20Society&am=${totalAmount}&cu=INR&tn=BookingRef${booking.id}`)}`}
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`upi://pay?pa=thakuraayush@fam&pn=Aayush%20Thakur&am=${totalAmount}&cu=INR&tn=NEEDRef${booking.id}`)}`}
                     alt="UPI QR Code"
                     className="w-full h-full object-contain rounded-lg"
                   />
@@ -270,7 +270,7 @@ export default function PaymentModal({
 
                 <div className="pt-2 text-xs space-y-1">
                   <div className="font-mono text-on-surface">
-                    UPI ID: <span className="font-bold text-primary">need.cooperative@upi</span>
+                    UPI ID: <span className="font-bold text-primary font-mono">thakuraayush@fam</span>
                   </div>
                   <p className="text-[11px] text-on-surface-variant">
                     Open PhonePe, GPay, Paytm or BHIM to scan &amp; complete payment.
