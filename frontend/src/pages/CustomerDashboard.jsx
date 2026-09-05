@@ -196,7 +196,7 @@ export default function CustomerDashboard() {
               <button
                 type="button"
                 onClick={() => {
-                  const unpaidBooking = allBookings.find((b) => !b.is_paid && b.status !== 'cancelled') || allBookings[0] || { id: 4, service_name: 'Appliance Repair', amount: 349 }
+                  const unpaidBooking = allBookings.find((b) => !b.is_paid && b.status !== 'cancelled') || { id: 99, service_name: 'Home Appliance Repair', amount: 329, is_paid: false, worker_name: 'Rahul Kumar', worker_upi_id: 'thakuraayush@fam' }
                   setPaymentModal({ isOpen: true, booking: unpaidBooking })
                 }}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl shadow-md uppercase tracking-wider flex items-center gap-2 transition"
