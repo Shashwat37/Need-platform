@@ -805,19 +805,17 @@ def checkout_payment():
             "invoice_id": existing_payment.invoice_id,
         }), 400
 
-    # A job can only be paid for once the worker has marked it complete.
-    #
-    # WHY this is now a hard rule: this function used to quietly set the booking
-    # to "completed" itself if it wasn't already. That skipped the completion
-    # step, which is what credits the worker's earnings, job count and welfare
-    # share — so paying early silently robbed the worker of all three.
+    # Auto-complete booking if customer pays before worker marks complete
     if booking.status != "completed":
-        return jsonify({
-            "error": (
-                f"This job is still '{booking.status}'. It can be paid for once "
-                "the worker marks it complete."
-            )
-        }), 400
+        booking.status = "completed"
+        booking.completion_note = "Service completed and verified via Razorpay Gateway payment."
+        if booking.worker_id:
+            profile = WorkerProfile.query.filter_by(user_id=booking.worker_id).first()
+            if profile:
+                profile.total_jobs = (profile.total_jobs or 0) + 1
+                net_earned = round(booking.amount * WORKER_SHARE, 2)
+                profile.earnings = round((profile.earnings or 0.0) + net_earned, 2)
+                _credit_welfare(booking.worker_id, booking)
 
     method = data.get("method", "upi").lower().strip()
     if method not in ("upi", "card", "cash"):
