@@ -249,16 +249,32 @@ export default function PaymentModal({
             )}
 
             {method === 'qr' && (
-              <div className="p-4 rounded-xl bg-surface-container-low text-center space-y-3 border border-outline-variant/40">
-                <span className="font-semibold text-xs text-on-surface block">Scan &amp; Pay via Any UPI App</span>
-                <div className="mx-auto w-36 h-36 bg-white p-2 rounded-xl shadow-md border border-outline-variant/60 flex flex-col items-center justify-center relative group">
-                  <QrCode size={110} className="text-slate-800" />
-                  <span className="absolute bottom-1 bg-emerald-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
-                    ₹{totalAmount}
+              <div className="p-4 rounded-xl bg-surface-container-low text-center space-y-3 border border-outline-variant/40 animate-fade-in">
+                <div className="flex items-center justify-center gap-2">
+                  <span className="font-semibold text-xs text-on-surface">Scan &amp; Pay via Any UPI App</span>
+                  <span className="bg-emerald-500/10 text-emerald-700 font-bold text-[10px] px-2 py-0.5 rounded-full border border-emerald-500/20">
+                    Live Dynamic QR
                   </span>
                 </div>
-                <div className="text-[11px] text-on-surface-variant font-mono">
-                  UPI ID: <span className="font-bold text-primary">need.cooperative@upi</span>
+
+                <div className="mx-auto w-44 h-44 bg-white p-2.5 rounded-2xl shadow-lg border border-outline-variant/60 flex flex-col items-center justify-center relative group">
+                  <img
+                    src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`upi://pay?pa=need.cooperative@upi&pn=NEED%20Cooperative%20Society&am=${totalAmount}&cu=INR&tn=BookingRef${booking.id}`)}`}
+                    alt="UPI QR Code"
+                    className="w-full h-full object-contain rounded-lg"
+                  />
+                  <span className="absolute -bottom-2 bg-emerald-600 text-white text-[10px] font-bold px-3 py-0.5 rounded-full shadow-md font-mono">
+                    Pay ₹{totalAmount}
+                  </span>
+                </div>
+
+                <div className="pt-2 text-xs space-y-1">
+                  <div className="font-mono text-on-surface">
+                    UPI ID: <span className="font-bold text-primary">need.cooperative@upi</span>
+                  </div>
+                  <p className="text-[11px] text-on-surface-variant">
+                    Open PhonePe, GPay, Paytm or BHIM to scan &amp; complete payment.
+                  </p>
                 </div>
               </div>
             )}
