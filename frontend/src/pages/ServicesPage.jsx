@@ -34,7 +34,7 @@ import {
   X,
 } from 'lucide-react'
 import { getServices, getWorkers } from '../services/api'
-import { getServiceIcon } from '../components/serviceIcons'
+import { getServiceIcon, getServiceImage } from '../components/serviceIcons'
 import WorkerIdCard from '../components/WorkerIdCard'
 import SectionHeading from '../components/SectionHeading'
 import BookingModal from '../components/BookingModal'
@@ -331,24 +331,35 @@ export default function ServicesPage() {
               <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {filteredServices.map(service => {
                   const Icon = getServiceIcon(service.icon)
+                  const imageUrl = getServiceImage(service.icon)
                   return (
                     <article
                       key={service.id}
-                      className="card group flex flex-col justify-between p-5 transition hover:shadow-lift"
+                      className="card group flex flex-col justify-between overflow-hidden transition hover:shadow-lift"
                     >
-                      <div>
-                        {/* Card Header: Icon + Category Badge */}
-                        <div className="flex items-start justify-between">
-                          <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-700 transition group-hover:bg-brand-100 group-hover:scale-105">
-                            <Icon size={22} strokeWidth={2} />
-                          </span>
-                          <span className="rounded-full border border-line bg-paper px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted">
-                            {service.category.replace(' Services', '')}
-                          </span>
-                        </div>
+                      {/* Image Header */}
+                      <div className="h-40 w-full shrink-0 overflow-hidden bg-line relative">
+                        <img 
+                          src={imageUrl} 
+                          alt={service.name} 
+                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                        />
+                        <span className="absolute top-3 right-3 rounded-full border border-white/20 bg-black/40 backdrop-blur-md px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-white shadow-sm">
+                          {service.category.replace(' Services', '')}
+                        </span>
+                      </div>
+                      
+                      <div className="flex flex-col flex-1 p-5 pt-0">
+                        <div>
+                          {/* Card Header: Icon */}
+                          <div className="flex items-start justify-between -mt-6 mb-2">
+                            <span className="grid h-12 w-12 place-items-center rounded-2xl bg-brand-50 text-brand-700 transition group-hover:bg-brand-100 group-hover:scale-105 shadow-sm border-[3px] border-white relative z-10">
+                              <Icon size={22} strokeWidth={2} />
+                            </span>
+                          </div>
 
-                        {/* Title & Description */}
-                        <h3 className="mt-4 font-display text-lg font-bold text-ink">
+                          {/* Title & Description */}
+                          <h3 className="font-display text-lg font-bold text-ink">
                           {service.name}
                         </h3>
                         <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted">
