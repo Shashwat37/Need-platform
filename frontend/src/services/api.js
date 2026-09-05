@@ -171,6 +171,12 @@ export async function getBookingPayment(bookingId) {
   return response.data
 }
 
+/** Check real-time payment status for hands-free auto-detection. */
+export async function checkPaymentStatus(bookingId) {
+  const response = await api.get(`/bookings/${bookingId}/payment-status`)
+  return response.data
+}
+
 // ---------------------------------------------------------------------------
 // Reviews & Ratings (Step 9)
 // ---------------------------------------------------------------------------

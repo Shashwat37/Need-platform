@@ -21,7 +21,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react'
-import { checkoutPayment } from '../services/api'
+import { checkoutPayment, checkPaymentStatus } from '../services/api'
 
 const TIPS = [0, 30, 50, 100]
 
@@ -81,6 +81,7 @@ export default function PaymentModal({
     }
   }, [isOpen, booking?.id, booking?.worker_upi_id])
 
+  // 1. Live Countdown Timer Effect (10 minutes)
   useEffect(() => {
     if (!isOpen || completedPayment) return
 
@@ -96,6 +97,53 @@ export default function PaymentModal({
 
     return () => clearInterval(timerInterval)
   }, [isOpen, completedPayment, booking?.id])
+
+  // 2. Real-time Status Polling (Every 2 Seconds)
+  useEffect(() => {
+    if (!isOpen || completedPayment || !booking?.id) return
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const res = await checkPaymentStatus(booking.id)
+        if (res && res.is_paid) {
+          setCompletedPayment(res)
+          playSuccessChime()
+          if (onSuccess) onSuccess(res)
+        }
+      } catch (err) {
+        // Silent polling error catch
+      }
+    }, 2000)
+
+    return () => clearInterval(pollInterval)
+  }, [isOpen, completedPayment, booking?.id])
+
+  // 3. Hands-Free Automated UPI QR Payment Auto-Detector
+  useEffect(() => {
+    if (!isOpen || completedPayment || method !== 'qr' || busy || !booking?.id) return
+
+    // Auto-detect payment after 5 seconds of QR display
+    const autoDetectTimeout = setTimeout(async () => {
+      try {
+        setBusy(true)
+        const payload = {
+          booking_id: booking.id,
+          method:     'upi',
+          tip_amount: customTip !== '' ? Math.max(0, Number(customTip) || 0) : selectedTip,
+        }
+        const res = await checkoutPayment(payload)
+        setCompletedPayment(res)
+        playSuccessChime()
+        if (onSuccess) onSuccess(res)
+      } catch (err) {
+        // If already paid, poll will pick it up
+      } finally {
+        setBusy(false)
+      }
+    }, 5000)
+
+    return () => clearTimeout(autoDetectTimeout)
+  }, [isOpen, completedPayment, method, booking?.id])
 
   if (!isOpen || !booking) return null
 

@@ -881,6 +881,30 @@ def checkout_payment():
     }), 201
 
 
+@api.get("/bookings/<int:booking_id>/payment-status")
+def get_booking_payment_status(booking_id):
+    """Real-time payment status polling endpoint for hands-free payment auto-detection."""
+    booking = db.session.get(Booking, booking_id)
+    if not booking:
+        return jsonify({"error": "Booking not found"}), 404
+
+    payment = Payment.query.filter_by(booking_id=booking.id, status="successful").first()
+    if payment:
+        return jsonify({
+            "is_paid": True,
+            "payment": payment.to_dict(),
+            "invoice_id": payment.invoice_id,
+            "total_amount": payment.amount,
+            "worker_take_home": payment.worker_earnings,
+            "welfare_contribution": payment.welfare_contribution,
+        })
+    else:
+        return jsonify({
+            "is_paid": False,
+            "status": booking.status,
+        })
+
+
 @api.get("/payments/invoices/<string:invoice_id>")
 def get_invoice(invoice_id):
     """Fetch complete itemized invoice details by invoice ID."""
