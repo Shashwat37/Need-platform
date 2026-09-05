@@ -15,11 +15,35 @@ import {
   Receipt,
   ShieldCheck,
   Smartphone,
+  Sparkles,
   X,
 } from 'lucide-react'
 import { checkoutPayment } from '../services/api'
 
 const TIPS = [0, 30, 50, 100]
+
+function playSuccessChime() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext
+    if (!AudioCtx) return
+    const ctx = new AudioCtx()
+    const now = ctx.currentTime
+
+    const osc1 = ctx.createOscillator()
+    const gain1 = ctx.createGain()
+    osc1.type = 'sine'
+    osc1.frequency.setValueAtTime(523.25, now)
+    osc1.frequency.exponentialRampToValueAtTime(783.99, now + 0.15)
+    gain1.gain.setValueAtTime(0.3, now)
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.6)
+    osc1.connect(gain1)
+    gain1.connect(ctx.destination)
+    osc1.start(now)
+    osc1.stop(now + 0.6)
+  } catch (e) {
+    // Fallback if audio blocked
+  }
+}
 
 export default function PaymentModal({
   isOpen,
@@ -71,10 +95,8 @@ export default function PaymentModal({
 
       const res = await checkoutPayment(payload)
       setCompletedPayment(res)
+      playSuccessChime()
       setBusy(false)
-      if (onSuccess) {
-        onSuccess(res)
-      }
     } catch (err) {
       setError(err?.response?.data?.error || 'Payment failed. Please try again.')
       setBusy(false)
@@ -127,39 +149,63 @@ export default function PaymentModal({
 
         {/* Payment Success Splash */}
         {completedPayment ? (
-          <div className="p-7 text-center space-y-4">
-            <div className="mx-auto w-16 h-16 rounded-2xl bg-primary text-on-primary flex items-center justify-center shadow-md animate-bounce">
-              <CheckCircle2 size={36} />
+          <div className="p-8 text-center space-y-6 animate-scale-up relative overflow-hidden bg-gradient-to-b from-emerald-500/10 via-surface-container-lowest to-surface-container-lowest">
+            {/* Floating celebratory glow rings */}
+            <div className="absolute -top-12 -right-12 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-teal-500/20 rounded-full blur-2xl pointer-events-none" />
+
+            {/* Animated Checkmark Circle */}
+            <div className="relative mx-auto w-24 h-24 flex items-center justify-center">
+              <div className="absolute inset-0 rounded-full bg-emerald-500/20 animate-ping" />
+              <div className="relative w-20 h-20 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white flex items-center justify-center shadow-xl border-4 border-white">
+                <CheckCircle2 size={48} className="animate-bounce" />
+              </div>
             </div>
 
-            <div>
-              <h3 className="font-headline-md text-xl font-extrabold text-on-surface">Payment Settled!</h3>
-              <p className="font-mono text-xs text-primary font-bold mt-1">
-                Official Receipt: {completedPayment.invoice_id}
+            {/* Title & Badge */}
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 bg-emerald-500/10 text-emerald-800 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border border-emerald-500/20">
+                <Sparkles size={14} className="text-emerald-600" />
+                Payment Successful &amp; Remitted
+              </div>
+              <h3 className="font-headline-lg text-2xl font-black text-on-surface pt-1">
+                ₹{completedPayment.total_amount || totalAmount} Paid!
+              </h3>
+              <p className="font-mono text-xs text-on-surface-variant">
+                Receipt ID: <span className="font-bold text-primary">{completedPayment.invoice_id}</span>
               </p>
             </div>
 
-            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-left text-xs space-y-2 max-w-sm mx-auto">
-              <div className="flex justify-between font-bold text-on-surface">
-                <span>Total Remitted:</span>
-                <span className="font-mono">₹{completedPayment.total_amount}</span>
+            {/* Breakdown Card */}
+            <div className="rounded-2xl border border-emerald-500/20 bg-surface-container-low p-4 text-xs space-y-2.5 text-left shadow-xs">
+              <div className="flex justify-between items-center pb-2 border-b border-outline-variant/40">
+                <span className="text-on-surface-variant font-medium">Payment Mode:</span>
+                <span className="font-bold text-emerald-700 uppercase font-mono bg-emerald-500/10 px-2 py-0.5 rounded">
+                  {method === 'qr' ? 'UPI Scan (thakuraayush@fam)' : method === 'upi' ? `UPI (${upiId})` : method.toUpperCase()}
+                </span>
               </div>
-              <div className="flex justify-between text-on-surface-variant">
-                <span>Payment Mode:</span>
-                <span className="font-mono uppercase">{method} (Simulated)</span>
+              <div className="flex justify-between text-on-surface">
+                <span className="text-on-surface-variant">Worker Payout (90% + Tip):</span>
+                <span className="font-mono font-bold text-primary">₹{completedPayment.worker_take_home || workerTakeHome}</span>
               </div>
-              <div className="border-t border-primary/20 pt-2 flex justify-between text-primary font-bold">
-                <span>Welfare Contribution:</span>
-                <span className="font-mono">₹{completedPayment.welfare_contribution}</span>
+              <div className="flex justify-between text-on-surface">
+                <span className="text-on-surface-variant">Co-op Welfare Reserve (10%):</span>
+                <span className="font-mono font-bold text-secondary">₹{completedPayment.welfare_contribution || welfareCut}</span>
               </div>
             </div>
 
-            <button
-              onClick={onClose}
-              className="w-full btn btn-primary font-bold text-xs uppercase tracking-wider shadow-sm"
-            >
-              Done • Return to Dashboard
-            </button>
+            <div className="pt-2 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (onSuccess) onSuccess(completedPayment)
+                  onClose()
+                }}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold py-3.5 px-4 rounded-xl shadow-lg transition-all text-xs uppercase tracking-wider flex items-center justify-center gap-2"
+              >
+                <span>🎉 Done • Return to Dashboard</span>
+              </button>
+            </div>
           </div>
         ) : (
           <form onSubmit={handlePay} className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
