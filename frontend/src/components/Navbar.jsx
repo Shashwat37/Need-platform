@@ -84,13 +84,13 @@ export default function Navbar() {
         {/* Right Desktop Utilities */}
         <div className="hidden md:flex items-center gap-3 flex-shrink-0">
           {/* Location / Civic Hub */}
-          <div className="hidden xl:flex items-center gap-1.5 bg-surface-container-lowest px-3 py-1.5 rounded-full border border-outline-variant/50 shadow-sm text-xs text-on-surface font-semibold">
+          <div className="hidden 2xl:flex items-center gap-1.5 bg-surface-container-lowest px-3 py-1.5 rounded-full border border-outline-variant/50 shadow-sm text-xs text-on-surface font-semibold">
             <span className="material-symbols-outlined text-secondary text-[17px]">location_on</span>
             <span>Noida &amp; NCR</span>
           </div>
 
           {/* Language Switcher */}
-          <div className="hidden xl:flex items-center gap-1 bg-surface-container-lowest px-2.5 py-1.5 rounded-full border border-outline-variant/50 shadow-sm text-xs">
+          <div className="hidden 2xl:flex items-center gap-1 bg-surface-container-lowest px-2.5 py-1.5 rounded-full border border-outline-variant/50 shadow-sm text-xs">
             <span className="material-symbols-outlined text-on-surface-variant text-[17px]">translate</span>
             <select
               value={lang}
