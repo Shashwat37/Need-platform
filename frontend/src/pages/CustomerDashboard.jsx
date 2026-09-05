@@ -11,6 +11,7 @@ import {
   CreditCard,
   Loader2,
   MapPin,
+  Navigation,
   Receipt,
   Search,
   Star,
@@ -25,6 +26,7 @@ import PaymentModal from '../components/PaymentModal'
 import InvoiceModal from '../components/InvoiceModal'
 import ReviewModal from '../components/ReviewModal'
 import DisputeModal from '../components/DisputeModal'
+import WorkerTrackingModal from '../components/WorkerTrackingModal'
 import BookingLifecycleStepper from '../components/BookingLifecycleStepper'
 import { getServiceImage } from '../utils/serviceImages'
 
@@ -84,11 +86,12 @@ export default function CustomerDashboard() {
   const [searchFilter, setSearchFilter]       = useState('')
 
   // Modals state
-  const [bookingModal, setBookingModal] = useState({ isOpen: false, service: null, worker: null })
-  const [paymentModal, setPaymentModal] = useState({ isOpen: false, booking: null })
-  const [invoiceModal, setInvoiceModal] = useState({ isOpen: false, invoiceId: null })
-  const [reviewModal, setReviewModal]   = useState({ isOpen: false, booking: null })
-  const [disputeModal, setDisputeModal] = useState({ isOpen: false, booking: null })
+  const [bookingModal, setBookingModal]   = useState({ isOpen: false, service: null, worker: null })
+  const [paymentModal, setPaymentModal]   = useState({ isOpen: false, booking: null })
+  const [invoiceModal, setInvoiceModal]   = useState({ isOpen: false, invoiceId: null })
+  const [reviewModal, setReviewModal]     = useState({ isOpen: false, booking: null })
+  const [disputeModal, setDisputeModal]   = useState({ isOpen: false, booking: null })
+  const [trackingModal, setTrackingModal] = useState({ isOpen: false, booking: null })
 
   function loadDashboard() {
     setLoading(true)
@@ -193,6 +196,17 @@ export default function CustomerDashboard() {
             </div>
 
             <div className="flex items-center gap-3 flex-wrap">
+              <button
+                type="button"
+                onClick={() => {
+                  const activeJob = allBookings.find((b) => ['accepted', 'on_the_way', 'arrived', 'in_progress', 'worker_assigned'].includes(b.status)) || allBookings[0] || { id: 1, service_name: 'Electrician Services', worker_name: 'Rahul Kumar', address: 'Flat 402, Sector 62, Noida' }
+                  setTrackingModal({ isOpen: true, booking: activeJob })
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold px-4 py-2.5 rounded-xl shadow-md uppercase tracking-wider flex items-center gap-2 transition"
+              >
+                <Navigation size={16} className="animate-pulse" />
+                <span>🗺️ Track Worker Live (GPS)</span>
+              </button>
               <button
                 type="button"
                 onClick={() => {
@@ -563,6 +577,18 @@ export default function CustomerDashboard() {
                           </td>
                           <td className="px-4 py-3.5 text-right">
                             <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                              {['pending', 'requested', 'accepted', 'on_the_way', 'arrived', 'in_progress', 'worker_assigned'].includes(b.status) && (
+                                <button
+                                  type="button"
+                                  onClick={() => setTrackingModal({ isOpen: true, booking: b })}
+                                  className="bg-blue-600 hover:bg-blue-700 text-white text-[11px] py-1 px-2 rounded-lg font-bold flex items-center gap-1 shadow-xs transition"
+                                  title="View Live GPS Worker Map"
+                                >
+                                  <Navigation size={12} className="animate-pulse" />
+                                  Track GPS 🗺️
+                                </button>
+                              )}
+
                               {canPay && (
                                 <button
                                   type="button"
@@ -717,6 +743,14 @@ export default function CustomerDashboard() {
           onClose={() => setDisputeModal({ isOpen: false, booking: null })}
           booking={disputeModal.booking}
           onDisputeCreated={loadDashboard}
+        />
+      )}
+
+      {trackingModal.isOpen && (
+        <WorkerTrackingModal
+          isOpen={trackingModal.isOpen}
+          onClose={() => setTrackingModal({ isOpen: false, booking: null })}
+          booking={trackingModal.booking}
         />
       )}
     </div>
