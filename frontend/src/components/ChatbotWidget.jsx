@@ -1,46 +1,39 @@
 /**
- * ChatbotWidget.jsx — Floating interactive AI Chatbot Assistant ("NEED Mitra").
- *
- * WHAT: Provides floating AI Assistant widget for service recommendations, 90/10 split explanation,
- *       emergency rush guidance, and quick booking triggers.
- * WHY:  Assists customers and workers instantly on any page without navigating away.
- * HOW:  Calls sendChatMessage() from api.js and renders markdown-friendly messages & action buttons.
+ * ChatbotWidget.jsx — Stitch "NEED Mitra" Civic Cooperative AI Assistant.
  */
 
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  AlertTriangle,
-  Bot,
   ChevronDown,
   Loader2,
-  MessageSquare,
   Send,
   Sparkles,
   User,
   Wrench,
   X,
 } from 'lucide-react'
-import { sendChatMessage } from '../services/api'
+import { getServices, sendChatMessage } from '../services/api'
 import BookingModal from './BookingModal'
 
 const INITIAL_PROMPTS = [
   'Need an Electrician for wiring',
-  'How does 90/10 split work?',
+  'How does the 85/10 split work?',
   'Emergency water pipe leak!',
   'How to verify worker identity?',
 ]
 
 export default function ChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false)
+  const [allServices, setAllServices] = useState([])
   const [messages, setMessages] = useState([
     {
       sender: 'bot',
-      text: 'Namaste! 🙏 I am **NEED Mitra**, your AI Assistant. How can I help you today?',
+      text: 'Namaste! 🙏 I am **NEED Mitra**, your Cooperative Federation AI Assistant. How can I assist you with verified services, fair 85/10 splits, or emergency rush dispatch today?',
       quick_actions: [
         { label: 'Book Electrician', action: 'book', service_id: 1 },
-        { label: 'How 90/10 Works', link: '/about' },
-        { label: 'Help Desk', link: '/support' },
+        { label: 'Co-op Model Split', link: '/about' },
+        { label: 'Support Desk', link: '/support' },
       ],
     },
   ])
@@ -50,8 +43,11 @@ export default function ChatbotWidget() {
   const messagesEndRef = useRef(null)
   const navigate = useNavigate()
 
-  // Booking Modal integration
   const [bookingModal, setBookingModal] = useState({ isOpen: false, serviceId: null })
+
+  useEffect(() => {
+    getServices().then(setAllServices).catch(() => {})
+  }, [])
 
   useEffect(() => {
     if (isOpen) {
@@ -68,7 +64,7 @@ export default function ChatbotWidget() {
     if (!query || sending) return
 
     const userMsg = { sender: 'user', text: query }
-    setMessages(prev => [...prev, userMsg])
+    setMessages((prev) => [...prev, userMsg])
     if (!textToSend) setInput('')
     setSending(true)
 
@@ -76,17 +72,17 @@ export default function ChatbotWidget() {
       const res = await sendChatMessage(query)
       const botMsg = {
         sender: 'bot',
-        text: res.reply || 'I am here to help!',
+        text: res.reply || 'I am here to assist you!',
         quick_actions: res.quick_actions || [],
         suggested_services: res.suggested_services || [],
       }
-      setMessages(prev => [...prev, botMsg])
+      setMessages((prev) => [...prev, botMsg])
     } catch (err) {
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
         {
           sender: 'bot',
-          text: 'Apologies, I encountered a temporary connection glitch. Please try again or visit our Help Center.',
+          text: 'Apologies, I encountered a temporary connection issue. Please try again or visit our Help Center.',
           quick_actions: [{ label: 'Go to Help Center', link: '/support' }],
         },
       ])
@@ -99,183 +95,186 @@ export default function ChatbotWidget() {
     if (action.action === 'book' && action.service_id) {
       setBookingModal({ isOpen: true, serviceId: action.service_id })
     } else if (action.link) {
-      navigate(action.link)
       setIsOpen(false)
+      navigate(action.link)
     }
   }
 
-  function renderFormattedText(text) {
-    // Simple markdown-style renderer for bold (**text**) and linebreaks
-    const parts = text.split(/(\*\*.*?\*\*|\n)/g)
-    return parts.map((part, idx) => {
-      if (part === '\n') return <br key={idx} />
-      if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={idx} className="font-bold text-ink">{part.slice(2, -2)}</strong>
-      }
-      return part
-    })
-  }
+  const activeBookingService =
+    allServices.find((s) => s.id === bookingModal.serviceId) ||
+    (bookingModal.serviceId ? { id: bookingModal.serviceId } : null)
 
   return (
     <>
-      {/* Floating Toggle Button */}
-      <div className="fixed bottom-5 right-5 z-40">
-        {!isOpen && (
+      {/* Floating Trigger Button (Stitch Civic Design) */}
+      {!isOpen && (
+        <aside className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-40">
           <button
             onClick={() => setIsOpen(true)}
-            className="group relative flex items-center gap-2.5 rounded-full bg-brand-600 px-4 py-3 text-white shadow-xl hover:bg-brand-700 hover:scale-105 transition-all duration-200"
+            className="h-14 pl-4 pr-6 rounded-full bg-primary hover:bg-primary-container text-on-primary shadow-[0_6px_24px_rgba(0,122,85,0.35)] transition-all hover:scale-105 active:scale-95 flex items-center gap-3 cursor-pointer border border-primary-fixed/20"
+            type="button"
             aria-label="Open NEED Mitra AI Assistant"
           >
-            <span className="relative flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
-            </span>
-            <Bot size={20} className="shrink-0" />
-            <span className="font-display text-xs font-bold tracking-wide">
-              NEED Mitra AI
-            </span>
+            <span className="w-3 h-3 rounded-full bg-secondary-container animate-pulse shrink-0" />
+            <span className="material-symbols-outlined text-[24px]">support_agent</span>
+            <span className="font-label-lg text-sm sm:text-base font-bold tracking-tight">NEED Mitra AI</span>
           </button>
-        )}
-      </div>
+        </aside>
+      )}
 
-      {/* Floating Chat Drawer */}
+      {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-5 right-5 z-50 w-full max-w-sm sm:max-w-md h-[540px] max-h-[85vh] rounded-2xl bg-white border border-line shadow-2xl flex flex-col overflow-hidden animate-fade-in">
-
-          {/* Chat Header */}
-          <div className="bg-gradient-to-r from-brand-700 via-brand-600 to-brand-700 p-4 text-white flex items-center justify-between shadow-md">
+        <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col w-[calc(100vw-2rem)] sm:w-[380px] h-[550px] max-h-[85vh] bg-surface-container-lowest rounded-3xl shadow-2xl border border-outline-variant/60 overflow-hidden animate-fade-in">
+          {/* Header */}
+          <div className="bg-inverse-surface text-inverse-on-surface p-4 flex items-center justify-between border-b border-white/10">
             <div className="flex items-center gap-3">
-              <div className="grid h-9 w-9 place-items-center rounded-xl bg-white/10 text-white backdrop-blur-sm">
-                <Bot size={20} />
+              <div className="w-9 h-9 rounded-xl bg-primary text-on-primary flex items-center justify-center font-bold text-xs shadow-md">
+                <span className="material-symbols-outlined text-[20px]">diversity_3</span>
               </div>
               <div>
-                <h3 className="font-display text-sm font-extrabold flex items-center gap-1.5">
-                  NEED Mitra
-                  <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-300 border border-emerald-400/30">
-                    AI Assistant
+                <div className="flex items-center gap-2">
+                  <span className="font-headline-sm text-sm sm:text-base font-bold text-inverse-on-surface">NEED Mitra</span>
+                  <span className="bg-primary/30 text-primary-fixed text-[10px] font-bold px-2 py-0.5 rounded font-mono uppercase tracking-wider">
+                    AI Civic
                   </span>
-                </h3>
-                <p className="text-[11px] text-brand-100">NEED Cooperative Helpdesk</p>
+                </div>
+                <p className="text-[11px] text-inverse-on-surface/70 leading-none mt-1">
+                  Multi-State Co-op Assistant • Active
+                </p>
               </div>
             </div>
-
             <button
               onClick={() => setIsOpen(false)}
-              className="rounded-lg p-1 text-brand-100 hover:bg-white/10 hover:text-white transition"
+              className="text-inverse-on-surface/70 hover:text-inverse-on-surface p-1.5 rounded-xl hover:bg-white/10 transition"
               aria-label="Close Chat"
             >
-              <X size={18} />
+              <X size={20} />
             </button>
           </div>
 
-          {/* Messages Thread */}
-          <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-paper/30 text-xs">
+          {/* Prompt Chips */}
+          <div className="p-3 bg-surface-container-low border-b border-outline-variant/40 flex items-center gap-2 overflow-x-auto scrollbar-none">
+            {INITIAL_PROMPTS.map((p) => (
+              <button
+                key={p}
+                onClick={() => handleSend(p)}
+                className="whitespace-nowrap rounded-full bg-surface-container-lowest px-3 py-1.5 text-xs font-semibold text-on-surface-variant hover:bg-surface-container hover:text-primary transition shadow-xs flex-shrink-0 border border-outline-variant/40"
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+
+          {/* Messages Feed */}
+          <div className="flex-1 p-4 overflow-y-auto space-y-3.5 bg-surface-container-low/30 text-sm">
             {messages.map((m, idx) => (
               <div
                 key={idx}
                 className={`flex gap-2.5 ${m.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 {m.sender === 'bot' && (
-                  <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-brand-100 text-brand-700 font-bold mt-0.5">
-                    <Bot size={14} />
+                  <div className="w-7 h-7 rounded-full bg-primary text-on-primary flex items-center justify-center text-xs shrink-0 mt-0.5 shadow-sm">
+                    <Sparkles size={14} />
                   </div>
                 )}
-
-                <div className={`max-w-[82%] rounded-2xl px-4 py-3 shadow-xs space-y-2.5 ${
-                  m.sender === 'user'
-                    ? 'bg-brand-600 text-white rounded-tr-none'
-                    : 'bg-white text-ink border border-line rounded-tl-none'
-                }`}>
-                  <div className="leading-relaxed whitespace-pre-wrap">
-                    {renderFormattedText(m.text)}
+                <div className={`space-y-2 max-w-[85%] ${m.sender === 'user' ? 'items-end' : 'items-start'}`}>
+                  <div
+                    className={`p-3.5 rounded-2xl text-sm leading-relaxed shadow-xs ${
+                      m.sender === 'user'
+                        ? 'bg-primary text-on-primary rounded-tr-none'
+                        : 'bg-surface-container-lowest text-on-surface rounded-tl-none border border-outline-variant/40'
+                    }`}
+                  >
+                    <p className="whitespace-pre-wrap">{m.text}</p>
                   </div>
 
-                  {/* Action Buttons inside Bot message */}
+                  {/* Quick Actions */}
                   {m.quick_actions && m.quick_actions.length > 0 && (
-                    <div className="pt-1.5 flex flex-wrap gap-1.5 border-t border-line/60">
-                      {m.quick_actions.map((act, aIdx) => (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {m.quick_actions.map((act, i) => (
                         <button
-                          key={aIdx}
+                          key={i}
                           onClick={() => handleActionClick(act)}
-                          className="rounded-lg bg-brand-50 hover:bg-brand-100 border border-brand-200 px-2.5 py-1 text-[11px] font-bold text-brand-700 transition"
+                          className="rounded-xl bg-surface-container-lowest border border-primary/30 px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary hover:text-on-primary transition shadow-xs"
                         >
                           {act.label} →
                         </button>
                       ))}
                     </div>
                   )}
-                </div>
 
-                {m.sender === 'user' && (
-                  <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-ink text-white font-bold text-[10px] mt-0.5">
-                    <User size={14} />
-                  </div>
-                )}
+                  {/* Suggested Services */}
+                  {m.suggested_services && m.suggested_services.length > 0 && (
+                    <div className="space-y-1.5 pt-1">
+                      {m.suggested_services.map((svc) => (
+                        <div
+                          key={svc.id}
+                          className="flex items-center justify-between p-2.5 rounded-xl bg-surface-container-lowest border border-outline-variant/50 text-xs"
+                        >
+                          <div>
+                            <span className="font-bold text-on-surface block text-sm">{svc.name}</span>
+                            <span className="text-xs text-on-surface-variant font-mono">
+                              from ₹{svc.starting_price}
+                            </span>
+                          </div>
+                          <button
+                            onClick={() => setBookingModal({ isOpen: true, serviceId: svc.id })}
+                            className="bg-primary hover:bg-primary-container text-on-primary px-3 py-1 rounded-lg text-xs font-bold transition shadow-xs"
+                          >
+                            Book
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
-
             {sending && (
-              <div className="flex gap-2.5 items-center text-muted text-xs">
-                <div className="grid h-7 w-7 place-items-center rounded-lg bg-brand-100 text-brand-700">
-                  <Bot size={14} />
-                </div>
-                <div className="flex items-center gap-1.5 bg-white border border-line rounded-2xl px-3.5 py-2">
-                  <Loader2 size={13} className="animate-spin text-brand-600" />
-                  <span>NEED Mitra is thinking...</span>
-                </div>
+              <div className="flex items-center gap-2 text-on-surface-variant text-sm italic">
+                <Loader2 size={16} className="animate-spin text-primary" />
+                <span>NEED Mitra is typing…</span>
               </div>
             )}
-
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Quick Suggestion Pills */}
-          <div className="px-3 py-2 bg-white border-t border-line overflow-x-auto flex gap-1.5 scrollbar-none">
-            {INITIAL_PROMPTS.map((prompt, pIdx) => (
-              <button
-                key={pIdx}
-                onClick={() => handleSend(prompt)}
-                className="whitespace-nowrap rounded-full bg-paper hover:bg-brand-50 border border-line hover:border-brand-200 px-2.5 py-1 text-[11px] font-medium text-muted hover:text-brand-700 transition"
-              >
-                {prompt}
-              </button>
-            ))}
-          </div>
-
-          {/* Chat Input Bar */}
+          {/* Input Bar */}
           <form
-            onSubmit={e => {
+            onSubmit={(e) => {
               e.preventDefault()
               handleSend()
             }}
-            className="p-3 bg-white border-t border-line flex items-center gap-2"
+            className="p-3 bg-surface-container-lowest border-t border-outline-variant/40 flex items-center gap-2"
           >
             <input
               type="text"
               value={input}
-              onChange={e => setInput(e.target.value)}
-              placeholder="Ask NEED Mitra AI (e.g. Electrician in Noida)..."
-              className="flex-1 rounded-xl border border-line bg-paper px-3.5 py-2.5 text-xs text-ink focus:outline-none focus:ring-2 focus:ring-brand-500"
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask about repairs, fair splits, emergency help..."
+              className="flex-1 rounded-xl border border-outline-variant bg-surface-container-low px-3.5 py-2.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20"
             />
             <button
               type="submit"
-              disabled={!input.trim() || sending}
-              className="grid h-9 w-9 place-items-center rounded-xl bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-50 transition shrink-0"
+              disabled={sending || !input.trim()}
+              className="w-10 h-10 rounded-xl bg-primary text-on-primary flex items-center justify-center hover:bg-primary-container transition disabled:opacity-40 shadow-sm"
               aria-label="Send message"
             >
-              <Send size={15} />
+              <Send size={16} />
             </button>
           </form>
-
         </div>
       )}
 
-      {/* Embedded Booking Modal triggered from Chatbot action */}
-      <BookingModal
-        isOpen={bookingModal.isOpen}
-        onClose={() => setBookingModal({ isOpen: false, serviceId: null })}
-        serviceId={bookingModal.serviceId}
-      />
+      {/* Booking Modal Integration */}
+      {bookingModal.isOpen && (
+        <BookingModal
+          isOpen={bookingModal.isOpen}
+          onClose={() => setBookingModal({ isOpen: false, serviceId: null })}
+          service={activeBookingService}
+          allServices={allServices}
+        />
+      )}
     </>
   )
 }

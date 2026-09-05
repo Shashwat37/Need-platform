@@ -1,138 +1,202 @@
-/*
-  index.css — global styles.
-
-  The three @tailwind lines pull in Tailwind's CSS.
-  Below them we add a few small reusable classes (.btn, .card, .eyebrow)
-  so we don't repeat the same ten utility classes on every button.
-*/
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply bg-paper font-sans text-ink antialiased;
-    background-image: linear-gradient(180deg, #faf8ff 0%, #f7f8fc 100%);
-    font-size: 15px;
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100%;
+    overflow-x: hidden;
+    background-color: #FAF8FF;
+    color: #131B2E;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  #root {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+  img, video, canvas, svg {
+    max-width: 100%;
   }
 
   ::selection {
-    @apply bg-brand-100 text-ink;
+    background-color: #A3FFD2;
+    color: #002114;
   }
 
-  h1,
-  h2,
-  h3,
-  h4 {
-    @apply font-display tracking-tight;
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: #131B2E;
+    letter-spacing: -0.02em;
+    font-weight: 700;
   }
 
-  input,
-  select,
-  textarea {
-    @apply transition-colors duration-150;
+  /* Material symbols helper */
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    display: inline-block;
+    vertical-align: middle;
+    line-height: 1;
+    text-transform: none;
+    letter-spacing: normal;
+    word-wrap: normal;
+    white-space: nowrap;
+    direction: ltr;
   }
 
-  /* Keyboard users must always be able to see where they are. */
+  .material-symbols-filled {
+    font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+  }
+
+  input, select, textarea {
+    border-color: #BDC9C1;
+    background-color: #FFFFFF;
+    color: #131B2E;
+    transition: all 150ms ease;
+  }
+
   :focus-visible {
-    @apply outline-none ring-2 ring-brand-600 ring-offset-2 ring-offset-paper;
+    outline: none;
+    box-shadow: 0 0 0 2px #007A55, 0 0 0 4px rgba(0, 122, 85, 0.15);
   }
 }
 
 @layer components {
-  /* Buttons ---------------------------------------------------------- */
+  /* Buttons */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-5 py-3
-           text-sm font-semibold transition-all duration-150;
+    @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-5 py-2.5
+      text-sm font-semibold transition-all duration-150 active:scale-[0.98];
   }
   .btn-primary {
-    @apply bg-brand-600 text-white shadow-sm hover:-translate-y-px hover:bg-brand-700 hover:shadow-card;
+    @apply bg-primary text-on-primary shadow-sm hover:bg-primary-container hover:shadow-md;
+  }
+  .btn-secondary {
+    @apply bg-secondary-container text-on-secondary-container hover:bg-secondary hover:text-on-secondary shadow-sm;
   }
   .btn-outline {
-    @apply border border-line bg-white text-ink shadow-sm hover:-translate-y-px hover:border-brand-500 hover:text-brand-700;
+    @apply border border-outline-variant bg-surface-container-lowest text-on-surface shadow-sm hover:bg-surface-container-low hover:border-outline;
   }
   .btn-ghost {
-    @apply text-ink hover:bg-brand-50;
+    @apply text-on-surface-variant hover:bg-surface-container hover:text-on-surface;
   }
   .btn-light {
-    @apply bg-white text-ink hover:bg-white/90;
+    @apply bg-surface-container-lowest text-on-surface hover:bg-surface-container-low;
   }
 
-  /* Cards ------------------------------------------------------------ */
+  /* Cards */
   .card {
-    @apply rounded-2xl border border-line/70 bg-white shadow-card;
-    transition: box-shadow 180ms ease, transform 180ms ease;
+    @apply rounded-2xl border border-outline-variant/60 bg-surface-container-lowest shadow-sm;
+    transition: box-shadow 200ms ease, transform 200ms ease;
   }
-
   .card:hover {
-    box-shadow: 0 8px 28px -14px rgba(19, 27, 46, .28);
+    @apply shadow-md;
   }
 
-  /* Small uppercase label above a section heading.
-     The letter-spacing is what makes it read as a label, not a sentence. */
+  /* Eyebrows and Badges */
   .eyebrow {
-    @apply font-mono text-[11px] uppercase tracking-[0.2em] text-brand-700;
+    @apply font-label-caps text-label-caps uppercase tracking-[0.08em] text-primary font-bold;
   }
 
-  /* Shared layout width so every section lines up. */
-  .container-page {
-    @apply mx-auto w-full max-w-content px-4 sm:px-6;
+  /* Responsive Production Container System
+     ONE definition drives every page. Change these numbers to change the
+     whole site's content width — do not hardcode max-w-[...] in pages. */
+  .container-page,
+  .app-container {
+    @apply mx-auto w-full max-w-[1440px] 2xl:max-w-[1680px] 3xl:max-w-[1840px]
+           px-4 sm:px-6 lg:px-8 2xl:px-10;
+  }
+
+  /* Narrower measure for long-form paragraphs, so body text stays readable
+     even though the page container is wide. */
+  .container-prose {
+    @apply mx-auto w-full max-w-[46rem];
+  }
+
+  .surface-band {
+    @apply border-y border-outline-variant/60 bg-surface-container-low/70;
+  }
+
+  .dashboard-shell {
+    @apply container-page py-6 sm:py-8 2xl:py-10;
+  }
+
+  /* Section vertical rhythm. Tighter than before at small/medium widths so
+     pages read dense rather than stretched, opening up only on large screens
+     where there is genuinely more room. */
+  .section-y {
+    @apply py-12 lg:py-16 2xl:py-20;
+  }
+
+  .section-y-tight {
+    @apply py-8 lg:py-12 2xl:py-14;
+  }
+
+  /* Form controls */
+  .field-label {
+    @apply mb-1.5 block text-xs font-semibold text-on-surface;
+  }
+
+  .field-control {
+    @apply w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3.5 py-2.5 text-sm text-on-surface
+           placeholder:text-outline focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20;
+  }
+
+  /* Tab strip */
+  .tab-strip {
+    @apply flex gap-1 overflow-x-auto border-b border-outline-variant/60;
+  }
+
+  .tab-strip > button {
+    @apply shrink-0 border-b-2 border-transparent px-4 py-3 text-sm font-semibold text-on-surface-variant transition-colors hover:text-on-surface;
+  }
+
+  .tab-strip > button[aria-selected='true'],
+  .tab-strip > button.active {
+    @apply border-primary text-primary font-bold;
+  }
+
+  /* Physical Credential Header Strip */
+  .credential-strip {
+    @apply bg-inverse-surface text-inverse-on-surface px-5 py-2.5 flex items-center justify-between text-xs;
   }
 }
 
-/* Shared Stitch-style chrome. Pages retain their existing structure and
-   behavior, while these primitives give every route one coherent visual
-   language. */
-header.sticky {
-  @apply border-b-0 bg-paper/90 shadow-[0_1px_8px_rgba(19,27,46,0.05)];
+/* Modal overlays */
+.fixed.inset-0.z-50 {
+  background-color: rgba(19, 27, 46, 0.65);
+  backdrop-filter: blur(4px);
 }
 
-header.sticky nav {
-  max-width: 1280px;
+.fixed.inset-0.z-50 > .card,
+.fixed.inset-0.z-50 > div {
+  border-radius: 1.25rem;
+  border-color: rgba(189, 201, 193, 0.8);
+  box-shadow: 0 20px 25px -5px rgba(15, 23, 42, 0.16), 0 8px 10px -6px rgba(15, 23, 42, 0.08);
 }
 
-header.sticky select {
-  @apply text-xs;
+/* Scrollbar styles */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
 }
 
-main {
-  min-height: 60vh;
-}
-
-/* The marketplace landing screen uses the Stitch tonal canvas: a quiet
-   lavender surface behind elevated white service cards. */
-main > section:first-child {
-  background-color: #f2f3ff;
-}
-
-main > section:first-child h1 {
-  letter-spacing: -0.03em;
-}
-
-main > section:first-child .card {
-  background: #ffffff;
-}
-
-/* Auth and content pages use the same centered, high-trust panel treatment. */
-main > div.container-page > div > .card {
-  background: #ffffff;
-}
-
-main a {
-  transition: color 150ms ease;
-}
-
-@media (max-width: 640px) {
-  .card {
-    border-radius: 1rem;
-  }
-}
-
-/* ------------------------------------------------------------------
-   Page-load animation for the hero.
-   One short, staggered reveal — not an effect on every element.
------------------------------------------------------------------- */
+/* Animations */
 @keyframes rise {
   from {
     opacity: 0;
@@ -148,7 +212,6 @@ main a {
   animation: rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-/* The verified stamp lands last, with a tiny settle, like a real rubber stamp. */
 @keyframes stampIn {
   0% {
     opacity: 0;
@@ -168,15 +231,12 @@ main a {
   animation: stampIn 0.5s ease-out 0.75s both;
 }
 
-/* Respect users who have asked their device to reduce motion. */
 @media (prefers-reduced-motion: reduce) {
   .rise,
   .stamp-in {
     animation: none !important;
     opacity: 1;
   }
-
-  /* The tilt is part of the design, not the animation, so it stays. */
   .stamp-in {
     transform: rotate(-7deg);
   }

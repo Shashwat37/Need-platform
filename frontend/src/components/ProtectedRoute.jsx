@@ -24,23 +24,42 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
+const ROLE_DASHBOARDS = {
+  customer: '/customer',
+  worker: '/worker',
+  cooperative_admin: '/cooperative',
+  admin: '/admin',
+}
+
 export default function ProtectedRoute({ requiredRole }) {
   const { user, loading } = useAuth()
   const location = useLocation()
 
-  // Still waiting for the /me check — render nothing to avoid flicker.
-  if (loading) return null
+  // Still verifying session with server and no cached user found — show branded loading
+  if (loading && !user) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center p-8 bg-surface">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <span className="material-symbols-outlined text-3xl animate-spin">progress_activity</span>
+        </div>
+        <p className="mt-4 text-xs font-bold tracking-wider uppercase text-on-surface-variant font-mono">
+          Verifying Federation Credentials...
+        </p>
+      </div>
+    )
+  }
 
-  // Not logged in → go to /login, remember where we were.
+  // Not logged in → go to /login, remember where we were trying to navigate
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  // Logged in but wrong role → send to their own dashboard.
+  // Logged in but wrong role → safely send to their own role-specific dashboard
   if (requiredRole && user.role !== requiredRole) {
-    return <Navigate to={`/${user.role}`} replace />
+    const target = ROLE_DASHBOARDS[user.role] || '/'
+    return <Navigate to={target} replace />
   }
 
-  // All good — render the nested route's element.
+  // Authenticated & authorized — render the requested protected route
   return <Outlet />
 }

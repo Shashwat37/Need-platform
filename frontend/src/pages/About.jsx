@@ -1,97 +1,148 @@
-import { Link } from 'react-router-dom'
-import { ArrowRight } from 'lucide-react'
-import SectionHeading from '../components/SectionHeading'
-
 /**
- * About.jsx — explains the cooperative idea in plain words.
- *
- * This page is static text only (no backend call), so it is finished now
- * rather than left as a placeholder.
+ * About.jsx — The NEED Cooperative Federation Democratic Charter & Philosophy.
+ * Redesigned using Stitch Cooperative Federation design language.
  */
+
+import { Link } from 'react-router-dom'
+import {
+  ArrowRight,
+  Award,
+  Building2,
+  CheckCircle2,
+  HeartHandshake,
+  IndianRupee,
+  Scale,
+  Shield,
+  ShieldCheck,
+  Users,
+  Wrench,
+  XCircle,
+} from 'lucide-react'
+import SectionHeading from '../components/SectionHeading'
 
 const DIFFERENCES = [
   {
-    them: 'A private company owns the platform and sets the commission.',
-    us: 'The workers are members of the cooperative that owns the platform.',
+    them: 'Private venture capital platform captures 25% to 35% commission margins as corporate profit.',
+    us: '85% to 90% goes directly to the worker. 10% auto-funds their democratic personal Welfare Wallet.',
   },
   {
-    them: 'Commission is decided for the worker, and can rise at any time.',
-    us: 'Members vote on the commission, and it funds welfare instead of profit.',
+    them: 'Algorithms arbitrarily de-rank or deactivate workers without human tribunal recourse or explanation.',
+    us: 'Accountable to elected peer assemblies with recorded restorative tripartite arbitration.',
   },
   {
-    them: 'A bad month is entirely the worker’s problem.',
-    us: 'Part of every job is saved into the worker’s welfare wallet.',
+    them: 'Medical emergencies, off-season lulls, and equipment breakages are solely the worker’s burden.',
+    us: 'Every job automatically contributes to group health insurance, tool grants, and instant emergency liquidity.',
   },
   {
-    them: 'Ratings can end someone’s income with no explanation.',
-    us: 'Verification and disputes are handled by the federation, with a record.',
+    them: 'Anonymous gig workers with no collective identity or ownership stake in the platform.',
+    us: 'Certified cooperative members with government-issued physical ID cards under MSCS Act 2002.',
   },
 ]
 
 export default function About() {
   return (
-    <div className="container-page py-16 lg:py-20">
-      <SectionHeading
-        eyebrow="About"
-        title="A marketplace the workers own"
-        description="NEED is built around one idea: the people doing the work should own the platform that finds them the work, and should keep most of what the customer pays."
-      />
+    <div className="w-full bg-surface text-on-surface pb-16">
 
-      <div className="mt-14 grid gap-12 lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="space-y-5 text-[15px] leading-relaxed text-muted">
-          <p>
-            Local service workers — electricians, plumbers, cleaners, carpenters —
-            usually find jobs through word of mouth. Work is irregular, prices are
-            argued over every time, and there is no record of a good job well done.
-            When they join a commercial app instead, they get a steady stream of
-            work but hand over a large share of every bill, and have no say in how
-            the rules are set.
-          </p>
-          <p>
-            NEED is organised as a cooperative federation instead. Workers
-            join a local society, get their identity and skills verified once, and
-            then appear in customer search results with a member ID and a rating
-            that belongs to them. The commission the platform charges is small and
-            decided by the members, and a slice of every job is set aside in the
-            worker’s own welfare wallet towards insurance and emergencies.
-          </p>
-          <p>
-            For customers, the benefit is trust. You are not gambling on a stranger
-            with a phone number. You can see that someone has been verified by
-            their society, how many jobs they have completed, what previous
-            customers said, and exactly what you will be charged before you book.
-          </p>
-          <p className="rounded-xl border border-line bg-white p-5 text-ink">
-            This is a student project prototype built for a college demonstration.
-            The payment flow is simulated end to end — invoices, welfare splits and
-            wallet balances are all real database records, but no actual money
-            moves and no real bank or UPI provider is connected.
+      {/* ── Hero Banner ─────────────────────────────────────────────────── */}
+      <section className="relative w-full overflow-hidden bg-surface-container-low px-4 sm:px-6 lg:px-8 py-8 sm:py-12 border-b border-surface-container-high">
+        <div className="pointer-events-none absolute -right-16 -top-24 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
+        <div className="pointer-events-none absolute right-1/3 -bottom-20 h-64 w-64 rounded-full bg-secondary-container/10 blur-2xl" />
+
+        <div className="relative z-10 max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto text-center space-y-4">
+          <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-3.5 py-1 text-xs font-bold text-primary mx-auto">
+            <Scale size={14} />
+            <span>DEMOCRATIC COOPERATIVE CHARTER • MSCS ACT 2002</span>
+          </div>
+
+          <h1 className="font-headline-xl text-3xl sm:text-5xl font-extrabold text-on-surface tracking-tight max-w-3xl mx-auto">
+            A Civic Marketplace Owned by the People Who Do the Work.
+          </h1>
+
+          <p className="text-sm sm:text-base text-on-surface-variant max-w-2xl mx-auto leading-relaxed">
+            NEED is India’s first worker-owned digital service federation. We replace speculative gig commissions
+            with mutual ownership, statutory welfare security, and transparent fair-split pricing.
           </p>
         </div>
+      </section>
 
-        <div>
-          <h3 className="font-mono text-[11px] uppercase tracking-[0.18em] text-ink">
-            The difference
-          </h3>
-          <ul className="mt-5 space-y-4">
-            {DIFFERENCES.map((row) => (
-              <li key={row.us} className="card p-5">
-                <p className="text-sm leading-relaxed text-muted/80 line-through">
-                  {row.them}
-                </p>
-                <p className="mt-2.5 border-l-2 border-brand-600 pl-3 text-sm font-medium leading-relaxed text-ink">
-                  {row.us}
-                </p>
-              </li>
-            ))}
-          </ul>
+      {/* ── Main Philosophy & Comparison ─────────────────────────────────── */}
+      <div className="max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
 
-          <Link to="/register" className="btn btn-primary mt-7">
-            Join the cooperative
-            <ArrowRight size={17} />
-          </Link>
+        <div className="grid gap-12 lg:grid-cols-12 items-start">
+          {/* Narrative Column (6 cols) */}
+          <div className="lg:col-span-6 space-y-6 text-sm text-on-surface-variant leading-relaxed">
+            <h2 className="font-headline-lg text-2xl font-bold text-on-surface">
+              Why We Are Building a Cooperative Federation
+            </h2>
+
+            <p>
+              Local home service workers — electricians, plumbers, carpenters, technicians — have traditionally
+              depended on word of mouth or informal local contacts. When commercial gig platforms entered, they promised
+              steady demand but introduced opaque algorithmic penalties, unpredictable surges, and 25-35% commission skims
+              that siphon wealth out of local communities.
+            </p>
+
+            <p>
+              NEED is chartered under the <strong>Multi-State Co-operative Societies Act, 2002</strong>. Workers are not
+              disposable independent contractors; they are voting co-op partners with democratic equity in the federation.
+              Every completed job contributes transparently into their personal welfare wallet, funding group medical insurance
+              and instant cash emergency relief.
+            </p>
+
+            <p>
+              For citizens, the benefit is guaranteed peace of mind. Every artisan arrives with government Aadhaar e-KYC
+              and ITI State Technical certification verified by local union boards. You know exactly where your rupees go:
+              straight to the family of the craftsman servicing your home.
+            </p>
+
+            {/* Prototype Notice Card */}
+            <div className="rounded-3xl border border-secondary/30 bg-secondary-container/10 p-5 text-xs text-on-surface space-y-1.5">
+              <div className="font-bold text-secondary flex items-center gap-1.5 text-sm">
+                <ShieldCheck size={16} />
+                Student Project Demonstration Note
+              </div>
+              <p className="text-on-surface-variant leading-relaxed">
+                This website is a functioning prototype built for university presentation. While database records,
+                split math, invoice generators, and role permissions are real and live, banking remittances are simulated.
+              </p>
+            </div>
+          </div>
+
+          {/* Comparison Cards (6 cols) */}
+          <div className="lg:col-span-6 space-y-4">
+            <h3 className="font-label-caps text-xs font-bold uppercase tracking-wider text-primary">
+              The Fundamental Structural Difference
+            </h3>
+
+            <div className="space-y-3.5">
+              {DIFFERENCES.map((row, idx) => (
+                <div
+                  key={idx}
+                  className="bg-surface-container-lowest rounded-2xl p-5 border border-surface-container-high shadow-sm space-y-2.5"
+                >
+                  <div className="flex items-start gap-2 text-xs text-on-surface-variant/80">
+                    <XCircle size={15} className="text-red-500 shrink-0 mt-0.5" />
+                    <span className="line-through">{row.them}</span>
+                  </div>
+                  <div className="flex items-start gap-2 text-xs font-semibold text-on-surface border-t border-surface-container-high pt-2">
+                    <CheckCircle2 size={15} className="text-primary shrink-0 mt-0.5" />
+                    <span className="text-primary font-bold">{row.us}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="pt-3">
+              <Link to="/register" className="btn btn-primary text-xs py-3 px-6 shadow-md flex items-center gap-2">
+                <span>Join the Cooperative Movement</span>
+                <ArrowRight size={16} />
+              </Link>
+            </div>
+          </div>
         </div>
+
       </div>
+
     </div>
   )
 }

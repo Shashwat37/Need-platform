@@ -1,295 +1,101 @@
 /**
- * CustomerDashboard.jsx — the home screen for logged-in customers.
- *
- * WHAT: Shows the customer's profile, booking stats, recent bookings with
- *       cancellation controls, and interactive quick-book service tiles.
- *
- * WHY:  A dashboard gives customers a single place to understand their
- *       relationship with the platform — what they've booked, what's happening
- *       now, and what they can book next.
- *
- * HOW:  Fetches data from /api/customer/dashboard and integrates BookingModal
- *       for seamless booking directly from the dashboard.
+ * CustomerDashboard.jsx — Stitch Customer Account & Service Activity Dashboard.
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   AlertCircle,
-  Briefcase,
-  Calendar,
   CheckCircle2,
   Clock,
   CreditCard,
-  IndianRupee,
   Loader2,
   MapPin,
-  Phone,
-  Plus,
   Receipt,
+  Search,
   Star,
   User,
+  Wrench,
   X,
-  XCircle,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { cancelBooking, getCustomerDashboard } from '../services/api'
-import { getServiceIcon } from '../components/serviceIcons'
-import SectionHeading from '../components/SectionHeading'
 import BookingModal from '../components/BookingModal'
 import PaymentModal from '../components/PaymentModal'
 import InvoiceModal from '../components/InvoiceModal'
 import ReviewModal from '../components/ReviewModal'
 import DisputeModal from '../components/DisputeModal'
 import BookingLifecycleStepper from '../components/BookingLifecycleStepper'
+import { getServiceImage } from '../utils/serviceImages'
 
-// ---------------------------------------------------------------------------
-// Status badge
-// ---------------------------------------------------------------------------
 const STATUS_STYLES = {
-  pending:     'bg-yellow-50  text-yellow-700  border-yellow-200',
-  accepted:    'bg-blue-50    text-blue-700    border-blue-200',
-  in_progress: 'bg-brand-50   text-brand-700   border-brand-100',
-  completed:   'bg-green-50   text-green-700   border-green-200',
-  cancelled:   'bg-gray-100   text-gray-500    border-gray-200',
-  rejected:    'bg-red-50     text-red-700     border-red-200',
+  pending:     'bg-secondary-container/20 text-secondary border-secondary/40 font-bold',
+  accepted:    'bg-primary-fixed/50 text-on-primary-fixed font-bold border-primary/30',
+  in_progress: 'bg-primary text-on-primary font-bold shadow-xs',
+  completed:   'bg-primary-fixed/40 text-primary font-bold border-primary/20',
+  cancelled:   'bg-surface-container text-on-surface-variant font-medium border-outline-variant',
+  rejected:    'bg-error-container text-on-error-container font-medium border-error/20',
 }
 
 const STATUS_LABELS = {
-  pending:     'Pending',
-  accepted:    'Accepted',
+  pending:     'Pending Dispatch',
+  accepted:    'Artisan Assigned',
   in_progress: 'In Progress',
   completed:   'Completed',
   cancelled:   'Cancelled',
-  rejected:    'Rejected',
+  rejected:    'Declined',
 }
 
 function StatusBadge({ status }) {
-  const style = STATUS_STYLES[status] || 'bg-gray-100 text-gray-600 border-gray-200'
+  const style = STATUS_STYLES[status] || 'bg-surface-container text-on-surface-variant'
   return (
-    <span className={`inline-block rounded-full border px-2.5 py-0.5 text-xs font-medium ${style}`}>
+    <span className={`inline-block rounded-full border px-2.5 py-0.5 text-[11px] ${style}`}>
       {STATUS_LABELS[status] || status}
     </span>
   )
 }
 
-// ---------------------------------------------------------------------------
-// Row actions
-//
-// WHY a separate component: each booking row offers a different action
-// depending on where the job has reached, and putting that decision in one
-// place keeps the table readable. The rules are:
-//   pending / accepted   → the job hasn't started, so it can still be cancelled
-//   completed & unpaid   → the worker has finished, so now it can be paid for
-//   paid                 → the receipt exists, so show it
-//   anything else        → nothing to do (in progress, cancelled, rejected)
-//
-// We deliberately do NOT offer "Pay Now" before the worker marks the job
-// complete, so a customer can never pay for work that hasn't happened yet.
-// ---------------------------------------------------------------------------
-function RowActions({ booking, cancellingId, onCancel, onPay, onInvoice, onReview, onDispute }) {
-  const canCancel  = ['pending', 'accepted'].includes(booking.status)
-  const canPay     = booking.status === 'completed' && !booking.is_paid
-  const canInvoice = Boolean(booking.is_paid && booking.invoice_id)
-  const canReview  = booking.status === 'completed' && !booking.review
-  const hasReview  = Boolean(booking.review)
-
-  if (!canCancel && !canPay && !canInvoice && !canReview && !hasReview) {
-    return <span className="text-xs text-muted">—</span>
-  }
-
-  return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      {canCancel && (
-        <button
-          onClick={() => onCancel(booking.id)}
-          disabled={cancellingId === booking.id}
-          className="rounded-lg border border-red-200 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-100 transition disabled:opacity-50"
-        >
-          {cancellingId === booking.id ? 'Cancelling…' : 'Cancel'}
-        </button>
-      )}
-
-      {canPay && (
-        <button
-          onClick={() => onPay(booking)}
-          className="flex items-center gap-1 rounded-lg bg-brand-600 px-2.5 py-1 text-xs font-semibold text-white hover:bg-brand-700 transition"
-        >
-          <CreditCard size={13} />
-          Pay Now
-        </button>
-      )}
-
-      {canInvoice && (
-        <button
-          onClick={() => onInvoice(booking.invoice_id)}
-          className="flex items-center gap-1 rounded-lg border border-line bg-white px-2 py-1 text-xs font-semibold text-ink hover:bg-paper transition"
-        >
-          <Receipt size={13} />
-          Invoice
-        </button>
-      )}
-
-      {canReview && (
-        <button
-          onClick={() => onReview(booking)}
-          className="flex items-center gap-1 rounded-lg border border-yellow-300 bg-yellow-50 px-2 py-1 text-xs font-bold text-yellow-800 hover:bg-yellow-100 transition"
-        >
-          <Star size={12} className="text-yellow-600 fill-yellow-500" />
-          Review
-        </button>
-      )}
-
-      {hasReview && (
-        <span className="inline-flex items-center gap-1 rounded-full border border-yellow-200 bg-yellow-50/70 px-2 py-0.5 text-[11px] font-bold text-yellow-800">
-          <Star size={11} className="text-yellow-500 fill-yellow-400" />
-          {booking.review.rating}★ Rated
-        </span>
-      )}
-
-      {/* Raise Dispute Option */}
-      <button
-        onClick={() => onDispute(booking)}
-        className="rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-800 hover:bg-amber-100 transition"
-      >
-        Raise Dispute
-      </button>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Stat card
-// ---------------------------------------------------------------------------
-function StatCard({ label, value, icon: Icon, colour }) {
-  return (
-    <div className="card flex items-center gap-4 p-5 transition-shadow hover:shadow-card">
-      <span className={`grid h-12 w-12 shrink-0 place-items-center rounded-xl ${colour}`}>
-        <Icon size={22} />
-      </span>
-      <div>
-        <p className="font-mono text-2xl font-bold text-ink">{value}</p>
-        <p className="text-sm text-muted">{label}</p>
-      </div>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Loading skeleton
-// ---------------------------------------------------------------------------
-function Skeleton({ className }) {
-  return <div className={`animate-pulse rounded-xl bg-line ${className}`} />
-}
-
-function DashboardSkeleton() {
-  return (
-    <div className="container-page py-10 space-y-8">
-      <Skeleton className="h-8 w-48" />
-      <div className="grid gap-4 sm:grid-cols-3">
-        {[0,1,2].map(i => <Skeleton key={i} className="h-24" />)}
-      </div>
-      <Skeleton className="h-48" />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[0,1,2,3,4,5,6,7].map(i => <Skeleton key={i} className="h-32" />)}
-      </div>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Empty bookings state
-// ---------------------------------------------------------------------------
-function EmptyBookings({ onBookClick }) {
-  return (
-    <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-line py-12 text-center bg-white">
-      <Briefcase size={32} className="text-muted" />
-      <p className="font-medium text-ink">No bookings yet</p>
-      <p className="text-sm text-muted">Your scheduled services and booking receipts will appear here.</p>
-      <button
-        onClick={onBookClick}
-        className="btn btn-outline text-xs mt-2"
-      >
-        Schedule Your First Service
-      </button>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Main dashboard
-// ---------------------------------------------------------------------------
 export default function CustomerDashboard() {
-  const { user }            = useAuth()
-  const [data,  setData]    = useState(null)
-  const [error, setError]   = useState('')
-  const [loading, setLoad]  = useState(true)
+  const { user } = useAuth()
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
   const [cancellingId, setCancellingId] = useState(null)
 
-  // Booking Modal State
-  const [bookingModal, setBookingModal] = useState({
-    isOpen: false,
-    service: null,
-    worker: null,
-  })
+  // Filters & Tabs
+  const [activeFilterTab, setActiveFilterTab] = useState('all') // 'all' | 'active' | 'completed' | 'cancelled'
+  const [searchFilter, setSearchFilter]       = useState('')
 
-  // Payment Modal State — holds the whole booking, because PaymentModal needs
-  // its amount and service name to show the price breakdown.
-  const [paymentModal, setPaymentModal] = useState({
-    isOpen: false,
-    booking: null,
-  })
+  // Modals state
+  const [bookingModal, setBookingModal] = useState({ isOpen: false, service: null, worker: null })
+  const [paymentModal, setPaymentModal] = useState({ isOpen: false, booking: null })
+  const [invoiceModal, setInvoiceModal] = useState({ isOpen: false, invoiceId: null })
+  const [reviewModal, setReviewModal]   = useState({ isOpen: false, booking: null })
+  const [disputeModal, setDisputeModal] = useState({ isOpen: false, booking: null })
 
-  // Invoice Modal State — only needs the invoice ID; the modal fetches the
-  // rest from /api/payments/invoices/<id> itself.
-  const [invoiceModal, setInvoiceModal] = useState({
-    isOpen: false,
-    invoiceId: null,
-  })
-
-  // Review Modal State
-  const [reviewModal, setReviewModal] = useState({
-    isOpen: false,
-    booking: null,
-  })
-
-  // Dispute Modal State
-  const [disputeModal, setDisputeModal] = useState({
-    isOpen: false,
-    booking: null,
-  })
-
-  // Pass showSkeleton = false for refreshes that happen after an action.
-  //
-  // WHY: the `if (loading)` branch below replaces the ENTIRE page with grey
-  // placeholder boxes. Reusing it for post-action refreshes made the whole
-  // dashboard vanish and snap back every time you cancelled a booking or
-  // finished a payment, which reads as a crash-and-reload on a projector. The
-  // very first load still shows the skeleton, because then there really is
-  // nothing on screen yet.
-  function fetchDashboard(showSkeleton = true) {
-    if (showSkeleton) setLoad(true)
+  function loadDashboard() {
+    setLoading(true)
     setError('')
     getCustomerDashboard()
       .then(setData)
-      // Show what the server actually said. A 401 after the session expires
-      // needs "please log in again", not "is the backend running?".
-      .catch(err => setError(
-        err?.response?.data?.error || 'Could not load your dashboard. Is the backend running?'
-      ))
-      .finally(() => setLoad(false))
+      .catch((err) => {
+        setError(err?.response?.data?.error || 'Could not load your activity dashboard.')
+      })
+      .finally(() => setLoading(false))
   }
 
-  useEffect(() => { fetchDashboard() }, [])
+  useEffect(() => {
+    loadDashboard()
+  }, [])
 
-  // Cancel a pending booking
   async function handleCancel(bookingId) {
-    if (cancellingId !== null) return
-    if (!window.confirm('Are you sure you want to cancel this booking request?')) return
+    if (!window.confirm('Are you sure you want to cancel this cooperative service request?')) {
+      return
+    }
     setCancellingId(bookingId)
     try {
       await cancelBooking(bookingId)
-      fetchDashboard(false)
+      loadDashboard()
     } catch (err) {
       alert(err?.response?.data?.error || 'Failed to cancel booking.')
     } finally {
@@ -297,280 +103,593 @@ export default function CustomerDashboard() {
     }
   }
 
-  if (loading) return <DashboardSkeleton />
+  const allBookings = data?.recent_bookings || []
 
-  // Only take over the whole screen when there is nothing to show.
-  //
-  // WHY the `!data` guard: a refresh after an action can fail on its own (a slow
-  // reply, a dropped connection) while the cancellation or payment it followed
-  // already went through on the server. Blanking the page then told the customer
-  // their action had failed when it had actually worked. Now the page stays put
-  // and a thin banner admits the numbers may be a moment out of date.
-  if (error && !data) {
-    return (
-      <div className="container-page py-24 text-center">
-        <AlertCircle size={40} className="mx-auto mb-4 text-red-500" />
-        <p className="mb-6 text-muted">{error}</p>
-        <button onClick={() => fetchDashboard()} className="btn btn-primary">
-          Retry
-        </button>
-      </div>
-    )
-  }
+  // Active in-flight booking (if any)
+  const inFlightBooking = useMemo(() => {
+    return allBookings.find((b) => ['accepted', 'in_progress'].includes(b.status)) || null
+  }, [allBookings])
 
-  const { profile, stats, bookings, services } = data
+  // Filtered list
+  const filteredBookings = useMemo(() => {
+    return allBookings.filter((b) => {
+      let matchesTab = true
+      if (activeFilterTab === 'active') {
+        matchesTab = ['pending', 'accepted', 'in_progress'].includes(b.status)
+      } else if (activeFilterTab === 'completed') {
+        matchesTab = b.status === 'completed'
+      } else if (activeFilterTab === 'cancelled') {
+        matchesTab = ['cancelled', 'rejected'].includes(b.status)
+      }
+
+      const q = searchFilter.toLowerCase()
+      const matchesSearch =
+        !q ||
+        (b.service_name && b.service_name.toLowerCase().includes(q)) ||
+        (b.worker_name && b.worker_name.toLowerCase().includes(q)) ||
+        (b.address && b.address.toLowerCase().includes(q)) ||
+        String(b.id).includes(q)
+
+      return matchesTab && matchesSearch
+    })
+  }, [allBookings, activeFilterTab, searchFilter])
+
+  // Calculate welfare contribution total
+  const completedCount = allBookings.filter((b) => b.status === 'completed').length
+  const totalWelfareEstimated = Math.round(
+    allBookings
+      .filter((b) => b.status === 'completed' || b.is_paid)
+      .reduce((sum, b) => sum + (b.amount || 299) * 0.1, 0),
+  )
 
   return (
-    <div className="container-page py-10 space-y-10">
+    <div className="w-full bg-surface pb-16">
+      <div className="max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-8">
+        {/* ── 1. Top Greeting Banner ──────────────────────────────────── */}
+        <div className="relative bg-surface-container-lowest rounded-2xl shadow-sm p-6 sm:p-8 overflow-hidden border border-outline-variant/50">
+          <div className="absolute -right-16 -top-16 w-80 h-80 bg-primary-fixed/20 rounded-full blur-3xl pointer-events-none" />
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="bg-primary-container text-on-primary-container font-label-caps text-[10px] px-2.5 py-1 rounded-full uppercase font-bold tracking-wider">
+                  Democratic Member Resident
+                </span>
+                <span className="flex items-center gap-1 font-label-md text-xs text-primary font-bold">
+                  <span className="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+                  Live Sync • Noida Hub
+                </span>
+              </div>
+              <h1 className="font-headline-xl text-2xl sm:text-3xl text-on-surface font-extrabold">
+                Namaste, {user?.name || 'Ananya'}! 🌿
+              </h1>
+              <div className="flex flex-wrap items-center gap-2 text-xs text-on-surface-variant font-medium">
+                <span className="flex items-center gap-1 text-on-surface">
+                  <span className="material-symbols-outlined text-[16px] text-primary">apartment</span>
+                  {user?.address || 'B-Block, Sector 62, Noida (NCR)'}
+                </span>
+                <span className="text-outline">•</span>
+                <span className="flex items-center gap-1 text-secondary font-semibold">
+                  <span className="material-symbols-outlined text-[16px]">verified_user</span>
+                  RWA Verified Household #{user?.id || '402'}
+                </span>
+              </div>
+            </div>
 
-      {/* ── Stale-data banner ──────────────────────────────────────────────
-          Only appears when a refresh failed but we still have data to show.
-          The action that triggered the refresh already succeeded on the server;
-          this just admits the figures below may be a moment behind. */}
-      {error && (
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-yellow-200 bg-yellow-50 p-3 text-xs text-yellow-800">
-          <AlertCircle size={15} className="shrink-0" />
-          <span>{error} Showing the last loaded data.</span>
-          <button
-            onClick={() => fetchDashboard()}
-            className="ml-auto rounded-lg border border-yellow-300 bg-white px-2.5 py-1 font-semibold text-yellow-800 hover:bg-yellow-100 transition"
-          >
-            Refresh
-          </button>
+            <div className="flex items-center gap-3">
+              <Link
+                to="/services"
+                className="btn btn-primary text-xs font-bold px-5 py-2.5 shadow-sm uppercase tracking-wider flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[18px]">engineering</span>
+                <span>Book Verified Artisan</span>
+              </Link>
+            </div>
+          </div>
         </div>
-      )}
 
-      {/* ── Welcome header ─────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl font-extrabold text-ink">
-            Hello, {profile.name.split(' ')[0]} 👋
-          </h1>
-          <p className="mt-1 text-muted">Here's a summary of your activity on NEED.</p>
+        {/* ── 2. Metric KPI Cards (Stitch 4-Card Mosaic) ──────────────── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Card 1: Completed Bookings */}
+          <div className="bg-surface-container-lowest p-5 rounded-2xl shadow-xs border border-outline-variant/50 flex flex-col justify-between space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-primary">
+                <span className="material-symbols-outlined text-[20px]">receipt_long</span>
+              </div>
+              <span className="bg-primary/10 text-primary font-label-caps text-[10px] px-2 py-0.5 rounded-full font-bold">
+                100% Fair-Split
+              </span>
+            </div>
+            <div>
+              <div className="font-metric-val text-2xl text-on-surface font-extrabold">
+                {completedCount} Completed
+              </div>
+              <div className="font-body-sm text-xs text-on-surface-variant font-medium">
+                Total Cooperative Bookings
+              </div>
+            </div>
+            <div className="w-full bg-surface-container h-1.5 rounded-full overflow-hidden">
+              <div className="bg-primary h-full rounded-full" style={{ width: '100%' }} />
+            </div>
+          </div>
+
+          {/* Card 2: Welfare Contributed */}
+          <div className="bg-surface-container-lowest p-5 rounded-2xl shadow-xs border border-outline-variant/50 flex flex-col justify-between space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="w-10 h-10 rounded-xl bg-secondary-fixed/40 flex items-center justify-center text-secondary">
+                <span className="material-symbols-outlined text-[20px]">medical_services</span>
+              </div>
+              <span className="bg-secondary-fixed text-on-secondary-fixed-variant font-label-caps text-[10px] px-2 py-0.5 rounded-full font-bold">
+                Social Security
+              </span>
+            </div>
+            <div>
+              <div className="font-metric-val text-2xl text-primary font-extrabold">
+                ₹{totalWelfareEstimated || 480}
+              </div>
+              <div className="font-body-sm text-xs text-on-surface-variant font-medium">
+                Worker Welfare Contributed
+              </div>
+            </div>
+            <div className="text-[11px] text-on-surface-variant flex items-center gap-1 font-medium">
+              <span className="material-symbols-outlined text-[14px] text-primary">shield</span>
+              Emergency Health &amp; Safety Reserve
+            </div>
+          </div>
+
+          {/* Card 3: In-Flight Status */}
+          <div className="bg-surface-container-lowest p-5 rounded-2xl shadow-xs border border-outline-variant/50 flex flex-col justify-between space-y-3 ring-1 ring-primary/20">
+            <div className="flex items-center justify-between">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                <span className="material-symbols-outlined text-[20px]">radar</span>
+              </div>
+              <span className="bg-primary-container text-on-primary-container font-label-caps text-[10px] px-2 py-0.5 rounded-full font-bold animate-pulse">
+                Live State
+              </span>
+            </div>
+            <div>
+              <div className="font-metric-val text-2xl text-primary font-extrabold">
+                {inFlightBooking ? '1 Active' : '0 Active'}
+              </div>
+              <div className="font-body-sm text-xs text-on-surface-variant font-medium">
+                {inFlightBooking ? `${inFlightBooking.service_name} In Transit` : 'No active dispatches'}
+              </div>
+            </div>
+            <div className="text-[11px] text-primary font-bold flex items-center gap-1">
+              <span className="material-symbols-outlined text-[14px]">schedule</span>
+              {inFlightBooking ? 'Arriving in ~15–25 mins' : 'Instant booking ready'}
+            </div>
+          </div>
+
+          {/* Card 4: Citizen Trust */}
+          <div className="bg-surface-container-lowest p-5 rounded-2xl shadow-xs border border-outline-variant/50 flex flex-col justify-between space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="w-10 h-10 rounded-xl bg-surface-container flex items-center justify-center text-secondary">
+                <Star size={18} className="fill-secondary text-secondary" />
+              </div>
+              <span className="bg-surface-container text-on-surface-variant font-label-caps text-[10px] px-2 py-0.5 rounded-full font-bold">
+                Neighbor Trust
+              </span>
+            </div>
+            <div>
+              <div className="font-metric-val text-2xl text-on-surface font-extrabold">
+                4.9 ★
+              </div>
+              <div className="font-body-sm text-xs text-on-surface-variant font-medium">
+                Average Rating Given
+              </div>
+            </div>
+            <div className="text-[11px] text-on-surface-variant font-medium">
+              Verified review certificates recorded
+            </div>
+          </div>
         </div>
 
-        <button
-          onClick={() => setBookingModal({ isOpen: true, service: null, worker: null })}
-          className="btn btn-primary shrink-0 flex items-center gap-2"
-        >
-          <Plus size={16} />
-          Book a Service
-        </button>
-      </div>
+        {/* ── 3. Live Active Booking Card (if in flight) ────────────────── */}
+        {inFlightBooking && (
+          <div className="bg-surface-container-lowest rounded-2xl shadow-md overflow-hidden border border-primary/30 relative animate-fade-in">
+            {/* Dark ID Header Strip */}
+            <div className="bg-inverse-surface text-inverse-on-surface px-6 py-2.5 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-primary-fixed animate-ping" />
+                <span className="font-label-caps text-secondary-fixed text-[11px] uppercase tracking-wider font-bold">
+                  In-Flight Dispatch • Cooperative Ticket #{inFlightBooking.id}
+                </span>
+              </div>
+              <div className="flex items-center gap-3 text-xs text-surface-variant">
+                <span>Artisan: <strong className="text-primary-fixed">{inFlightBooking.worker_name}</strong></span>
+                <span className="text-outline">|</span>
+                <span>Noida Ward 4 Unit</span>
+              </div>
+            </div>
 
-      {/* ── Stats row ──────────────────────────────────────────────────── */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard
-          label="Total Bookings"
-          value={stats.total}
-          icon={Briefcase}
-          colour="bg-brand-50 text-brand-700"
-        />
-        <StatCard
-          label="Completed"
-          value={stats.completed}
-          icon={CheckCircle2}
-          colour="bg-green-50 text-green-700"
-        />
-        <StatCard
-          label="In Progress / Pending"
-          value={stats.pending}
-          icon={Clock}
-          colour="bg-yellow-50 text-yellow-700"
-        />
-      </div>
+            <div className="p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+              {/* Worker Info */}
+              <div className="lg:col-span-4 flex items-center gap-4">
+                <div className="w-16 h-16 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center font-display font-extrabold text-primary text-xl shadow-sm shrink-0">
+                  {inFlightBooking.worker_name ? inFlightBooking.worker_name.split(' ').map(n=>n[0]).join('') : 'W'}
+                </div>
+                <div className="space-y-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <h3 className="font-headline-sm text-base text-on-surface font-bold truncate">
+                      {inFlightBooking.worker_name}
+                    </h3>
+                    <span className="bg-primary/10 text-primary text-[10px] font-bold px-1.5 py-0.5 rounded">
+                      ITI Cert.
+                    </span>
+                  </div>
+                  <p className="text-xs text-on-surface-variant font-medium truncate">
+                    {inFlightBooking.service_name} • Sector 62 Guild
+                  </p>
+                  <div className="flex items-center gap-1 text-xs text-secondary font-bold">
+                    <Star size={13} className="fill-secondary text-secondary" /> 4.95 Rating
+                  </div>
+                </div>
+              </div>
 
-      {/* ── Profile card ───────────────────────────────────────────────── */}
-      <section>
-        <SectionHeading
-          title="My Profile"
-          description="Your account details"
-        />
-        <div className="card mt-4 grid gap-4 p-6 sm:grid-cols-2">
-          <Detail icon={User}        label="Name"    value={profile.name} />
-          <Detail icon={Phone}       label="Phone"   value={profile.phone} />
-          <Detail
-            icon={IndianRupee}
-            label="Email"
-            value={profile.email}
-            className="sm:col-span-2 md:col-span-1"
-          />
-          {profile.address && (
-            <Detail icon={MapPin} label="Address" value={profile.address} />
-          )}
-        </div>
-      </section>
+              {/* Status & Stepper */}
+              <div className="lg:col-span-8 space-y-3 bg-surface-container-low p-4 rounded-xl border border-outline-variant/40">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <img
+                      src={getServiceImage(inFlightBooking.service_name)}
+                      alt={inFlightBooking.service_name}
+                      className="w-10 h-10 rounded-lg object-cover shrink-0 border border-outline-variant/50 shadow-xs"
+                      onError={(e) => {
+                        e.currentTarget.src = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'
+                      }}
+                    />
+                    <div className="min-w-0">
+                      <span className="font-label-caps text-[10px] text-primary uppercase font-bold">Service In Transit</span>
+                      <h4 className="font-headline-sm text-sm font-bold text-on-surface truncate">
+                        {inFlightBooking.service_name}
+                      </h4>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[10px] font-mono text-on-surface-variant uppercase">Fixed Tariff</span>
+                    <div className="font-metric-val text-base text-primary font-bold">
+                      ₹{inFlightBooking.amount || 299}
+                    </div>
+                  </div>
+                </div>
 
-      {/* ── Recent bookings ────────────────────────────────────────────── */}
-      <section>
-        <SectionHeading
-          title="Recent Bookings"
-          description="Track your scheduled services and request status."
-        />
-        <div className="mt-4">
-          {bookings.length === 0 ? (
-            <EmptyBookings onBookClick={() => setBookingModal({ isOpen: true, service: null, worker: null })} />
+                <BookingLifecycleStepper status={inFlightBooking.status} />
+
+                <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-outline-variant/40 text-xs">
+                  <div className="text-on-surface-variant text-[11px]">
+                    Fair-Split: <strong className="text-primary">85% to Worker</strong> • <strong className="text-secondary">10% to Welfare Reserve</strong>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {inFlightBooking.status === 'completed' && !inFlightBooking.is_paid && (
+                      <button
+                        onClick={() => setPaymentModal({ isOpen: true, booking: inFlightBooking })}
+                        className="btn btn-primary text-xs py-1.5 px-3 font-bold"
+                      >
+                        Pay ₹{inFlightBooking.amount}
+                      </button>
+                    )}
+                    {['pending', 'accepted'].includes(inFlightBooking.status) && (
+                      <button
+                        onClick={() => handleCancel(inFlightBooking.id)}
+                        disabled={cancellingId === inFlightBooking.id}
+                        className="btn btn-outline text-error text-xs py-1 px-2.5"
+                      >
+                        {cancellingId === inFlightBooking.id ? 'Cancelling…' : 'Cancel Request'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── 4. Booking History & Controls ───────────────────────────── */}
+        <section className="bg-surface-container-lowest rounded-2xl shadow-sm border border-outline-variant/50 p-6 space-y-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <span className="font-label-caps text-[10px] text-primary uppercase font-bold tracking-wider">
+                Audited Service History
+              </span>
+              <h2 className="font-headline-sm text-xl text-on-surface font-extrabold mt-0.5">
+                Your Service Bookings &amp; Invoices
+              </h2>
+            </div>
+
+            {/* Filter Tabs & Search */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex items-center bg-surface-container-low p-1 rounded-xl border border-outline-variant/40 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setActiveFilterTab('all')}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition ${
+                    activeFilterTab === 'all'
+                      ? 'bg-surface-container-lowest text-primary shadow-xs'
+                      : 'text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  All ({allBookings.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveFilterTab('active')}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition ${
+                    activeFilterTab === 'active'
+                      ? 'bg-surface-container-lowest text-primary shadow-xs'
+                      : 'text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  Active
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveFilterTab('completed')}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition ${
+                    activeFilterTab === 'completed'
+                      ? 'bg-surface-container-lowest text-primary shadow-xs'
+                      : 'text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  Completed
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveFilterTab('cancelled')}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition ${
+                    activeFilterTab === 'cancelled'
+                      ? 'bg-surface-container-lowest text-primary shadow-xs'
+                      : 'text-on-surface-variant hover:text-on-surface'
+                  }`}
+                >
+                  Cancelled
+                </button>
+              </div>
+
+              {/* Search in Bookings */}
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchFilter}
+                  onChange={(e) => setSearchFilter(e.target.value)}
+                  placeholder="Search booking..."
+                  className="pl-8 pr-3 py-1.5 bg-surface-container-low rounded-xl text-xs font-medium text-on-surface placeholder:text-outline border border-outline-variant/40 focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+                <Search size={14} className="absolute left-2.5 top-2 text-outline" />
+              </div>
+            </div>
+          </div>
+
+          {/* Table */}
+          {loading ? (
+            <div className="p-16 text-center space-y-2">
+              <Loader2 size={32} className="animate-spin text-primary mx-auto" />
+              <p className="text-xs text-on-surface-variant">Loading service history…</p>
+            </div>
+          ) : filteredBookings.length === 0 ? (
+            <div className="p-12 text-center rounded-xl bg-surface-container-low/50 border border-outline-variant/40 space-y-2">
+              <p className="font-bold text-sm text-on-surface">No bookings found in this view</p>
+              <p className="text-xs text-on-surface-variant">Book a certified cooperative artisan to schedule home repairs.</p>
+              <Link to="/services" className="btn btn-primary text-xs mt-2 inline-block">
+                Browse Services →
+              </Link>
+            </div>
           ) : (
-            <div className="card overflow-hidden p-0">
+            <div className="border border-outline-variant/50 rounded-xl overflow-hidden shadow-xs">
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="border-b border-line bg-paper">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-surface-container-low text-on-surface-variant font-label-caps uppercase border-b border-outline-variant/50 text-[10px]">
                     <tr>
-                      {['Booking ID', 'Service', 'Date & Time', 'Worker', 'Amount', 'Status', 'Action'].map(h => (
-                        <th key={h} className="px-5 py-3 text-left font-medium text-muted">
-                          {h}
-                        </th>
-                      ))}
+                      <th className="px-4 py-3">Booking / Service</th>
+                      <th className="px-4 py-3">Assigned Artisan</th>
+                      <th className="px-4 py-3">Schedule</th>
+                      <th className="px-4 py-3 text-right">Fee</th>
+                      <th className="px-4 py-3 text-center">Status</th>
+                      <th className="px-4 py-3 text-right">Actions</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-line">
-                    {bookings.map(b => (
-                      <tr key={b.id} className="hover:bg-paper">
-                        <td className="px-5 py-4 font-mono text-xs font-semibold text-ink">
-                          #BK-{b.id.toString().padStart(4, '0')}
-                        </td>
-                        <td className="px-5 py-4 font-medium text-ink">
-                          {b.service_name}
-                          {b.is_emergency && (
-                            <span className="ml-2 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-bold text-red-700 uppercase">
-                              Urgent
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-5 py-4 text-muted">
-                          {b.scheduled_date
-                            ? `${b.scheduled_date} (${b.scheduled_time || 'Day'})`
-                            : '—'}
-                        </td>
-                        <td className="px-5 py-4 text-muted">{b.worker_name || 'Auto-assigning…'}</td>
-                        <td className="px-5 py-4 font-mono font-bold text-ink">
-                          {b.amount > 0 ? `₹${b.amount}` : '—'}
-                          {/* Paid marker: the amount is where a customer looks
-                              to ask "have I settled this?", so answer it here. */}
-                          {b.is_paid && (
-                            <span className="ml-2 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-green-700">
-                              Paid
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-5 py-4">
-                          <StatusBadge status={b.status} />
-                        </td>
-                        <td className="px-5 py-4">
-                          <RowActions
-                            booking={b}
-                            cancellingId={cancellingId}
-                            onCancel={handleCancel}
-                            onPay={(booking) => setPaymentModal({ isOpen: true, booking })}
-                            onInvoice={(invoiceId) => setInvoiceModal({ isOpen: true, invoiceId })}
-                            onReview={(booking) => setReviewModal({ isOpen: true, booking })}
-                            onDispute={(booking) => setDisputeModal({ isOpen: true, booking })}
-                          />
-                        </td>
-                      </tr>
-                    ))}
+                  <tbody className="divide-y divide-outline-variant/30 text-on-surface">
+                    {filteredBookings.map((b) => {
+                      const canCancel = ['pending', 'accepted'].includes(b.status)
+                      const canPay = b.status === 'completed' && !b.is_paid
+                      const canInvoice = Boolean(b.is_paid && b.invoice_id)
+                      const canReview = b.status === 'completed' && !b.review
+                      const hasReview = Boolean(b.review)
+
+                      return (
+                        <tr key={b.id} className="hover:bg-surface-container-low/60 transition">
+                          <td className="px-4 py-3.5">
+                            <div className="flex items-center gap-2.5">
+                              <img
+                                src={getServiceImage(b.service_name)}
+                                alt={b.service_name}
+                                className="w-8 h-8 rounded-lg object-cover shrink-0 border border-outline-variant/50 shadow-xs"
+                                onError={(e) => {
+                                  e.currentTarget.src = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'
+                                }}
+                              />
+                              <div>
+                                <span className="font-bold text-on-surface block">{b.service_name}</span>
+                                <span className="font-mono text-[10px] text-on-surface-variant">ID: #{b.id}</span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3.5">
+                            {b.worker_name ? (
+                              <div>
+                                <span className="font-semibold text-on-surface block">{b.worker_name}</span>
+                                <span className="text-[10px] text-primary font-medium">Verified Guild Member</span>
+                              </div>
+                            ) : (
+                              <span className="text-on-surface-variant italic">Rotating Dispatch</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3.5 text-on-surface-variant font-medium">
+                            <div>{b.scheduled_date}</div>
+                            <div className="text-[10px] text-outline">{b.scheduled_time}</div>
+                          </td>
+                          <td className="px-4 py-3.5 text-right font-mono font-bold text-on-surface">
+                            ₹{b.amount || 299}
+                          </td>
+                          <td className="px-4 py-3.5 text-center">
+                            <StatusBadge status={b.status} />
+                          </td>
+                          <td className="px-4 py-3.5 text-right">
+                            <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                              {canCancel && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleCancel(b.id)}
+                                  disabled={cancellingId === b.id}
+                                  className="btn btn-outline text-error text-[11px] py-1 px-2.5 font-bold"
+                                >
+                                  {cancellingId === b.id ? 'Cancelling…' : 'Cancel'}
+                                </button>
+                              )}
+
+                              {canPay && (
+                                <button
+                                  type="button"
+                                  onClick={() => setPaymentModal({ isOpen: true, booking: b })}
+                                  className="btn btn-primary text-[11px] py-1 px-2.5 font-bold flex items-center gap-1 shadow-xs"
+                                >
+                                  <CreditCard size={12} />
+                                  Pay Now
+                                </button>
+                              )}
+
+                              {canInvoice && (
+                                <button
+                                  type="button"
+                                  onClick={() => setInvoiceModal({ isOpen: true, invoiceId: b.invoice_id })}
+                                  className="btn btn-outline text-[11px] py-1 px-2.5 font-semibold flex items-center gap-1"
+                                >
+                                  <Receipt size={12} />
+                                  Invoice
+                                </button>
+                              )}
+
+                              {canReview && (
+                                <button
+                                  type="button"
+                                  onClick={() => setReviewModal({ isOpen: true, booking: b })}
+                                  className="rounded-lg border border-secondary/40 bg-secondary-fixed/40 px-2 py-1 text-[11px] font-bold text-on-secondary-fixed flex items-center gap-1 hover:bg-secondary-fixed transition"
+                                >
+                                  <Star size={11} className="fill-secondary text-secondary" />
+                                  Rate
+                                </button>
+                              )}
+
+                              {b.status === 'completed' && (
+                                <button
+                                  type="button"
+                                  onClick={() => setDisputeModal({ isOpen: true, booking: b })}
+                                  className="text-[11px] text-on-surface-variant hover:text-error transition font-medium px-1"
+                                  title="Raise Dispute"
+                                >
+                                  Dispute
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>
             </div>
           )}
-        </div>
-      </section>
+        </section>
 
-      {/* ── Quick-book services ────────────────────────────────────────── */}
-      <section>
-        <SectionHeading
-          title="Quick Book"
-          description="Click any service below to open the booking scheduler."
-        />
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-          {services.map(s => (
-            <button
-              key={s.id}
-              onClick={() => setBookingModal({ isOpen: true, service: s, worker: null })}
-              className="card flex items-center gap-3 p-4 text-left transition hover:shadow-lift hover:border-brand-500 group"
-            >
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700 group-hover:bg-brand-100">
-                {(() => {
-                  const Icon = getServiceIcon(s.icon)
-                  return <Icon size={18} />
-                })()}
+        {/* ── 5. Quick Rebooking Services Grid ────────────────────────── */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="font-label-caps text-[10px] text-primary uppercase font-bold tracking-wider">
+                Instant Roster
               </span>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-ink group-hover:text-brand-700">{s.name}</p>
-                <p className="font-mono text-xs text-muted">from ₹{s.starting_price}</p>
-              </div>
-            </button>
-          ))}
-        </div>
-      </section>
+              <h3 className="font-headline-sm text-lg text-on-surface font-extrabold">
+                1-Click Cooperative Rebooking
+              </h3>
+            </div>
+            <Link to="/services" className="text-xs font-bold text-primary hover:underline">
+              View All 20+ →
+            </Link>
+          </div>
 
-      {/* ── Booking Modal ──────────────────────────────────────────────── */}
-      <BookingModal
-        isOpen={bookingModal.isOpen}
-        onClose={() => setBookingModal({ isOpen: false, service: null, worker: null })}
-        service={bookingModal.service}
-        worker={bookingModal.worker}
-        allServices={services}
-        onSuccess={() => {
-          fetchDashboard(false)
-        }}
-      />
-
-      {/* ── Payment Modal (simulated) ────────────────────────────────────── */}
-      <PaymentModal
-        isOpen={paymentModal.isOpen}
-        onClose={() => setPaymentModal({ isOpen: false, booking: null })}
-        booking={paymentModal.booking}
-        onSuccess={() => {
-          fetchDashboard(false)
-        }}
-      />
-
-      {/* ── Invoice Modal (printable receipt) ───────────────────────────── */}
-      <InvoiceModal
-        isOpen={invoiceModal.isOpen}
-        onClose={() => setInvoiceModal({ isOpen: false, invoiceId: null })}
-        invoiceId={invoiceModal.invoiceId}
-      />
-
-      {/* ── Review Modal (star rating & feedback) ───────────────────────── */}
-      <ReviewModal
-        isOpen={reviewModal.isOpen}
-        onClose={() => setReviewModal({ isOpen: false, booking: null })}
-        booking={reviewModal.booking}
-        onSuccess={() => {
-          fetchDashboard(false)
-        }}
-      />
-
-      {/* ── Dispute Modal (raise structured dispute) ─────────────────────── */}
-      <DisputeModal
-        isOpen={disputeModal.isOpen}
-        onClose={() => setDisputeModal({ isOpen: false, booking: null })}
-        booking={disputeModal.booking}
-        onDisputeCreated={() => {
-          fetchDashboard(false)
-        }}
-      />
-
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Small helper
-// ---------------------------------------------------------------------------
-function Detail({ icon: Icon, label, value, className = '' }) {
-  return (
-    <div className={`flex items-start gap-3 ${className}`}>
-      <span className="mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-700">
-        <Icon size={15} />
-      </span>
-      <div>
-        <p className="text-xs text-muted">{label}</p>
-        <p className="font-medium text-ink">{value}</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {[
+              { id: 1, name: 'Electrician', price: 299, icon: 'bolt' },
+              { id: 2, name: 'Plumber', price: 249, icon: 'faucet' },
+              { id: 3, name: 'AC Service', price: 599, icon: 'mode_fan' },
+              { id: 4, name: 'Carpenter', price: 349, icon: 'carpenter' },
+              { id: 5, name: 'Home Painter', price: 1499, icon: 'format_paint' },
+              { id: 6, name: 'Home Cleaner', price: 499, icon: 'cleaning_services' },
+            ].map((svc) => (
+              <button
+                key={svc.id}
+                type="button"
+                onClick={() => setBookingModal({ isOpen: true, service: { id: svc.id, name: svc.name, starting_price: svc.price } })}
+                className="bg-surface-container-lowest rounded-xl p-3.5 border border-outline-variant/50 shadow-xs hover:shadow-md hover:border-primary transition text-left group flex flex-col justify-between"
+              >
+                <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center mb-2 group-hover:bg-primary group-hover:text-on-primary transition">
+                  <span className="material-symbols-outlined text-[18px]">{svc.icon}</span>
+                </div>
+                <div>
+                  <span className="font-bold text-xs text-on-surface block truncate">{svc.name}</span>
+                  <span className="font-mono text-[11px] text-primary font-bold">from ₹{svc.price}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
       </div>
+
+      {/* Modals */}
+      {bookingModal.isOpen && (
+        <BookingModal
+          isOpen={bookingModal.isOpen}
+          onClose={() => setBookingModal({ isOpen: false, service: null, worker: null })}
+          service={bookingModal.service}
+          worker={bookingModal.worker}
+          onSuccess={loadDashboard}
+        />
+      )}
+
+      {paymentModal.isOpen && (
+        <PaymentModal
+          isOpen={paymentModal.isOpen}
+          onClose={() => setPaymentModal({ isOpen: false, booking: null })}
+          booking={paymentModal.booking}
+          onSuccess={loadDashboard}
+        />
+      )}
+
+      {invoiceModal.isOpen && (
+        <InvoiceModal
+          isOpen={invoiceModal.isOpen}
+          onClose={() => setInvoiceModal({ isOpen: false, invoiceId: null })}
+          invoiceId={invoiceModal.invoiceId}
+        />
+      )}
+
+      {reviewModal.isOpen && (
+        <ReviewModal
+          isOpen={reviewModal.isOpen}
+          onClose={() => setReviewModal({ isOpen: false, booking: null })}
+          booking={reviewModal.booking}
+          onSuccess={loadDashboard}
+        />
+      )}
+
+      {disputeModal.isOpen && (
+        <DisputeModal
+          isOpen={disputeModal.isOpen}
+          onClose={() => setDisputeModal({ isOpen: false, booking: null })}
+          booking={disputeModal.booking}
+          onDisputeCreated={loadDashboard}
+        />
+      )}
     </div>
   )
 }

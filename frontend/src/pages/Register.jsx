@@ -1,27 +1,44 @@
 /**
  * Register.jsx — account creation page.
+ * Redesigned using Stitch Multi-Role Access Identity Portal reference.
  *
- * WHAT: A two-step form.
- *   Step 1: Choose role — Customer or Worker.
- *   Step 2: Fill in personal details. Workers get extra fields (skills, city).
+ * WHAT: A two-step registration flow:
+ *   Step 1: Choose role — Customer, Artisan Member, or Labour Cooperative Union.
+ *   Step 2: Fill in personal details, technical qualifications, and region.
  *
- * WHY:  Separating role selection onto its own screen makes the choice clear
- *       and keeps the form from looking overwhelming.
+ * WHY:  On NEED, every user enters the cooperative network with full statutory dignity.
  * HOW:  Calls register() from AuthContext which hits POST /api/auth/register.
- *       On success the user is automatically logged in and redirected.
+ *       On success the user is automatically authenticated and redirected to their dashboard.
  */
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Briefcase, Building2, User } from 'lucide-react'
+import {
+  AlertCircle,
+  Award,
+  Briefcase,
+  Building2,
+  CheckCircle2,
+  ChevronLeft,
+  Home,
+  IndianRupee,
+  Loader2,
+  Lock,
+  Mail,
+  MapPin,
+  Phone,
+  Shield,
+  ShieldCheck,
+  User,
+  Wrench,
+  Zap,
+} from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { useLanguage } from '../context/LanguageContext'
-import { sendOTP, verifyOTP } from '../services/api'
 import Logo from '../components/Logo'
 
 const DASHBOARD = {
   customer: '/customer',
-  worker:   '/worker',
+  worker: '/worker',
   cooperative_admin: '/cooperative',
 }
 
@@ -29,60 +46,82 @@ const DASHBOARD = {
 // Step 1 — Choose role
 // ---------------------------------------------------------------------------
 function RoleStep({ onChoose }) {
-  const { t } = useLanguage()
-
   return (
-    <div className="card p-8">
-      <h1 className="mb-1 font-display text-2xl font-bold text-ink">{t('register_title', 'Create an Account')}</h1>
-      <p className="mb-8 text-sm text-muted">{t('choose_role', 'I am joining NEED as a...')}</p>
+    <div className="space-y-6">
+      <div>
+        <h2 className="font-headline-lg text-2xl font-extrabold text-on-surface">
+          Create Cooperative Account
+        </h2>
+        <p className="text-xs text-on-surface-variant mt-1">
+          Select how you wish to participate in the NEED worker-owned digital federation.
+        </p>
+      </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-3.5 sm:grid-cols-3">
+        {/* Customer */}
         <button
           onClick={() => onChoose('customer')}
-          className="flex flex-col items-center gap-3 rounded-2xl border-2 border-line bg-white p-5 text-center transition hover:border-brand-500 hover:shadow-card focus:outline-none focus:ring-2 focus:ring-brand-500"
+          className="flex flex-col items-start gap-3 rounded-2xl border border-surface-container-high bg-surface-container-low p-5 text-left transition-all hover:border-primary hover:bg-primary/5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary group"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-50 text-brand-600">
-            <User size={24} />
+          <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
+            <Home size={24} />
           </div>
           <div>
-            <p className="font-display font-bold text-ink text-sm">{t('role_customer', 'Customer')}</p>
-            <p className="mt-0.5 text-[11px] text-muted leading-tight">{t('role_customer_desc', 'Book services for my home')}</p>
+            <p className="font-bold text-sm text-on-surface">Citizen Customer</p>
+            <p className="mt-1 text-xs text-on-surface-variant leading-relaxed">
+              Book certified home services with zero middleman price gouging.
+            </p>
           </div>
+          <span className="text-[11px] font-bold text-primary flex items-center gap-1 mt-auto pt-2">
+            Register as Resident →
+          </span>
         </button>
 
+        {/* Worker */}
         <button
           onClick={() => onChoose('worker')}
-          className="flex flex-col items-center gap-3 rounded-2xl border-2 border-line bg-white p-5 text-center transition hover:border-brand-500 hover:shadow-card focus:outline-none focus:ring-2 focus:ring-brand-500"
+          className="flex flex-col items-start gap-3 rounded-2xl border border-surface-container-high bg-surface-container-low p-5 text-left transition-all hover:border-secondary hover:bg-secondary/5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-secondary group"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-marigold-50 text-marigold-600">
-            <Briefcase size={24} />
+          <div className="w-12 h-12 rounded-2xl bg-secondary-container/20 text-secondary flex items-center justify-center group-hover:bg-secondary group-hover:text-white transition-colors">
+            <Wrench size={24} />
           </div>
           <div>
-            <p className="font-display font-bold text-ink text-sm">{t('role_worker', 'Worker Partner')}</p>
-            <p className="mt-0.5 text-[11px] text-muted leading-tight">{t('role_worker_desc', 'Offer skills & earn directly')}</p>
+            <p className="font-bold text-sm text-on-surface">Artisan Partner</p>
+            <p className="mt-1 text-xs text-on-surface-variant leading-relaxed">
+              Retain 85-90% direct earnings, insurance shield &amp; democratic welfare wallet.
+            </p>
           </div>
+          <span className="text-[11px] font-bold text-secondary flex items-center gap-1 mt-auto pt-2">
+            Join as Artisan →
+          </span>
         </button>
 
+        {/* Co-op Admin */}
         <button
           onClick={() => onChoose('cooperative_admin')}
-          className="flex flex-col items-center gap-3 rounded-2xl border-2 border-line bg-white p-5 text-center transition hover:border-brand-500 hover:shadow-card focus:outline-none focus:ring-2 focus:ring-brand-500"
+          className="flex flex-col items-start gap-3 rounded-2xl border border-surface-container-high bg-surface-container-low p-5 text-left transition-all hover:border-primary hover:bg-primary/5 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary group"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-purple-50 text-purple-600 border border-purple-200">
+          <div className="w-12 h-12 rounded-2xl bg-surface-container-high text-on-surface flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
             <Building2 size={24} />
           </div>
           <div>
-            <p className="font-display font-bold text-ink text-sm">{t('role_contractor', 'Contractor / Coop')}</p>
-            <p className="mt-0.5 text-[11px] text-muted leading-tight">{t('role_contractor_desc', 'Manage worker team & society')}</p>
+            <p className="font-bold text-sm text-on-surface">Labour Union / Co-op</p>
+            <p className="mt-1 text-xs text-on-surface-variant leading-relaxed">
+              Manage artisan rosters, local dispatch hubs &amp; collective reserve funds.
+            </p>
           </div>
+          <span className="text-[11px] font-bold text-primary flex items-center gap-1 mt-auto pt-2">
+            Charter Society Hub →
+          </span>
         </button>
       </div>
 
-      <p className="mt-6 text-center text-sm text-muted">
-        Already have an account?{' '}
-        <Link to="/login" className="font-medium text-brand-600 hover:underline">
-          Log in
+      <div className="pt-2 flex items-center justify-between text-xs text-on-surface-variant">
+        <span>Already hold an authorized federation ID?</span>
+        <Link to="/login" className="font-bold text-primary hover:underline">
+          Sign In Here →
         </Link>
-      </p>
+      </div>
     </div>
   )
 }
@@ -90,14 +129,23 @@ function RoleStep({ onChoose }) {
 // ---------------------------------------------------------------------------
 // Step 2 — Fill details
 // ---------------------------------------------------------------------------
-function DetailsStep({ role, onBack, onProceedToOtp, busy, error }) {
+function DetailsStep({ role, onBack, onSubmit, busy, error }) {
   const [form, setForm] = useState({
-    name: '', email: '', phone: '', password: '', confirm: '',
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirm: '',
     address: '',
     // Worker extras
-    skills: '', experience_years: '', city: '', primary_service: '',
-    // Cooperative Admin / Contractor extras
-    cooperative_name: '', registration_number: '', service_categories: '',
+    skills: '',
+    experience_years: '',
+    city: '',
+    primary_service: 'Electrician',
+    // Cooperative Admin extras
+    cooperative_name: '',
+    registration_number: '',
+    service_categories: '',
     accepted_terms: false,
   })
   const [localError, setLocalError] = useState('')
@@ -109,275 +157,295 @@ function DetailsStep({ role, onBack, onProceedToOtp, busy, error }) {
     }))
 
   function validate() {
-    if (!form.name.trim())    return 'Name is required'
-    if (!form.email.trim())   return 'Email is required'
-    if (!form.phone.trim())   return 'Phone number is required'
+    if (!form.name.trim()) return 'Legal name is required'
+    if (!form.email.trim()) return 'Email address is required'
+    if (!form.phone.trim()) return 'Phone number is required'
     if (form.password.length < 6) return 'Password must be at least 6 characters'
     if (form.password !== form.confirm) return 'Passwords do not match'
-    if (!form.accepted_terms) return 'Please accept the terms to continue'
+    if (!form.accepted_terms) return 'Please accept the Cooperative Bylaws and terms to continue'
     return null
   }
 
   function handleSubmit(e) {
     e.preventDefault()
     const err = validate()
-    if (err) { setLocalError(err); return }
+    if (err) {
+      setLocalError(err)
+      return
+    }
     setLocalError('')
     const { confirm, ...rest } = form
-    onProceedToOtp({ ...rest, role })
+    onSubmit({ ...rest, role })
   }
 
   const displayError = localError || error
 
   return (
-    <div className="card p-8">
-      <button
-        onClick={onBack}
-        className="mb-4 flex items-center gap-1 text-sm text-muted hover:text-ink"
-      >
-        ← Back
-      </button>
+    <div className="space-y-5">
+      <div className="flex items-center justify-between">
+        <button
+          onClick={onBack}
+          className="inline-flex items-center gap-1 text-xs font-bold text-on-surface-variant hover:text-on-surface"
+        >
+          <ChevronLeft size={16} /> Change Membership Role
+        </button>
+        <span className="px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-mono text-[11px] font-bold uppercase">
+          {role === 'worker' ? 'Artisan Onboarding' : role === 'cooperative_admin' ? 'Co-op Charter' : 'Citizen Access'}
+        </span>
+      </div>
 
-      <h1 className="mb-1 font-display text-2xl font-bold text-ink">
-        {role === 'worker'
-          ? 'Join as a Worker Partner'
-          : role === 'cooperative_admin'
-          ? 'Register Labour Cooperative / Contractor'
-          : 'Join as a Customer'}
-      </h1>
-      <p className="mb-6 text-sm text-muted">Fill in your details to get started</p>
+      <div>
+        <h2 className="font-headline-lg text-2xl font-extrabold text-on-surface">
+          {role === 'worker'
+            ? 'Enrol as Cooperative Artisan Partner'
+            : role === 'cooperative_admin'
+            ? 'Register Labour Cooperative / Trade Union'
+            : 'Create Citizen Account'}
+        </h2>
+        <p className="text-xs text-on-surface-variant mt-1">
+          Fill in verified details. Under MSCS Act 2002, your data is owned democratically by the cooperative.
+        </p>
+      </div>
 
       {displayError && (
-        <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          {displayError}
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-700 flex items-center gap-2 animate-shake">
+          <AlertCircle size={16} className="shrink-0" />
+          <span>{displayError}</span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
+      <form onSubmit={handleSubmit} className="space-y-4" noValidate>
         {/* Common fields */}
-        <Field label="Full name / Administrator Name" id="name" type="text" value={form.name}
-          onChange={set('name')} placeholder="Riya Sharma" autoComplete="name" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-bold text-on-surface mb-1">
+              Full Legal Name
+            </label>
+            <input
+              type="text"
+              required
+              value={form.name}
+              onChange={set('name')}
+              placeholder="e.g. Rahul Verma"
+              className="input-stitch text-xs"
+            />
+          </div>
 
-        <Field label="Email address" id="email" type="email" value={form.email}
-          onChange={set('email')} placeholder="riya@example.com" autoComplete="email" />
+          <div>
+            <label className="block text-xs font-bold text-on-surface mb-1">
+              Mobile Phone (Aadhaar Linked)
+            </label>
+            <input
+              type="tel"
+              required
+              value={form.phone}
+              onChange={set('phone')}
+              placeholder="98765 43210"
+              className="input-stitch text-xs"
+            />
+          </div>
+        </div>
 
-        <Field label="Phone number" id="phone" type="tel" value={form.phone}
-          onChange={set('phone')} placeholder="9876543210" autoComplete="tel" />
+        <div>
+          <label className="block text-xs font-bold text-on-surface mb-1">
+            Email Address
+          </label>
+          <input
+            type="email"
+            required
+            value={form.email}
+            onChange={set('email')}
+            placeholder="rahul@example.com"
+            className="input-stitch text-xs"
+          />
+        </div>
 
-        <Field label="Address (optional)" id="address" type="text" value={form.address}
-          onChange={set('address')} placeholder="House no., street, city" />
+        <div>
+          <label className="block text-xs font-bold text-on-surface mb-1">
+            Residential Address or Cluster Sector
+          </label>
+          <input
+            type="text"
+            value={form.address}
+            onChange={set('address')}
+            placeholder="Flat / House No., Sector / Ward, Noida NCR"
+            className="input-stitch text-xs"
+          />
+        </div>
 
         {/* Worker-only fields */}
         {role === 'worker' && (
-          <>
-            <Field label="Primary service" id="primary_service" type="text"
-              value={form.primary_service} onChange={set('primary_service')}
-              placeholder="e.g. Electrician, Plumber" />
-            <Field label="Skills (comma-separated)" id="skills" type="text"
-              value={form.skills} onChange={set('skills')}
-              placeholder="e.g. Wiring, Fan repair" />
-            <Field label="Years of experience" id="experience_years" type="number"
-              value={form.experience_years} onChange={set('experience_years')}
-              placeholder="0" />
-            <Field label="City" id="city" type="text"
-              value={form.city} onChange={set('city')} placeholder="Noida" />
-          </>
+          <div className="p-4 rounded-2xl bg-surface-container-low border border-surface-container-high space-y-4">
+            <p className="text-xs font-bold text-primary uppercase tracking-wider">
+              Trade &amp; Skill Credentials:
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-on-surface mb-1">Primary Trade</label>
+                <select
+                  value={form.primary_service}
+                  onChange={set('primary_service')}
+                  className="input-stitch text-xs"
+                >
+                  <option value="Electrician">Electrician</option>
+                  <option value="Plumber">Plumber</option>
+                  <option value="Carpenter">Carpenter</option>
+                  <option value="AC Service">AC Service &amp; HVAC</option>
+                  <option value="Cleaner">Deep Cleaning Specialist</option>
+                  <option value="Painter">Painter</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-on-surface mb-1">Field Experience (Years)</label>
+                <input
+                  type="number"
+                  value={form.experience_years}
+                  onChange={set('experience_years')}
+                  placeholder="e.g. 5"
+                  className="input-stitch text-xs"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-on-surface mb-1">Skills &amp; Specialties</label>
+              <input
+                type="text"
+                value={form.skills}
+                onChange={set('skills')}
+                placeholder="e.g. Wiring, MCB Tripping, Chandelier, Inverter Backup"
+                className="input-stitch text-xs"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-on-surface mb-1">Operating City / NCR Hub</label>
+              <input
+                type="text"
+                value={form.city}
+                onChange={set('city')}
+                placeholder="Noida & Greater Noida"
+                className="input-stitch text-xs"
+              />
+            </div>
+          </div>
         )}
 
-        {/* Contractor / Cooperative Admin fields */}
+        {/* Cooperative Admin fields */}
         {role === 'cooperative_admin' && (
-          <>
-            <Field label="Labour Union / Contractor Organization Name" id="cooperative_name" type="text"
-              value={form.cooperative_name} onChange={set('cooperative_name')}
-              placeholder="e.g. Noida Artisans & Electricians Cooperative" />
-            <Field label="Society / Licence Registration Number (Optional)" id="registration_number" type="text"
-              value={form.registration_number} onChange={set('registration_number')}
-              placeholder="e.g. COOP-UP-2026-901" />
-            <Field label="City / Operating Region" id="city" type="text"
-              value={form.city} onChange={set('city')} placeholder="Noida & Greater Noida" />
-            <Field label="Service Categories Provided" id="service_categories" type="text"
-              value={form.service_categories} onChange={set('service_categories')}
-              placeholder="e.g. Electrician, Plumber, AC Repair" />
-          </>
+          <div className="p-4 rounded-2xl bg-surface-container-low border border-surface-container-high space-y-4">
+            <p className="text-xs font-bold text-primary uppercase tracking-wider">
+              Cooperative Society Charter:
+            </p>
+            <div>
+              <label className="block text-xs font-bold text-on-surface mb-1">Society / Union Name</label>
+              <input
+                type="text"
+                value={form.cooperative_name}
+                onChange={set('cooperative_name')}
+                placeholder="e.g. Noida Artisans & Electricians Cooperative"
+                className="input-stitch text-xs"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-on-surface mb-1">Registration Number</label>
+                <input
+                  type="text"
+                  value={form.registration_number}
+                  onChange={set('registration_number')}
+                  placeholder="e.g. COOP-UP-2022-1082"
+                  className="input-stitch text-xs"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-on-surface mb-1">City / Operating Ward</label>
+                <input
+                  type="text"
+                  value={form.city}
+                  onChange={set('city')}
+                  placeholder="Noida Sector 62 & NCR"
+                  className="input-stitch text-xs"
+                />
+              </div>
+            </div>
+          </div>
         )}
 
-        <Field label="Password" id="password" type="password" value={form.password}
-          onChange={set('password')} placeholder="Min. 6 characters" autoComplete="new-password" />
+        {/* Password fields */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-bold text-on-surface mb-1">Create Password</label>
+            <input
+              type="password"
+              required
+              value={form.password}
+              onChange={set('password')}
+              placeholder="Min 6 characters"
+              className="input-stitch text-xs"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-on-surface mb-1">Confirm Password</label>
+            <input
+              type="password"
+              required
+              value={form.confirm}
+              onChange={set('confirm')}
+              placeholder="Re-enter password"
+              className="input-stitch text-xs"
+            />
+          </div>
+        </div>
 
-        <Field label="Confirm password" id="confirm" type="password" value={form.confirm}
-          onChange={set('confirm')} placeholder="••••••••" autoComplete="new-password" />
-
-        <label className="flex items-start gap-2 text-sm text-ink">
+        {/* Terms agreement checkbox */}
+        <label className="flex items-start gap-2.5 text-xs text-on-surface cursor-pointer pt-1">
           <input
             type="checkbox"
             checked={form.accepted_terms}
             onChange={set('accepted_terms')}
-            className="mt-0.5 accent-brand-600"
+            className="mt-0.5 accent-primary h-4 w-4 rounded"
           />
-          <span>
-            I agree to the{' '}
-            <Link to="/about" className="text-brand-600 hover:underline">
-              terms and conditions
+          <span className="text-on-surface-variant leading-tight">
+            I agree to the democratic principles, privacy guarantee, and{' '}
+            <Link to="/about" className="text-primary font-bold hover:underline">
+              Cooperative Federation Charter
             </Link>
+            .
           </span>
         </label>
 
         <button
           type="submit"
           disabled={busy}
-          className="btn btn-primary w-full disabled:opacity-60"
+          className="w-full btn btn-primary py-3 text-xs sm:text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2"
         >
-          {busy ? 'Sending OTP…' : 'Continue to Phone OTP Verification →'}
+          {busy ? (
+            <Loader2 size={16} className="animate-spin" />
+          ) : (
+            <>
+              <span>Complete Registration &amp; Enrol</span>
+              <span className="material-symbols-outlined text-[18px]">arrow_forward</span>
+            </>
+          )}
         </button>
       </form>
     </div>
   )
 }
 
-// Reusable labelled input
-function Field({ label, id, ...inputProps }) {
-  return (
-    <div>
-      <label htmlFor={id} className="mb-1 block text-sm font-medium text-ink">
-        {label}
-      </label>
-      <input
-        id={id}
-        {...inputProps}
-        required
-        className="w-full rounded-xl border border-line bg-white px-4 py-2.5 text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand-500"
-      />
-    </div>
-  )
-}
-
 // ---------------------------------------------------------------------------
-// Step 3 — Mandatory OTP Verification
-// ---------------------------------------------------------------------------
-function OtpStep({ phone, onVerifyAndSubmit, onBack, busy, error }) {
-  const [otpCode, setOtpCode] = useState('')
-  const [demoOtp, setDemoOtp] = useState('')
-  const [localError, setLocalError] = useState('')
-  const [sentMsg, setSentMsg] = useState('')
-  const [sending, setSending] = useState(false)
-
-  // Auto-trigger OTP send when entering Step 3
-  const triggerSend = async () => {
-    setSending(true)
-    setLocalError('')
-    try {
-      const res = await sendOTP(phone, 'mobile')
-      setDemoOtp(res.demo_otp || '123456')
-      setSentMsg(`OTP sent to +91 ${phone}! Demo OTP: ${res.demo_otp || '123456'}`)
-    } catch (err) {
-      setLocalError('Failed to send OTP to mobile. Please try again.')
-    } finally {
-      setSending(false)
-    }
-  }
-
-  // Initial send on component mount
-  useEffect(() => {
-    triggerSend()
-  }, [])
-
-  async function handleConfirm(e) {
-    e.preventDefault()
-    if (!otpCode.trim() || otpCode.length < 4) {
-      setLocalError('Please enter the 6-digit OTP code')
-      return
-    }
-    setLocalError('')
-
-    try {
-      await verifyOTP(phone, 'mobile', otpCode)
-      onVerifyAndSubmit()
-    } catch (err) {
-      setLocalError(err?.response?.data?.error || 'Invalid or expired OTP. Try 123456.')
-    }
-  }
-
-  const displayError = localError || error
-
-  return (
-    <div className="card p-8">
-      <button
-        onClick={onBack}
-        className="mb-4 flex items-center gap-1 text-sm text-muted hover:text-ink"
-      >
-        ← Back to Details
-      </button>
-
-      <h1 className="mb-1 font-display text-2xl font-bold text-ink">Verify Mobile Number</h1>
-      <p className="mb-6 text-sm text-muted">
-        We sent a 6-digit verification OTP code to <strong className="text-ink">+91 {phone}</strong>
-      </p>
-
-      {displayError && (
-        <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 font-medium">
-          {displayError}
-        </div>
-      )}
-
-      {sentMsg && (
-        <div className="mb-4 rounded-lg bg-emerald-50 px-4 py-3 text-xs text-emerald-800 font-medium">
-          {sentMsg}
-        </div>
-      )}
-
-      <form onSubmit={handleConfirm} className="flex flex-col gap-4">
-        <div>
-          <label className="mb-1 block text-sm font-medium text-ink">Enter 6-Digit OTP</label>
-          <input
-            type="text"
-            maxLength={6}
-            value={otpCode}
-            onChange={(e) => setOtpCode(e.target.value)}
-            placeholder="123456"
-            autoFocus
-            required
-            className="w-full rounded-xl border-2 border-brand-500 bg-white px-4 py-3 text-center font-mono text-xl font-bold tracking-[0.3em] text-ink focus:outline-none focus:ring-2 focus:ring-brand-500"
-          />
-          {demoOtp && (
-            <div className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-center text-xs text-amber-900 font-mono">
-              🔑 Demo Auto-Generated OTP: <strong>{demoOtp}</strong>
-            </div>
-          )}
-        </div>
-
-        <div className="flex gap-2 pt-2">
-          <button
-            type="button"
-            onClick={triggerSend}
-            disabled={sending || busy}
-            className="btn btn-secondary flex-1 py-2.5 text-xs"
-          >
-            {sending ? 'Sending…' : 'Resend OTP'}
-          </button>
-          <button
-            type="submit"
-            disabled={busy}
-            className="btn btn-primary flex-[2] py-2.5 text-xs font-bold disabled:opacity-60"
-          >
-            {busy ? 'Verifying & Registering…' : 'Confirm OTP & Complete Signup ✓'}
-          </button>
-        </div>
-      </form>
-    </div>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Main page
+// Main Register Component
 // ---------------------------------------------------------------------------
 export default function Register() {
   const { register } = useAuth()
-  const navigate     = useNavigate()
+  const navigate = useNavigate()
 
-  const [step,  setStep]  = useState(1)       // 1 = role choice, 2 = details, 3 = OTP
-  const [role,  setRole]  = useState(null)
-  const [formData, setFormData] = useState(null)
-  const [busy,  setBusy]  = useState(false)
+  const [step, setStep] = useState(1)
+  const [role, setRole] = useState(null)
+  const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
 
   function chooseRole(r) {
@@ -385,60 +453,104 @@ export default function Register() {
     setStep(2)
   }
 
-  function handleProceedToOtp(data) {
-    setFormData(data)
-    setStep(3)
-  }
-
-  async function handleFinalRegister() {
-    if (!formData) return
+  async function handleSubmit(data) {
     setError('')
     setBusy(true)
     try {
-      const user = await register({
-        ...formData,
-        is_mobile_verified: true,
-      })
+      const user = await register(data)
       navigate(DASHBOARD[user.role] || '/', { replace: true })
     } catch (err) {
-      const msg = err?.response?.data?.error || 'Something went wrong during registration.'
+      const msg = err?.response?.data?.error || 'Registration failed. Please review your details and try again.'
       setError(msg)
-      setStep(2) // return to details if registration fails
     } finally {
       setBusy(false)
     }
   }
 
   return (
-    <div className="container-page flex min-h-[calc(100vh-4rem)] items-center justify-center py-12">
-      <div className="w-full max-w-md">
-        <div className="mb-8 flex justify-center">
-          <Logo />
+    <div className="w-full bg-surface py-6 sm:py-10 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+
+        {/* ── LEFT COLUMN: Brand Pillar (5 cols) ─────────────────────────── */}
+        <div className="hidden lg:flex lg:col-span-5 flex-col justify-between p-6 sm:p-10 rounded-3xl bg-primary text-white shadow-xl relative overflow-hidden">
+          <div className="absolute -right-20 -bottom-20 w-80 h-80 rounded-full bg-primary-container opacity-40 blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 flex flex-col gap-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <span className="p-2 bg-white text-primary rounded-xl flex items-center justify-center shadow-sm">
+                  <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+                    handshake
+                  </span>
+                </span>
+                <span className="font-headline-sm text-base font-extrabold tracking-tight text-white">
+                  NEED FEDERATION
+                </span>
+              </div>
+              <span className="px-3 py-1 rounded-full bg-primary-container text-primary-fixed font-label-caps text-[10px] uppercase font-bold tracking-wider">
+                COOPERATIVE NETWORK
+              </span>
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <span className="font-label-caps text-xs uppercase tracking-widest text-primary-fixed-dim font-bold">
+                Join the Federation
+              </span>
+              <h1 className="font-headline-xl text-2xl sm:text-3xl leading-tight text-white font-extrabold">
+                Your skills and community belong in the network.
+              </h1>
+              <p className="text-xs sm:text-sm text-primary-fixed-dim max-w-md leading-relaxed">
+                Choose how you participate, then build a trusted profile backed by real cooperative work, insurance equity, and zero platform exploitation.
+              </p>
+            </div>
+
+            {/* Federation Pillars */}
+            <div className="space-y-3 pt-2">
+              <div className="flex items-start gap-3 bg-primary-container/60 p-3.5 rounded-2xl border border-white/10">
+                <ShieldCheck size={20} className="text-primary-fixed shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-bold text-xs text-white">100% Democratic Oversight</h4>
+                  <p className="text-[11px] text-primary-fixed-dim mt-0.5">
+                    Governed by verified member assemblies under the Multi-State Co-operative Societies Act 2002.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 bg-primary-container/60 p-3.5 rounded-2xl border border-white/10">
+                <IndianRupee size={20} className="text-secondary-container shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="font-bold text-xs text-white">Transparent 85/10/5 Revenue Flow</h4>
+                  <p className="text-[11px] text-primary-fixed-dim mt-0.5">
+                    85% direct artisan payout, 10% emergency welfare wallet, 5% democratic local society reserve.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="relative z-10 border-t border-white/15 pt-4 mt-6 text-xs text-primary-fixed-dim flex items-center justify-between">
+            <span>NEED Worker Cooperative Federation</span>
+            <span className="font-mono text-[10px]">New Delhi • NCR</span>
+          </div>
         </div>
 
-        {step === 1 && (
-          <RoleStep onChoose={chooseRole} />
-        )}
+        {/* ── RIGHT COLUMN: Registration Form Portal (7 cols) ─────────────── */}
+        <div className="lg:col-span-7 flex flex-col justify-center py-2">
+          <div className="bg-surface-container-lowest p-6 sm:p-8 rounded-3xl shadow-xl border border-surface-container-high">
+            {step === 1 ? (
+              <RoleStep onChoose={chooseRole} />
+            ) : (
+              <DetailsStep
+                role={role}
+                onBack={() => setStep(1)}
+                onSubmit={handleSubmit}
+                busy={busy}
+                error={error}
+              />
+            )}
+          </div>
+        </div>
 
-        {step === 2 && (
-          <DetailsStep
-            role={role}
-            onBack={() => setStep(1)}
-            onProceedToOtp={handleProceedToOtp}
-            busy={busy}
-            error={error}
-          />
-        )}
-
-        {step === 3 && formData && (
-          <OtpStep
-            phone={formData.phone}
-            onVerifyAndSubmit={handleFinalRegister}
-            onBack={() => setStep(2)}
-            busy={busy}
-            error={error}
-          />
-        )}
       </div>
     </div>
   )

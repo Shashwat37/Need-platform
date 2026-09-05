@@ -73,7 +73,9 @@ export async function getWorkersForService(serviceId) {
 export async function registerUser(data) {
   const response = await api.post('/auth/register', data)
   if (response.data?.token || response.data?.id) {
-    localStorage.setItem('need_token', response.data.token || `user-${response.data.id}`)
+    const token = response.data.token || `user-${response.data.id}`
+    localStorage.setItem('need_token', token)
+    localStorage.setItem('need_user', JSON.stringify(response.data))
   }
   return response.data
 }
@@ -82,7 +84,9 @@ export async function registerUser(data) {
 export async function loginUser(email, password) {
   const response = await api.post('/auth/login', { email, password })
   if (response.data?.token || response.data?.id) {
-    localStorage.setItem('need_token', response.data.token || `user-${response.data.id}`)
+    const token = response.data.token || `user-${response.data.id}`
+    localStorage.setItem('need_token', token)
+    localStorage.setItem('need_user', JSON.stringify(response.data))
   }
   return response.data
 }
@@ -100,6 +104,7 @@ export async function logoutUser() {
     return response.data
   } finally {
     localStorage.removeItem('need_token')
+    localStorage.removeItem('need_user')
   }
 }
 
@@ -391,36 +396,6 @@ export async function reviewCustomer(bookingId, rating, comment = '') {
     rating,
     comment,
   })
-  return response.data
-}
-
-// ---------------------------------------------------------------------------
-// OTP & Govt Aadhaar Identity Verification Services
-// ---------------------------------------------------------------------------
-
-/** Send 6-digit OTP to Mobile, Email, or Govt Aadhaar. */
-export async function sendOTP(target, otpType = 'mobile') {
-  const response = await api.post('/verification/otp/send', {
-    target,
-    otp_type: otpType,
-  })
-  return response.data
-}
-
-/** Verify 6-digit OTP code for Mobile, Email, or Aadhaar. */
-export async function verifyOTP(target, otpType, otpCode, aadhaarNumber = '') {
-  const response = await api.post('/verification/otp/verify', {
-    target,
-    otp_type: otpType,
-    otp_code: otpCode,
-    aadhaar_number: aadhaarNumber,
-  })
-  return response.data
-}
-
-/** Fetch user OTP and Govt Aadhaar verification status. */
-export async function getVerificationStatus() {
-  const response = await api.get('/verification/status')
   return response.data
 }
 

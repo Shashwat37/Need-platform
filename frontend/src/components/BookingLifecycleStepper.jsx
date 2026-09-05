@@ -1,37 +1,32 @@
 /**
- * BookingLifecycleStepper.jsx — Structured Booking Status Tracker.
- *
- * Visual progress bar displaying the 8 lifecycle stages:
- *  Requested -> Accepted -> Worker Assigned -> On the Way -> Arrived -> In Progress -> Completed -> Customer Confirmed.
+ * BookingLifecycleStepper.jsx — Stitch Cooperative Dispatch Lifecycle Stepper.
  */
-
 import { CheckCircle2, Clock, MapPin, Play, UserCheck, Wrench, ShieldCheck, AlertCircle } from 'lucide-react'
 
 const STAGES = [
   { key: 'requested', label: 'Requested', icon: Clock },
   { key: 'accepted', label: 'Accepted', icon: CheckCircle2 },
-  { key: 'worker_assigned', label: 'Worker Assigned', icon: UserCheck },
-  { key: 'on_the_way', label: 'On the Way', icon: MapPin },
-  { key: 'arrived', label: 'Arrived', icon: ShieldCheck },
+  { key: 'worker_assigned', label: 'Dispatched', icon: UserCheck },
+  { key: 'on_the_way', label: 'In Transit', icon: MapPin },
+  { key: 'arrived', label: 'On Site', icon: ShieldCheck },
   { key: 'in_progress', label: 'In Progress', icon: Play },
-  { key: 'completed', label: 'Completed', icon: Wrench },
-  { key: 'confirmed', label: 'Customer Confirmed', icon: CheckCircle2 },
+  { key: 'completed', label: 'Fulfilled', icon: Wrench },
+  { key: 'confirmed', label: 'Settled', icon: CheckCircle2 },
 ]
 
 export default function BookingLifecycleStepper({ status, currentStageIndex = 0 }) {
   if (status === 'cancelled' || status === 'rejected') {
     return (
-      <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-800 flex items-center gap-3">
-        <AlertCircle className="h-5 w-5 text-rose-600 shrink-0" />
+      <div className="rounded-xl border border-error/30 bg-error-container/40 p-3.5 text-on-error-container flex items-center gap-3">
+        <AlertCircle className="h-5 w-5 text-error shrink-0" />
         <div>
-          <h4 className="font-bold text-sm">Booking {status === 'cancelled' ? 'Cancelled' : 'Declined'}</h4>
-          <p className="text-xs text-rose-600">This service request is no longer active.</p>
+          <h4 className="font-bold text-xs uppercase tracking-wider">Booking {status === 'cancelled' ? 'Cancelled' : 'Declined'}</h4>
+          <p className="text-xs text-error leading-tight">This service request is archived in federation records.</p>
         </div>
       </div>
     )
   }
 
-  // Determine current index based on status key
   const statusMap = {
     pending: 0,
     requested: 0,
@@ -47,22 +42,22 @@ export default function BookingLifecycleStepper({ status, currentStageIndex = 0 
   const activeIdx = statusMap[status] ?? currentStageIndex
 
   return (
-    <div className="w-full py-3">
-      <div className="flex items-center justify-between relative overflow-x-auto pb-2 scrollbar-none">
+    <div className="w-full py-2">
+      <div className="flex items-center justify-between relative overflow-x-auto pb-2 scrollbar-none gap-1">
         {STAGES.map((stage, idx) => {
           const isDone = idx < activeIdx
           const isCurrent = idx === activeIdx
           const Icon = stage.icon
 
           return (
-            <div key={stage.key} className="flex flex-col items-center text-center min-w-[75px] sm:min-w-[90px] relative z-10 px-1">
+            <div key={stage.key} className="flex flex-col items-center text-center min-w-[70px] sm:min-w-[85px] relative z-10 px-1">
               <div
-                className={`grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-full text-xs font-bold transition-all duration-200 shadow-sm ${
+                className={`grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-xl text-xs font-bold transition-all shadow-sm ${
                   isDone
-                    ? 'bg-emerald-600 text-white ring-2 ring-emerald-600/30'
+                    ? 'bg-primary text-on-primary ring-2 ring-primary/20'
                     : isCurrent
-                    ? 'bg-brand-600 text-white ring-4 ring-brand-500/20 scale-110'
-                    : 'bg-stone-100 text-stone-400 border border-stone-200'
+                    ? 'bg-primary-container text-on-primary-container ring-4 ring-primary-fixed/40 scale-105 animate-pulse'
+                    : 'bg-surface-container text-outline border border-outline-variant/60'
                 }`}
               >
                 {isDone ? <CheckCircle2 size={16} /> : <Icon size={16} />}
@@ -70,10 +65,10 @@ export default function BookingLifecycleStepper({ status, currentStageIndex = 0 
               <span
                 className={`mt-1.5 text-[10px] sm:text-xs font-semibold leading-tight ${
                   isCurrent
-                    ? 'text-brand-700 font-bold'
+                    ? 'text-primary font-bold'
                     : isDone
-                    ? 'text-emerald-800'
-                    : 'text-stone-400'
+                    ? 'text-primary'
+                    : 'text-on-surface-variant/70'
                 }`}
               >
                 {stage.label}

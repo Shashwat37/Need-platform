@@ -1,26 +1,25 @@
 /**
- * SectionHeading.jsx — the small label + big title used above each section.
- *
- * Keeping this in one component means every section on every page is spaced
- * and styled identically, which is what makes a page look designed rather
- * than assembled.
+ * SectionHeading.jsx — Stitch Civic section header component.
  */
-export default function SectionHeading({ eyebrow, title, description, align = 'left' }) {
+export default function SectionHeading({ eyebrow, title, description, align = 'left', className = '' }) {
   const isCentre = align === 'center'
 
   return (
-    <div className={isCentre ? 'mx-auto max-w-2xl text-center' : 'max-w-2xl'}>
+    <div className={`${isCentre ? 'mx-auto max-w-2xl text-center' : 'max-w-2xl'} ${className}`}>
       {eyebrow && (
-        <p className={`eyebrow flex items-center gap-2.5 ${isCentre ? 'justify-center' : ''}`}>
-          <span className="h-px w-6 bg-brand-600/40" />
-          {eyebrow}
-        </p>
+        <div className={`flex items-center gap-2 mb-2 ${isCentre ? 'justify-center' : ''}`}>
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-label-caps text-label-caps uppercase font-bold tracking-wider">
+            {eyebrow}
+          </span>
+        </div>
       )}
-      <h2 className="mt-3 text-3xl font-extrabold leading-[1.1] text-ink sm:text-[2.5rem]">
+      <h2 className="font-headline-xl text-headline-xl text-on-surface font-extrabold tracking-tight">
         {title}
       </h2>
       {description && (
-        <p className="mt-4 text-[15px] leading-relaxed text-muted">{description}</p>
+        <p className="mt-2.5 font-body-md text-body-md text-on-surface-variant leading-relaxed">
+          {description}
+        </p>
       )}
     </div>
   )

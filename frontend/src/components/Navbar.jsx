@@ -1,16 +1,17 @@
 import { useState } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { Globe, LogOut, Menu, ShieldCheck, User, X } from 'lucide-react'
+import { Globe, LogOut, Menu, User, X } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useLanguage } from '../context/LanguageContext'
 import Logo from './Logo'
-import OTPVerificationModal from './OTPVerificationModal'
 
 const LINKS = [
-  { to: '/services',     labelKey: 'nav_services',     fallback: 'Services' },
-  { to: '/cooperatives', labelKey: 'nav_cooperatives', fallback: 'Cooperatives' },
-  { to: '/about',        labelKey: 'nav_about',        fallback: 'Cooperative Model' },
-  { to: '/help',         labelKey: 'nav_support',      fallback: 'Help & Support' },
+  { to: '/services',     labelKey: 'nav_services',      fallback: 'Find Services' },
+  { to: '/cooperatives', labelKey: 'nav_cooperatives',  fallback: 'Labour Cooperatives' },
+  { to: '/about',        labelKey: 'nav_about',         fallback: 'Cooperative Model' },
+  { to: '/worker',       labelKey: 'nav_worker_portal', fallback: 'Worker Portal' },
+  { to: '/cooperative',  labelKey: 'nav_society_hub',   fallback: 'Society Hub' },
+  { to: '/support',      labelKey: 'nav_support',       fallback: 'Help & Support' },
 ]
 
 const DASHBOARD_PATH = {
@@ -30,21 +31,21 @@ const LANGUAGES = [
 export default function Navbar() {
   const { user, logout } = useAuth()
   const { lang, setLanguage, t } = useLanguage()
-  const navigate         = useNavigate()
+  const navigate = useNavigate()
 
-  // `false` = mobile menu closed. Clicking the hamburger flips it.
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
-  const [isOtpModalOpen, setIsOtpModalOpen] = useState(false)
 
   const closeMenu = () => setIsMenuOpen(false)
 
   const linkClasses = ({ isActive }) =>
-    `text-sm font-medium transition-colors ${
-      isActive ? 'text-brand-700' : 'text-muted hover:text-ink'
+    `px-3 2xl:px-3.5 py-1.5 2xl:py-2 text-[13.5px] 2xl:text-sm whitespace-nowrap transition-all rounded-lg ${
+      isActive
+        ? 'bg-primary-container text-on-primary-container font-bold shadow-xs'
+        : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface font-semibold'
     }`
 
-  async function handleLogout() {
+  const handleLogout = async () => {
     setLoggingOut(true)
     try {
       await logout()
@@ -58,110 +59,139 @@ export default function Navbar() {
   const dashboardPath = user ? (DASHBOARD_PATH[user.role] || '/') : '/login'
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-paper/85 backdrop-blur">
-      <nav className="container-page flex h-20 items-center justify-between gap-4">
-        <Link to="/" onClick={closeMenu} aria-label="NEED home">
-          <Logo />
-        </Link>
+    <header className="fixed top-0 left-0 right-0 z-50 bg-surface/90 backdrop-blur-xl border-b border-outline-variant/60 shadow-[0_1px_8px_rgba(0,0,0,0.04)]">
+      <div className="h-16 max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto px-4 sm:px-5 lg:px-6 2xl:px-8 flex items-center justify-between gap-4">
+        {/* Left: Brand + Verification Seal */}
+        <div className="flex items-center gap-4 lg:gap-6 flex-shrink-0">
+          <Link to="/" onClick={closeMenu} aria-label="NEED Federation Home" className="flex items-center">
+            <Logo />
+          </Link>
+          <div className="hidden xl:flex items-center gap-1.5 bg-surface-container-low px-3 py-1.5 rounded-full border border-outline-variant/40">
+            <span className="material-symbols-outlined text-primary text-[17px]">verified</span>
+            <span className="font-label-md text-xs text-on-surface font-medium">India Cooperative Act • Verified</span>
+          </div>
+        </div>
 
-        {/* Desktop links — hidden below the md breakpoint */}
-        <div className="hidden items-center gap-8 md:flex">
+        {/* Center Desktop Navigation */}
+        <nav className="hidden lg:flex items-center gap-1.5">
           {LINKS.map((link) => (
             <NavLink key={link.to} to={link.to} className={linkClasses}>
               {t(link.labelKey, link.fallback)}
             </NavLink>
           ))}
-        </div>
+        </nav>
 
-        {/* Desktop right side */}
-        <div className="hidden items-center gap-3 md:flex">
-          {/* Language Selector Dropdown */}
-          <div className="relative flex items-center gap-1.5 rounded-lg border border-line bg-white px-2.5 py-1 text-xs font-medium text-ink">
-            <Globe size={14} className="text-muted" />
+        {/* Right Desktop Utilities */}
+        <div className="hidden md:flex items-center gap-3 flex-shrink-0">
+          {/* Location / Civic Hub */}
+          <div className="hidden sm:flex items-center gap-1.5 bg-surface-container-lowest px-3 py-1.5 rounded-full border border-outline-variant/50 shadow-sm text-xs text-on-surface font-semibold">
+            <span className="material-symbols-outlined text-secondary text-[17px]">location_on</span>
+            <span>Noida &amp; NCR</span>
+          </div>
+
+          {/* Language Switcher */}
+          <div className="flex items-center gap-1 bg-surface-container-lowest px-2.5 py-1.5 rounded-full border border-outline-variant/50 shadow-sm text-xs">
+            <span className="material-symbols-outlined text-on-surface-variant text-[17px]">translate</span>
             <select
               value={lang}
-              onChange={e => setLanguage(e.target.value)}
-              className="bg-transparent font-medium text-ink focus:outline-none cursor-pointer"
+              onChange={(e) => setLanguage(e.target.value)}
+              className="bg-transparent font-medium text-on-surface focus:outline-none cursor-pointer text-xs pr-1"
               aria-label="Select Language"
             >
-              {LANGUAGES.map(l => (
-                <option key={l.code} value={l.code}>{l.label}</option>
+              {LANGUAGES.map((l) => (
+                <option key={l.code} value={l.code}>
+                  {l.label}
+                </option>
               ))}
             </select>
           </div>
 
           {user ? (
-            <>
-              {/* Verify OTP & Aadhaar Badge Button */}
-              <button
-                onClick={() => setIsOtpModalOpen(true)}
-                className="flex items-center gap-1.5 rounded-full border border-purple-200 bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700 hover:bg-purple-100 transition"
-              >
-                <ShieldCheck size={14} className="text-purple-600" />
-                {user.is_aadhaar_verified ? 'Aadhaar Verified' : 'Verify OTP / Aadhaar'}
-              </button>
-
+            <div className="flex items-center gap-2">
               <Link
                 to={dashboardPath}
-                className="flex items-center gap-1.5 text-sm font-medium text-ink hover:text-brand-700"
+                className="flex items-center gap-2 bg-surface-container-high/80 hover:bg-surface-container-highest px-3 py-1.5 rounded-full text-xs font-semibold text-on-surface transition-colors"
               >
-                <User size={16} />
-                {user.name.split(' ')[0]}
+                <div className="w-6 h-6 rounded-full bg-primary text-on-primary flex items-center justify-center text-xs">
+                  <User size={13} />
+                </div>
+                <span>{user.name.split(' ')[0]}</span>
+                <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-[10px] uppercase font-bold">
+                  {user.role === 'cooperative_admin' ? 'Coop Admin' : user.role}
+                </span>
               </Link>
-
               <button
                 onClick={handleLogout}
                 disabled={loggingOut}
-                className="btn btn-ghost flex items-center gap-1.5"
+                className="p-2 rounded-full text-on-surface-variant hover:bg-surface-container hover:text-error transition"
+                title="Log out"
               >
                 <LogOut size={16} />
-                {loggingOut ? 'Logging out…' : t('nav_logout', 'Log out')}
               </button>
-            </>
+            </div>
           ) : (
-            <>
-              <Link to="/login"    className="btn btn-ghost">{t('nav_login', 'Log in')}</Link>
-              <Link to="/register" className="btn btn-primary">{t('nav_register', 'Join Cooperative')}</Link>
-            </>
+            <div className="flex items-center gap-2">
+              <Link
+                to="/login"
+                className="px-3.5 py-2 rounded-lg text-sm font-semibold text-on-surface hover:bg-surface-container transition-colors"
+              >
+                {t('nav_login', 'Log In')}
+              </Link>
+              <Link
+                to="/register"
+                className="btn btn-primary text-xs font-bold shadow-sm"
+              >
+                {t('nav_register', 'Join Cooperative')}
+              </Link>
+            </div>
           )}
         </div>
 
-        {/* Hamburger — only visible on small screens */}
-        <button
-          type="button"
-          onClick={() => setIsMenuOpen((open) => !open)}
-          className="grid h-10 w-10 place-items-center rounded-lg border border-line text-ink md:hidden"
-          aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
-          aria-expanded={isMenuOpen}
-        >
-          {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
-        </button>
-      </nav>
+        {/* Mobile Hamburger Button */}
+        <div className="flex items-center gap-2 lg:hidden">
+          <button
+            type="button"
+            onClick={() => setIsMenuOpen((open) => !open)}
+            className="w-10 h-10 rounded-xl bg-surface-container-low border border-outline-variant/60 flex items-center justify-center text-on-surface"
+            aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+          >
+            {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
+      </div>
 
-      {/* OTP & Aadhaar Verification Modal */}
-      {user && (
-        <OTPVerificationModal
-          isOpen={isOtpModalOpen}
-          onClose={() => setIsOtpModalOpen(false)}
-          initialMode="mobile"
-          userPhone={user.phone}
-          userEmail={user.email}
-          userAadhaar={user.aadhaar_number || ''}
-        />
-      )}
-
-      {/* Mobile dropdown panel */}
+      {/* Mobile Drawer */}
       {isMenuOpen && (
-        <div className="border-t border-line bg-paper md:hidden">
-          <div className="container-page flex flex-col gap-1 py-4">
+        <div className="border-t border-outline-variant/60 bg-surface px-4 py-4 lg:hidden shadow-lg animate-fade-in">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between pb-3 border-b border-outline-variant/40 text-xs">
+              <span className="flex items-center gap-1 font-semibold text-on-surface">
+                <span className="material-symbols-outlined text-secondary text-[16px]">location_on</span>
+                Noida &amp; NCR Service Zone
+              </span>
+              <select
+                value={lang}
+                onChange={(e) => setLanguage(e.target.value)}
+                className="rounded border border-outline-variant bg-white px-2 py-1 text-xs"
+              >
+                {LANGUAGES.map((l) => (
+                  <option key={l.code} value={l.code}>
+                    {l.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {LINKS.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
                 onClick={closeMenu}
                 className={({ isActive }) =>
-                  `rounded-lg px-3 py-2.5 text-sm font-medium ${
-                    isActive ? 'bg-brand-50 text-brand-700' : 'text-ink'
+                  `px-3.5 py-2.5 rounded-lg text-sm font-semibold transition ${
+                    isActive
+                      ? 'bg-primary-container text-on-primary-container'
+                      : 'text-on-surface-variant hover:bg-surface-container'
                   }`
                 }
               >
@@ -169,29 +199,44 @@ export default function Navbar() {
               </NavLink>
             ))}
 
-            {user ? (
-              <div className="mt-2 flex flex-col gap-2">
-                <Link
-                  to={dashboardPath}
-                  onClick={closeMenu}
-                  className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-ink hover:bg-brand-50"
-                >
-                  <User size={16} /> {user.name} — Dashboard
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  disabled={loggingOut}
-                  className="btn btn-outline w-full"
-                >
-                  {loggingOut ? 'Logging out…' : 'Log out'}
-                </button>
-              </div>
-            ) : (
-              <div className="mt-2 grid grid-cols-2 gap-2">
-                <Link to="/login"    onClick={closeMenu} className="btn btn-outline w-full">Log in</Link>
-                <Link to="/register" onClick={closeMenu} className="btn btn-primary w-full">Register</Link>
-              </div>
-            )}
+            <div className="pt-3 border-t border-outline-variant/40 mt-1">
+              {user ? (
+                <div className="flex flex-col gap-2">
+                  <Link
+                    to={dashboardPath}
+                    onClick={closeMenu}
+                    className="flex items-center justify-between p-3 rounded-xl bg-surface-container-low text-on-surface font-semibold text-sm"
+                  >
+                    <span>{user.name} ({user.role})</span>
+                    <span className="text-primary font-bold text-xs">Dashboard →</span>
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    disabled={loggingOut}
+                    className="w-full btn btn-outline text-error font-semibold text-sm"
+                  >
+                    {loggingOut ? 'Logging out…' : 'Log Out'}
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  <Link
+                    to="/login"
+                    onClick={closeMenu}
+                    className="btn btn-outline text-center text-sm font-semibold"
+                  >
+                    Log In
+                  </Link>
+                  <Link
+                    to="/register"
+                    onClick={closeMenu}
+                    className="btn btn-primary text-center text-sm font-semibold"
+                  >
+                    Join Co-op
+                  </Link>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

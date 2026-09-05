@@ -21,36 +21,105 @@ import { getMe, loginUser, logoutUser, registerUser } from '../services/api'
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user, setUser]       = useState(null)
-  const [loading, setLoading] = useState(true) // true while we check /me
+  // Synchronously restore cached user from localStorage on refresh to prevent unauthenticated flash
+  const [user, setUser] = useState(() => {
+    try {
+      const cached = localStorage.getItem('need_user')
+      if (!cached) return null
+      const parsed = JSON.parse(cached)
+      if (parsed && parsed.id) {
+        const token = parsed.token || localStorage.getItem('need_token') || `user-${parsed.id}`
+        if (!localStorage.getItem('need_token')) {
+          localStorage.setItem('need_token', token)
+        }
+        return { ...parsed, token }
+      }
+      return null
+    } catch {
+      return null
+    }
+  })
 
-  // On first render, ask the server if the browser already has a valid
-  // session cookie. This restores login state after a page refresh.
+  // Start in loading state until verified
+  const [loading, setLoading] = useState(true)
+
+  // Verify and re-synchronize session with backend upon application mount
   useEffect(() => {
-    getMe()
-      .then(setUser)
-      .catch(() => setUser(null)) // 401 = not logged in, that is fine
-      .finally(() => setLoading(false))
+    let isMounted = true
+
+    async function syncAuth() {
+      try {
+        const serverUser = await getMe()
+        if (isMounted && serverUser) {
+          const token = serverUser.token || localStorage.getItem('need_token') || `user-${serverUser.id}`
+          const fullUser = { ...serverUser, token }
+          setUser(fullUser)
+          localStorage.setItem('need_user', JSON.stringify(fullUser))
+          localStorage.setItem('need_token', token)
+        }
+      } catch (err) {
+        // 401 Unauthorized means the session/token is invalid or expired
+        if (err?.response?.status === 401) {
+          if (isMounted) {
+            setUser(null)
+            localStorage.removeItem('need_user')
+            localStorage.removeItem('need_token')
+          }
+        } else {
+          // If server was temporarily busy or network glitch, keep cached user
+          console.warn('Session verification warning:', err?.message)
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    syncAuth()
+
+    return () => {
+      isMounted = false
+    }
   }, [])
 
-  /** Call the login endpoint, store the returned user. */
+  /** Call the login endpoint, store the returned user and token. */
   const login = useCallback(async (email, password) => {
     const userData = await loginUser(email, password)
-    setUser(userData)
-    return userData
+    const token = userData.token || (userData.id ? `user-${userData.id}` : '')
+    const fullUser = { ...userData, token }
+    setUser(fullUser)
+    localStorage.setItem('need_user', JSON.stringify(fullUser))
+    if (token) {
+      localStorage.setItem('need_token', token)
+    }
+    return fullUser
   }, [])
 
   /** Register a new account, then automatically log them in. */
   const register = useCallback(async (data) => {
     const userData = await registerUser(data)
-    setUser(userData)
-    return userData
+    const token = userData.token || (userData.id ? `user-${userData.id}` : '')
+    const fullUser = { ...userData, token }
+    setUser(fullUser)
+    localStorage.setItem('need_user', JSON.stringify(fullUser))
+    if (token) {
+      localStorage.setItem('need_token', token)
+    }
+    return fullUser
   }, [])
 
   /** Clear the server session and local state. */
   const logout = useCallback(async () => {
-    await logoutUser()
-    setUser(null)
+    try {
+      await logoutUser()
+    } catch (err) {
+      console.warn('Logout API warning:', err?.message)
+    } finally {
+      localStorage.removeItem('need_user')
+      localStorage.removeItem('need_token')
+      setUser(null)
+    }
   }, [])
 
   return (

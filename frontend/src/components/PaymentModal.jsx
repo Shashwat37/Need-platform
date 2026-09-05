@@ -1,14 +1,5 @@
 /**
- * PaymentModal.jsx — simulated payment checkout for bookings.
- *
- * WHAT: Allows customers to complete payment for a service booking via UPI,
- *       Card, or Cash on Delivery, with optional worker tipping and transparent
- *       90/10 cooperative split breakdown.
- *
- * WHY:  On NEED, payment is transparent. The customer sees exactly how
- *       much goes directly to the worker and how much builds their social security.
- *
- * HOW:  Calls checkoutPayment() from api.js and opens the official invoice receipt.
+ * PaymentModal.jsx — Stitch Cooperative Checkout & Transparent Remittance.
  */
 
 import { useEffect, useState } from 'react'
@@ -18,15 +9,12 @@ import {
   CheckCircle2,
   CreditCard,
   Heart,
-  HeartHandshake,
-  IndianRupee,
   Loader2,
   Lock,
   QrCode,
+  Receipt,
   ShieldCheck,
   Smartphone,
-  Sparkles,
-  User,
   X,
 } from 'lucide-react'
 import { checkoutPayment } from '../services/api'
@@ -39,25 +27,18 @@ export default function PaymentModal({
   booking,
   onSuccess,
 }) {
-  const [method, setMethod]     = useState('upi') // 'upi' | 'card' | 'cash'
+  const [method, setMethod]           = useState('upi')
   const [selectedTip, setSelectedTip] = useState(30)
   const [customTip, setCustomTip]     = useState('')
-  const [upiId, setUpiId]       = useState('ananya@okhdfcbank')
-  const [cardNumber, setCardNumber] = useState('4532 •••• •••• 8821')
-  const [expiry, setExpiry]     = useState('08/28')
-  const [cvv, setCvv]           = useState('742')
+  const [upiId, setUpiId]             = useState('ananya@okhdfcbank')
+  const [cardNumber, setCardNumber]   = useState('4532 •••• •••• 8821')
+  const [expiry, setExpiry]           = useState('08/28')
+  const [cvv, setCvv]                 = useState('742')
 
-  const [busy, setBusy]         = useState(false)
-  const [error, setError]       = useState('')
+  const [busy, setBusy]               = useState(false)
+  const [error, setError]             = useState('')
   const [completedPayment, setCompletedPayment] = useState(null)
 
-  // Start every checkout from a clean slate.
-  //
-  // WHY: closing this modal only hides it (the `return null` below), it does not
-  // unmount it, so React keeps all the state above. Without this reset, paying a
-  // second booking opened straight onto the FIRST payment's success screen —
-  // showing the old invoice ID — and the Pay button stayed stuck on
-  // "Processing Payment…" forever, because `busy` was never set back to false.
   useEffect(() => {
     if (isOpen) {
       setCompletedPayment(null)
@@ -101,271 +82,257 @@ export default function PaymentModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/60 backdrop-blur-sm animate-fade-in">
-      <div className="card relative w-full max-w-lg max-h-[92vh] overflow-y-auto p-6 sm:p-7 shadow-2xl border-brand-100">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div
+        className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm"
+        onClick={busy ? undefined : onClose}
+      />
 
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 rounded-lg p-1 text-muted hover:bg-paper hover:text-ink transition"
-          aria-label="Close modal"
-        >
-          <X size={18} />
-        </button>
+      <div className="relative w-full max-w-lg bg-surface-container-lowest rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/60 z-10 my-8 animate-fade-in">
+        {/* Tactile Header */}
+        <div className="bg-inverse-surface text-inverse-on-surface px-5 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-secondary-container text-[18px]">payments</span>
+            <span className="font-label-caps text-[11px] tracking-wider text-secondary-fixed uppercase font-bold">
+              Direct Cooperative Remittance
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            disabled={busy}
+            className="text-inverse-on-surface/70 hover:text-inverse-on-surface p-1 rounded-lg hover:bg-white/10 transition"
+            aria-label="Close"
+          >
+            <X size={18} />
+          </button>
+        </div>
 
-        {/* Payment Completed Splash */}
+        {/* Title Bar */}
+        <div className="p-5 border-b border-outline-variant/40 bg-surface-container-low flex items-center justify-between">
+          <div>
+            <span className="font-label-caps text-[10px] uppercase text-primary font-bold">
+              Booking Ref #{booking.id}
+            </span>
+            <h2 className="font-headline-sm text-lg text-on-surface font-extrabold">
+              {booking.service_name || 'Service Task'}
+            </h2>
+          </div>
+          <div className="text-right">
+            <span className="text-[10px] font-mono text-on-surface-variant uppercase">Payable</span>
+            <div className="font-metric-val text-xl text-primary font-extrabold leading-tight">
+              ₹{totalAmount}
+            </div>
+          </div>
+        </div>
+
+        {/* Payment Success Splash */}
         {completedPayment ? (
-          <div className="py-8 text-center space-y-4">
-            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-verified/10 text-verified animate-bounce">
+          <div className="p-7 text-center space-y-4">
+            <div className="mx-auto w-16 h-16 rounded-2xl bg-primary text-on-primary flex items-center justify-center shadow-md animate-bounce">
               <CheckCircle2 size={36} />
             </div>
 
             <div>
-              <h3 className="font-display text-2xl font-bold text-ink">Payment Successful!</h3>
-              <p className="font-mono text-xs text-brand-700 font-semibold mt-1">
-                Invoice ID: {completedPayment.invoice_id}
+              <h3 className="font-headline-md text-xl font-extrabold text-on-surface">Payment Settled!</h3>
+              <p className="font-mono text-xs text-primary font-bold mt-1">
+                Official Receipt: {completedPayment.invoice_id}
               </p>
             </div>
 
-            <div className="rounded-xl border border-verified/30 bg-verified/5 p-4 text-left text-xs space-y-2 max-w-sm mx-auto">
-              <div className="flex justify-between font-medium text-ink">
-                <span>Total Paid:</span>
-                <span className="font-mono font-bold">₹{completedPayment.total_amount}</span>
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-left text-xs space-y-2 max-w-sm mx-auto">
+              <div className="flex justify-between font-bold text-on-surface">
+                <span>Total Remitted:</span>
+                <span className="font-mono">₹{completedPayment.total_amount}</span>
               </div>
-              <div className="flex justify-between text-muted">
+              <div className="flex justify-between text-on-surface-variant">
                 <span>Payment Mode:</span>
                 <span className="font-mono uppercase">{method} (Simulated)</span>
               </div>
-              <div className="border-t border-verified/20 pt-2 flex justify-between text-brand-700 font-semibold">
+              <div className="border-t border-primary/20 pt-2 flex justify-between text-primary font-bold">
                 <span>Welfare Contribution:</span>
-                <span className="font-mono">+₹{completedPayment.welfare_contribution} saved</span>
+                <span className="font-mono">₹{completedPayment.welfare_contribution}</span>
               </div>
             </div>
 
-            <div className="pt-2 flex items-center justify-center gap-3">
-              <button
-                onClick={onClose}
-                className="btn btn-primary text-xs py-2 px-5"
-              >
-                Close & View Dashboard
-              </button>
-            </div>
+            <button
+              onClick={onClose}
+              className="w-full btn btn-primary font-bold text-xs uppercase tracking-wider shadow-sm"
+            >
+              Done • Return to Dashboard
+            </button>
           </div>
         ) : (
-          <div>
-            {/* Header */}
-            <div className="mb-5">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-brand-700">
-                <Lock size={14} />
-                Cooperative Payment Gateway
-              </div>
-              <h2 className="mt-1 font-display text-2xl font-extrabold text-ink">
-                Complete Payment
-              </h2>
-              <p className="text-xs text-muted">
-                Booking #{booking.id} • {booking.service_name} • {booking.worker_name || 'Assigned Partner'}
-              </p>
-            </div>
-
-            {/* Error Banner */}
+          <form onSubmit={handlePay} className="p-5 space-y-4 max-h-[75vh] overflow-y-auto">
             {error && (
-              <div className="mb-4 flex items-center gap-2 rounded-xl bg-red-50 p-3 text-xs text-red-700">
-                <AlertCircle size={16} className="shrink-0" />
+              <div className="p-3 rounded-xl bg-error-container/40 border border-error/30 text-on-error-container text-xs flex items-center gap-2 font-medium">
+                <AlertCircle size={16} className="text-error shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
             {/* Payment Method Selector */}
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-ink mb-2">Select Payment Method</label>
-                <div className="grid grid-cols-3 gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => setMethod('upi')}
-                    className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 text-xs font-bold transition ${
-                      method === 'upi'
-                        ? 'border-brand-600 bg-brand-50 text-brand-700 shadow-sm'
-                        : 'border-line bg-white text-muted hover:border-ink/30 hover:text-ink'
-                    }`}
-                  >
-                    <Smartphone size={18} />
-                    <span>UPI / QR</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setMethod('card')}
-                    className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 text-xs font-bold transition ${
-                      method === 'card'
-                        ? 'border-brand-600 bg-brand-50 text-brand-700 shadow-sm'
-                        : 'border-line bg-white text-muted hover:border-ink/30 hover:text-ink'
-                    }`}
-                  >
-                    <CreditCard size={18} />
-                    <span>Card</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setMethod('cash')}
-                    className={`flex flex-col items-center gap-1.5 rounded-xl border p-3 text-xs font-bold transition ${
-                      method === 'cash'
-                        ? 'border-brand-600 bg-brand-50 text-brand-700 shadow-sm'
-                        : 'border-line bg-white text-muted hover:border-ink/30 hover:text-ink'
-                    }`}
-                  >
-                    <Banknote size={18} />
-                    <span>Cash</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Method Details (Simulated inputs) */}
-              {method === 'upi' && (
-                <div className="rounded-xl border border-line bg-paper/60 p-3.5 space-y-2">
-                  <label className="block text-xs font-medium text-ink">Virtual Payment Address (VPA)</label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={upiId}
-                      onChange={e => setUpiId(e.target.value)}
-                      placeholder="mobile@upi or user@okhdfcbank"
-                      className="w-full rounded-xl border border-line bg-white px-3.5 py-2 text-xs font-mono text-ink focus:outline-none focus:ring-1 focus:ring-brand-500"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 rounded bg-brand-50 px-1.5 py-0.5 text-[10px] font-bold text-brand-700 uppercase">
-                      Instant Pay
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-muted">Supports Google Pay, PhonePe, Paytm & BHIM</p>
-                </div>
-              )}
-
-              {method === 'card' && (
-                <div className="rounded-xl border border-line bg-paper/60 p-3.5 space-y-2.5">
-                  <div>
-                    <label className="block text-[11px] font-medium text-muted">Card Number</label>
-                    <input
-                      type="text"
-                      value={cardNumber}
-                      onChange={e => setCardNumber(e.target.value)}
-                      className="w-full rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-mono text-ink"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-[11px] font-medium text-muted">Expiry</label>
-                      <input
-                        type="text"
-                        value={expiry}
-                        onChange={e => setExpiry(e.target.value)}
-                        className="w-full rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-mono text-ink"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[11px] font-medium text-muted">CVV</label>
-                      <input
-                        type="password"
-                        value={cvv}
-                        onChange={e => setCvv(e.target.value)}
-                        className="w-full rounded-lg border border-line bg-white px-3 py-1.5 text-xs font-mono text-ink"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {method === 'cash' && (
-                <div className="rounded-xl border border-line bg-paper/60 p-3.5 text-xs text-muted space-y-1">
-                  <p className="font-semibold text-ink">Cash on Delivery Receipt</p>
-                  <p className="text-[11px]">
-                    Pay cash directly to the service provider after job verification. The worker will confirm receipt on their phone.
-                  </p>
-                </div>
-              )}
-
-              {/* Worker Tip Selector */}
-              <div>
-                <label className="block text-xs font-bold text-ink mb-1.5 flex items-center gap-1.5">
-                  <Heart size={14} className="text-red-500 fill-red-500" />
-                  Add Worker Appreciation Tip (100% to Worker)
-                </label>
-                <div className="flex flex-wrap items-center gap-2">
-                  {TIPS.map(t => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => { setSelectedTip(t); setCustomTip(''); }}
-                      className={`rounded-xl border px-3 py-1.5 text-xs font-bold transition ${
-                        selectedTip === t && customTip === ''
-                          ? 'border-brand-600 bg-brand-50 text-brand-700 shadow-sm'
-                          : 'border-line bg-white text-muted hover:text-ink'
-                      }`}
-                    >
-                      {t === 0 ? 'No Tip' : `₹${t}`}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Cooperative Transparency Breakdown */}
-              <div className="rounded-2xl border border-brand-200 bg-brand-50/50 p-4 space-y-2.5">
-                <div className="flex justify-between text-xs text-muted">
-                  <span>Service Base Amount</span>
-                  <span className="font-mono text-ink">₹{serviceAmount}</span>
-                </div>
-
-                {tipAmount > 0 && (
-                  <div className="flex justify-between text-xs text-emerald-700">
-                    <span>Direct Worker Tip</span>
-                    <span className="font-mono font-semibold">+₹{tipAmount}</span>
-                  </div>
-                )}
-
-                <div className="border-t border-brand-200 pt-2 flex justify-between text-sm font-bold text-ink">
-                  <span>Total Amount Due</span>
-                  <span className="font-mono text-base text-brand-700">₹{totalAmount}</span>
-                </div>
-
-                {/* Split Transparency Note */}
-                <div className="rounded-xl bg-white p-2.5 border border-brand-100 text-[11px] text-muted space-y-1">
-                  <div className="flex justify-between font-medium text-ink">
-                    <span>👷 Direct Worker Earnings (90% + Tip):</span>
-                    <span className="font-mono text-brand-700 font-bold">₹{workerTakeHome}</span>
-                  </div>
-                  <div className="flex justify-between text-teal-700 font-medium">
-                    <span>🛡️ Cooperative Welfare Fund (10%):</span>
-                    <span className="font-mono font-bold">₹{welfareCut}</span>
-                  </div>
-                  <div className="text-[10px] text-muted pt-0.5">
-                    Zero private platform fee. 100% of payment supports the worker & their social security.
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="pt-2 flex items-center justify-end gap-2.5">
+            <div className="space-y-1.5">
+              <label className="font-label-md text-xs text-on-surface font-bold">
+                Select Payment Mode
+              </label>
+              <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
-                  onClick={onClose}
-                  className="btn btn-ghost text-xs"
+                  onClick={() => setMethod('upi')}
+                  className={`p-2.5 rounded-xl border text-left transition flex flex-col justify-between ${
+                    method === 'upi'
+                      ? 'border-primary bg-primary/10 text-primary font-bold shadow-sm ring-2 ring-primary/20'
+                      : 'border-outline-variant bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
+                  }`}
                 >
-                  Cancel
+                  <Smartphone size={18} className="mb-1 text-primary" />
+                  <span className="text-xs">Instant UPI</span>
                 </button>
+
                 <button
-                  onClick={handlePay}
-                  disabled={busy}
-                  className="btn btn-primary flex items-center gap-2 text-xs py-2.5 px-5 disabled:opacity-60"
+                  type="button"
+                  onClick={() => setMethod('card')}
+                  className={`p-2.5 rounded-xl border text-left transition flex flex-col justify-between ${
+                    method === 'card'
+                      ? 'border-primary bg-primary/10 text-primary font-bold shadow-sm ring-2 ring-primary/20'
+                      : 'border-outline-variant bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
+                  }`}
                 >
-                  {busy ? <Loader2 size={15} className="animate-spin" /> : <ShieldCheck size={15} />}
-                  <span>{busy ? 'Processing Payment…' : `Pay ₹${totalAmount} Securely`}</span>
+                  <CreditCard size={18} className="mb-1 text-primary" />
+                  <span className="text-xs">Debit/Credit</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setMethod('cash')}
+                  className={`p-2.5 rounded-xl border text-left transition flex flex-col justify-between ${
+                    method === 'cash'
+                      ? 'border-primary bg-primary/10 text-primary font-bold shadow-sm ring-2 ring-primary/20'
+                      : 'border-outline-variant bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
+                  }`}
+                >
+                  <Banknote size={18} className="mb-1 text-secondary" />
+                  <span className="text-xs">Direct Cash</span>
                 </button>
               </div>
-
             </div>
-          </div>
-        )}
 
+            {/* Dynamic Method Details */}
+            {method === 'upi' && (
+              <div className="p-3 rounded-xl bg-surface-container-low space-y-2 border border-outline-variant/40">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-on-surface">UPI Virtual Payment Address</span>
+                  <span className="text-[10px] text-primary font-bold flex items-center gap-1">
+                    <QrCode size={13} /> Scan QR Ready
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  value={upiId}
+                  onChange={(e) => setUpiId(e.target.value)}
+                  className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-medium text-on-surface"
+                />
+              </div>
+            )}
+
+            {method === 'card' && (
+              <div className="p-3 rounded-xl bg-surface-container-low space-y-2 border border-outline-variant/40">
+                <span className="font-semibold text-xs text-on-surface block">Simulated Card Details</span>
+                <input
+                  type="text"
+                  value={cardNumber}
+                  onChange={(e) => setCardNumber(e.target.value)}
+                  className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-medium text-on-surface"
+                />
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    value={expiry}
+                    onChange={(e) => setExpiry(e.target.value)}
+                    placeholder="MM/YY"
+                    className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-medium text-on-surface"
+                  />
+                  <input
+                    type="password"
+                    value={cvv}
+                    onChange={(e) => setCvv(e.target.value)}
+                    placeholder="CVV"
+                    className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-medium text-on-surface"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Optional Worker Tip */}
+            <div className="space-y-1.5">
+              <label className="font-label-md text-xs text-on-surface font-bold flex items-center justify-between">
+                <span className="flex items-center gap-1">
+                  <Heart size={14} className="text-secondary fill-secondary" />
+                  Direct Worker Tip (100% to Worker)
+                </span>
+                <span className="text-[11px] text-secondary font-bold">Zero commission taken</span>
+              </label>
+              <div className="flex items-center gap-2">
+                {TIPS.map((tip) => (
+                  <button
+                    key={tip}
+                    type="button"
+                    onClick={() => {
+                      setSelectedTip(tip)
+                      setCustomTip('')
+                    }}
+                    className={`flex-1 py-1.5 rounded-lg border text-xs font-bold transition ${
+                      selectedTip === tip && customTip === ''
+                        ? 'border-secondary bg-secondary-container text-on-secondary-container shadow-sm'
+                        : 'border-outline-variant bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
+                    }`}
+                  >
+                    {tip === 0 ? 'No tip' : `₹${tip}`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Live Transparent Split Breakdown */}
+            <div className="p-3 rounded-xl bg-surface-container-low border border-outline-variant/40 space-y-1.5">
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-label-caps text-[10px] text-on-surface-variant uppercase font-bold">
+                  Cooperative Split Formula
+                </span>
+                <span className="font-bold text-primary text-xs">
+                  ₹{totalAmount} Total
+                </span>
+              </div>
+              <div className="w-full h-2 rounded-full overflow-hidden bg-surface-container flex">
+                <div className="h-full bg-primary" style={{ width: '90%' }} />
+                <div className="h-full bg-secondary-container" style={{ width: '10%' }} />
+              </div>
+              <div className="flex justify-between text-[10px] font-medium text-on-surface-variant">
+                <span className="text-primary font-bold">₹{workerTakeHome} Direct to Worker (90% + tip)</span>
+                <span className="text-secondary font-bold">₹{welfareCut} Welfare Fund (10%)</span>
+              </div>
+            </div>
+
+            {/* Submit Action */}
+            <button
+              type="submit"
+              disabled={busy}
+              className="w-full py-3 px-4 rounded-xl bg-primary text-on-primary hover:bg-primary-container transition shadow-md flex items-center justify-center gap-2 font-label-md text-xs font-bold uppercase tracking-wider disabled:opacity-50"
+            >
+              {busy ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Processing Remittance…</span>
+                </>
+              ) : (
+                <>
+                  <Lock size={14} />
+                  <span>Simulate Payment &amp; Remit (₹{totalAmount})</span>
+                </>
+              )}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   )

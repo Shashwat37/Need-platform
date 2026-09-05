@@ -1,22 +1,11 @@
 /**
- * InvoiceModal.jsx — printable cooperative tax invoice & receipt.
- *
- * WHAT: Renders a clean, official itemized receipt for a completed booking,
- *       including the invoice number, date, payment method, transparent
- *       welfare allocation stamp, and printable layout.
- *
- * WHY:  Proves the transaction happened and guarantees transparency of the
- *       90/10 cooperative worker split.
- *
- * HOW:  Fetches invoice data from getInvoice(invoiceId) and supports window.print().
+ * InvoiceModal.jsx — Stitch Cooperative Tax Invoice & Itemized Receipt.
  */
 
 import { useEffect, useState } from 'react'
 import {
   AlertCircle,
   CheckCircle2,
-  Download,
-  HeartHandshake,
   Loader2,
   Printer,
   ShieldCheck,
@@ -44,8 +33,6 @@ export default function InvoiceModal({
         })
         .finally(() => setLoading(false))
     } else if (isOpen) {
-      // Opened with no invoice id. Without this branch `loading` stays true from
-      // its initial value and the modal spins forever with no way out.
       setLoading(false)
       setError('This booking does not have an invoice yet.')
     }
@@ -58,208 +45,199 @@ export default function InvoiceModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/60 backdrop-blur-sm animate-fade-in print:p-0 print:bg-white">
-      <div className="card relative w-full max-w-2xl max-h-[92vh] overflow-y-auto p-6 sm:p-9 shadow-2xl border-brand-100 bg-white print:max-h-none print:shadow-none print:border-none print:p-0">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto print:p-0">
+      <div
+        className="fixed inset-0 bg-inverse-surface/60 backdrop-blur-sm print:hidden"
+        onClick={onClose}
+      />
 
-        {/* Close button (hidden on print) */}
-        <button
-          onClick={onClose}
-          className="absolute right-5 top-5 rounded-lg p-1 text-muted hover:bg-paper hover:text-ink transition print:hidden"
-          aria-label="Close invoice"
-        >
-          <X size={20} />
-        </button>
+      <div className="relative w-full max-w-2xl bg-surface-container-lowest rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/60 z-10 my-8 animate-fade-in print:max-h-none print:shadow-none print:border-none print:m-0">
+        {/* Tactile Header Strip */}
+        <div className="bg-inverse-surface text-inverse-on-surface px-6 py-3 flex items-center justify-between print:hidden">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-secondary-container text-[18px]">receipt_long</span>
+            <span className="font-label-caps text-[11px] tracking-wider text-secondary-fixed uppercase font-bold">
+              Official Federation Tax Invoice
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-inverse-on-surface/70 hover:text-inverse-on-surface p-1 rounded-lg hover:bg-white/10 transition"
+            aria-label="Close invoice"
+          >
+            <X size={18} />
+          </button>
+        </div>
 
         {loading ? (
-          <div className="py-20 text-center space-y-3">
-            <Loader2 size={32} className="animate-spin text-brand-600 mx-auto" />
-            <p className="text-xs text-muted">Loading invoice receipt…</p>
+          <div className="p-16 text-center space-y-3">
+            <Loader2 size={32} className="animate-spin text-primary mx-auto" />
+            <p className="text-xs text-on-surface-variant font-medium">Retrieving verified invoice…</p>
           </div>
         ) : error ? (
-          <div className="py-16 text-center space-y-3">
-            <AlertCircle size={36} className="text-red-500 mx-auto" />
-            <p className="text-sm text-muted">{error}</p>
+          <div className="p-12 text-center space-y-3">
+            <AlertCircle size={36} className="text-error mx-auto" />
+            <p className="text-sm text-on-surface font-semibold">{error}</p>
             <button onClick={onClose} className="btn btn-outline text-xs">
               Close
             </button>
           </div>
         ) : (
-          <div className="space-y-6 text-ink">
-
-            {/* ── Top Federation Header ───────────────────────────────────── */}
-            <div className="flex flex-wrap items-start justify-between gap-4 border-b border-line pb-6">
+          <div className="p-6 sm:p-8 space-y-6 text-on-surface max-h-[75vh] overflow-y-auto print:max-h-none print:overflow-visible">
+            {/* Top Federation Header */}
+            <div className="flex flex-wrap items-start justify-between gap-4 border-b border-outline-variant/50 pb-5">
               <div>
-                <div className="flex items-center gap-2">
-                  <div className="grid h-8 w-8 place-items-center rounded-lg bg-brand-600 font-display font-extrabold text-white text-sm">
-                    SS
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-primary text-on-primary flex items-center justify-center font-bold text-sm shadow-sm">
+                    <span className="material-symbols-outlined text-[20px]">diversity_3</span>
                   </div>
-                  <span className="font-display text-xl font-extrabold tracking-tight text-ink">
-                    NEED
-                  </span>
+                  <div>
+                    <span className="font-headline-sm text-lg text-primary font-black tracking-tight leading-none">
+                      NEED
+                    </span>
+                    <span className="font-label-caps text-[10px] text-secondary font-bold uppercase block tracking-wider mt-0.5">
+                      Worker-Owned Federation
+                    </span>
+                  </div>
                 </div>
-                <p className="mt-1 text-xs text-muted">
-                  Worker Cooperative Federation of India
-                </p>
-                <p className="text-[11px] text-muted">
-                  Empowering service professionals with dignity & social security
+                <p className="mt-2 text-xs text-on-surface-variant max-w-xs leading-relaxed">
+                  Shramik Kalyan Sahakari Samiti Ltd.<br />
+                  Reg. #COOP-UP-2022-1082 • Multi-State Act, 2002<br />
+                  Sector 62, Noida, Gautam Buddha Nagar, UP
                 </p>
               </div>
 
               <div className="text-right">
-                <span className="inline-flex items-center gap-1 rounded-full bg-verified/10 text-verified border border-verified/30 px-3 py-1 text-xs font-bold uppercase tracking-wider">
-                  <CheckCircle2 size={13} />
-                  {data.payment_status}
-                </span>
-                <p className="font-mono text-xs font-bold text-ink mt-2">
-                  {data.invoice_id}
-                </p>
-                <p className="text-xs text-muted">Date: {data.date}</p>
-              </div>
-            </div>
-
-            {/* ── Customer & Worker Meta Columns ─────────────────────────── */}
-            <div className="grid gap-6 sm:grid-cols-2 text-xs">
-              <div className="rounded-xl border border-line bg-paper/50 p-4 space-y-1">
-                <p className="font-bold text-ink uppercase tracking-wider text-[10px] text-muted">Billed To (Customer)</p>
-                <p className="font-semibold text-sm text-ink">{data.customer.name}</p>
-                <p className="text-muted">{data.customer.phone}</p>
-                <p className="text-muted">{data.customer.email}</p>
-                <p className="text-muted pt-1 border-t border-line/60">{data.customer.address || 'Service Location'}</p>
-              </div>
-
-              <div className="rounded-xl border border-line bg-paper/50 p-4 space-y-1">
-                <p className="font-bold text-ink uppercase tracking-wider text-[10px] text-muted">Service Provider (Cooperative Member)</p>
-                <p className="font-semibold text-sm text-ink">{data.worker.name}</p>
-                <p className="text-brand-700 font-medium">{data.worker.trade}</p>
-                <p className="text-muted">{data.worker.society}</p>
-                <p className="text-[11px] text-muted pt-1 border-t border-line/60 font-mono">
-                  Member ID: #SHR-2026-{(data.worker.id || 0).toString().padStart(4, '0')}
+                <div className="inline-flex items-center gap-1 rounded-full bg-primary-fixed/50 text-on-primary-fixed px-2.5 py-0.5 text-[11px] font-bold">
+                  <ShieldCheck size={12} className="text-primary" />
+                  Statutory Receipt
+                </div>
+                <h3 className="font-mono text-base font-bold text-on-surface mt-1.5">
+                  {data?.invoice_number || invoiceId}
+                </h3>
+                <p className="font-mono text-xs text-on-surface-variant">
+                  Date: {data?.paid_at ? new Date(data.paid_at).toLocaleDateString('en-IN') : new Date().toLocaleDateString('en-IN')}
                 </p>
               </div>
             </div>
 
-            {/* ── Booking & Itemized Charges Table ────────────────────────── */}
-            <div>
-              <p className="text-xs font-bold uppercase tracking-wider text-muted mb-2">Service Breakdown</p>
-              <div className="rounded-xl border border-line overflow-hidden">
-                <table className="w-full text-xs">
-                  <thead className="border-b border-line bg-paper text-muted font-medium">
-                    <tr>
-                      <th className="px-4 py-2.5 text-left">Description</th>
-                      <th className="px-4 py-2.5 text-center">Schedule</th>
-                      <th className="px-4 py-2.5 text-right">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-line">
-                    <tr>
-                      <td className="px-4 py-3">
-                        <p className="font-semibold text-ink">{data.booking.service_name}</p>
-                        <p className="text-muted text-[11px]">{data.booking.description || 'Standard service request'}</p>
-                      </td>
-                      <td className="px-4 py-3 text-center text-muted">
-                        {data.booking.scheduled_date} ({data.booking.scheduled_time || 'Day'})
-                      </td>
-                      <td className="px-4 py-3 text-right font-mono font-medium text-ink">
-                        ₹{data.breakdown.base_fare}
-                      </td>
-                    </tr>
-
-                    {data.breakdown.emergency_fee > 0 && (
-                      <tr>
-                        <td className="px-4 py-2.5 text-red-700 font-medium">
-                          Urgent / Emergency Rush Dispatch Fee
-                        </td>
-                        <td className="px-4 py-2.5 text-center text-muted text-[11px]">60-Min Priority</td>
-                        <td className="px-4 py-2.5 text-right font-mono text-red-700 font-medium">
-                          +₹{data.breakdown.emergency_fee}
-                        </td>
-                      </tr>
-                    )}
-
-                    {data.breakdown.tip_amount > 0 && (
-                      <tr>
-                        <td className="px-4 py-2.5 text-emerald-700 font-medium">
-                          Worker Appreciation Tip (100% direct)
-                        </td>
-                        <td className="px-4 py-2.5 text-center text-muted text-[11px]">Direct Tip</td>
-                        <td className="px-4 py-2.5 text-right font-mono text-emerald-700 font-medium">
-                          +₹{data.breakdown.tip_amount}
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                  <tfoot className="border-t-2 border-line bg-paper font-bold text-sm">
-                    <tr>
-                      <td colSpan={2} className="px-4 py-3 text-ink">
-                        Total Amount Paid ({data.payment_method})
-                      </td>
-                      <td className="px-4 py-3 text-right font-mono text-brand-700 text-base">
-                        ₹{data.breakdown.total_paid}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            </div>
-
-            {/* ── Transparent Cooperative Fee Allocation Box ───────────────────────── */}
-            <div className="rounded-xl border border-brand-200 bg-brand-50/40 p-4 space-y-2">
-              <div className="flex items-center gap-2 font-bold text-xs text-ink uppercase tracking-wider">
-                <HeartHandshake size={16} className="text-brand-700" />
-                Transparent Cooperative Distribution Breakdown
-              </div>
-
-              <div className="grid gap-2 sm:grid-cols-3 text-xs pt-1">
-                <div className="rounded-lg bg-white p-2.5 border border-line">
-                  <span className="text-[10px] text-muted block font-semibold">Platform Fee (10%)</span>
-                  <span className="font-mono font-bold text-stone-800">₹{Math.round(data.breakdown.total_paid * 0.10)}</span>
-                </div>
-
-                <div className="rounded-lg bg-amber-50 p-2.5 border border-amber-200">
-                  <span className="text-[10px] text-amber-800 block font-semibold">Cooperative Share (5%)</span>
-                  <span className="font-mono font-bold text-amber-900">₹{Math.round(data.breakdown.total_paid * 0.05)}</span>
-                </div>
-
-                <div className="rounded-lg bg-emerald-50 p-2.5 border border-emerald-200">
-                  <span className="text-[10px] text-emerald-800 block font-semibold">Worker Take-Home (85%)</span>
-                  <span className="font-mono font-bold text-emerald-900">₹{Math.round(data.breakdown.total_paid * 0.85)}</span>
-                </div>
-              </div>
-
-              <p className="text-[11px] text-emerald-800 pt-1 flex items-center gap-1 font-medium">
-                <ShieldCheck size={13} />
-                <span>
-                  <strong className="font-mono">₹{data.breakdown.welfare_contribution}</strong> (10% of fare) was deposited directly into {data.worker.name}'s Welfare Wallet for emergency cash & health insurance.
+            {/* Bill To / Service Info */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-xl bg-surface-container-low p-4 text-xs border border-outline-variant/40">
+              <div>
+                <span className="font-label-caps text-[10px] text-on-surface-variant uppercase font-bold block mb-1">
+                  Citizen Resident
                 </span>
-              </p>
+                <p className="font-bold text-on-surface">{data?.customer_name || 'Resident Customer'}</p>
+                <p className="text-on-surface-variant mt-0.5">{data?.customer_address || 'Noida Sector 62'}</p>
+              </div>
+
+              <div>
+                <span className="font-label-caps text-[10px] text-on-surface-variant uppercase font-bold block mb-1">
+                  Assigned Guild Worker
+                </span>
+                <p className="font-bold text-primary">{data?.worker_name || 'Cooperative Worker'}</p>
+                <p className="text-on-surface-variant mt-0.5 font-mono">
+                  Member ID: {data?.worker_member_id || 'ND-ELE-8812'}
+                </p>
+              </div>
             </div>
 
-            {/* ── Footer Actions (Print / Close) ──────────────────────────── */}
-            <div className="flex items-center justify-between border-t border-line pt-4 print:hidden">
-              <span className="text-[11px] text-muted">
-                Official Receipt • NEED Digital Invoice
-              </span>
+            {/* Itemized Table */}
+            <div className="border border-outline-variant/50 rounded-xl overflow-hidden">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-surface-container-low text-on-surface-variant font-label-caps uppercase border-b border-outline-variant/50 text-[10px]">
+                  <tr>
+                    <th className="px-4 py-2.5">Description</th>
+                    <th className="px-4 py-2.5 text-center">Share Type</th>
+                    <th className="px-4 py-2.5 text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/30 text-on-surface">
+                  <tr>
+                    <td className="px-4 py-3">
+                      <p className="font-bold text-on-surface">{data?.service_name || 'Home Service'}</p>
+                      <p className="text-[11px] text-on-surface-variant">Standard skilled trade execution</p>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="bg-primary/10 text-primary px-2 py-0.5 rounded font-bold text-[10px]">
+                        90% Direct
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono font-bold">
+                      ₹{data?.worker_earnings || Math.round((data?.amount || 299) * 0.9)}
+                    </td>
+                  </tr>
 
+                  <tr className="bg-secondary-fixed/15">
+                    <td className="px-4 py-2.5">
+                      <p className="font-semibold text-on-surface">Worker Welfare Fund Allocation</p>
+                      <p className="text-[10px] text-secondary font-medium">Health cover, safety tools &amp; reserve wallet</p>
+                    </td>
+                    <td className="px-4 py-2.5 text-center">
+                      <span className="bg-secondary-container/20 text-secondary px-2 py-0.5 rounded font-bold text-[10px]">
+                        10% Welfare
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5 text-right font-mono font-bold text-secondary">
+                      ₹{data?.welfare_amount || Math.round((data?.amount || 299) * 0.1)}
+                    </td>
+                  </tr>
+
+                  {Number(data?.tip_amount || 0) > 0 && (
+                    <tr>
+                      <td className="px-4 py-2.5">
+                        <p className="font-semibold text-on-surface">Direct Citizen Tip</p>
+                      </td>
+                      <td className="px-4 py-2.5 text-center">
+                        <span className="bg-primary/10 text-primary px-2 py-0.5 rounded font-bold text-[10px]">
+                          100% Worker
+                        </span>
+                      </td>
+                      <td className="px-4 py-2.5 text-right font-mono font-bold text-primary">
+                        ₹{data?.tip_amount}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+                <tfoot className="bg-surface-container-low font-bold border-t border-outline-variant/50">
+                  <tr>
+                    <td colSpan={2} className="px-4 py-3 text-right text-xs">
+                      Grand Total Paid:
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono text-base text-primary">
+                      ₹{data?.total_amount || data?.amount || 299}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            {/* Bottom Actions */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-outline-variant/40 print:hidden">
+              <div className="flex items-center gap-1.5 text-xs text-on-surface-variant">
+                <CheckCircle2 size={14} className="text-primary" />
+                <span>Simulated zero-surge cooperative payment verified.</span>
+              </div>
               <div className="flex items-center gap-2">
                 <button
+                  type="button"
                   onClick={handlePrint}
-                  className="btn btn-outline flex items-center gap-1.5 text-xs py-2 px-4"
+                  className="btn btn-outline text-xs flex items-center gap-1.5 font-bold"
                 >
-                  <Printer size={15} />
-                  Print / Save PDF
+                  <Printer size={14} />
+                  Print / PDF
                 </button>
                 <button
+                  type="button"
                   onClick={onClose}
-                  className="btn btn-primary text-xs py-2 px-4"
+                  className="btn btn-primary text-xs font-bold"
                 >
-                  Done
+                  Close Receipt
                 </button>
               </div>
             </div>
-
           </div>
         )}
-
       </div>
     </div>
   )

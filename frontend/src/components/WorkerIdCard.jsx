@@ -1,28 +1,4 @@
-import { Award, CheckCircle2, MapPin, ShieldCheck, Star } from 'lucide-react'
-
-/**
- * WorkerIdCard.jsx — the cooperative member card.
- *
- * Renders verified worker details along with explicit trust badges:
- *  - Identity Verified
- *  - Skill Verified
- *  - Cooperative Member
- */
-
-const STATUS_STYLES = {
-  verified: {
-    label: 'Verified Member',
-    className: 'border-verified/40 bg-verified/10 text-verified',
-  },
-  pending: {
-    label: 'Pending',
-    className: 'border-pending/40 bg-pending/10 text-pending',
-  },
-  rejected: {
-    label: 'Rejected',
-    className: 'border-rejected/40 bg-rejected/10 text-rejected',
-  },
-}
+import { CheckCircle2, ShieldCheck, Star } from 'lucide-react'
 
 function getInitials(fullName) {
   return fullName
@@ -31,109 +7,129 @@ function getInitials(fullName) {
 }
 
 export default function WorkerIdCard({
-  name,
-  trade,
-  society = 'Noida Artisans Cooperative Union',
-  memberId,
-  rating,
-  jobs,
-  area,
+  name = 'Rajesh Kumar Verma',
+  trade = 'Master Electrician & Solar Wireman',
+  society = 'Noida Shramik Electric Co-op',
+  memberId = 'ND-ELE-8812',
+  rating = 4.95,
+  jobs = 342,
+  area = 'Sector 62, Noida (NCR)',
   status = 'verified',
-  identityVerified = true,
-  skillVerified = true,
-  animateStamp = false,
+  onBook,
+  showBookingTrigger = false,
+  photoUrl,
 }) {
-  const statusStyle = STATUS_STYLES[status] || STATUS_STYLES.pending
+  const isVerified = status === 'verified'
 
   return (
-    <article className="card overflow-hidden shadow-lift transition hover:shadow-xl">
-      {/* Top band — issuing cooperative */}
-      <div className="flex items-center justify-between bg-ink px-5 py-2.5">
-        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/80 font-bold truncate max-w-[200px]">
-          {society}
-        </span>
-        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-marigold-400 font-bold">
-          Cooperative Member
+    <article className="bg-surface-container-lowest rounded-2xl shadow-xl overflow-hidden border border-outline-variant/60 relative">
+      {/* Badge Header: Credential Style */}
+      <div className="bg-inverse-surface text-inverse-on-surface px-5 py-2.5 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-secondary-container"></span>
+          <span className="font-label-caps text-[10px] uppercase tracking-widest text-secondary-fixed font-bold">
+            NEED FEDERATION CREDENTIAL
+          </span>
+        </div>
+        <span className="font-label-caps text-[11px] text-surface-variant font-mono font-bold">
+          ID: {memberId || 'ND-ELE-0000'}
         </span>
       </div>
 
-      <div className="relative p-5">
-        {/* Verification stamp */}
-        <div
-          className={`absolute right-4 top-4 flex items-center gap-1.5 rounded-md border-2 px-2 py-1 ${statusStyle.className} ${
-            animateStamp ? 'stamp-in' : ''
-          }`}
-          style={animateStamp ? undefined : { transform: 'rotate(-7deg)' }}
-        >
-          <ShieldCheck size={13} strokeWidth={2.5} />
-          <span className="font-mono text-[10px] font-bold uppercase tracking-[0.14em]">
-            {statusStyle.label}
-          </span>
-        </div>
-
-        {/* Avatar + name + trade */}
-        <div className="flex items-center gap-3.5">
-          <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-brand-50 font-display text-lg font-extrabold text-brand-700 border border-brand-200">
-            {getInitials(name)}
+      <div className="p-5 sm:p-6">
+        {/* Worker Header */}
+        <div className="flex items-start gap-4 mb-5">
+          <div className="relative flex-shrink-0">
+            {photoUrl ? (
+              <img
+                src={photoUrl}
+                alt={name}
+                className="w-20 h-20 sm:w-22 sm:h-22 rounded-2xl object-cover shadow-md bg-surface-container"
+              />
+            ) : (
+              <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center font-display font-extrabold text-primary text-2xl shadow-sm">
+                {getInitials(name)}
+              </div>
+            )}
+            {isVerified && (
+              <span className="absolute -bottom-1 -right-1 bg-primary text-on-primary rounded-full p-1.5 shadow-md">
+                <span className="material-symbols-outlined text-[16px]">verified</span>
+              </span>
+            )}
           </div>
-          <div className="min-w-0">
-            <h3 className="truncate font-display text-lg font-bold text-ink">{name}</h3>
-            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-brand-700 font-semibold">
+
+          <div className="flex-1 min-w-0">
+            <h3 className="font-headline-sm text-lg sm:text-xl text-on-surface font-bold truncate">
+              {name}
+            </h3>
+            <p className="font-body-sm text-sm text-on-surface-variant mt-0.5 truncate">
               {trade}
             </p>
+            <div className="flex items-center gap-2.5 mt-2 flex-wrap">
+              <span className="inline-flex items-center gap-1 text-secondary font-bold text-sm bg-secondary-container/15 px-2.5 py-0.5 rounded-full">
+                <Star size={14} className="fill-secondary text-secondary" />
+                {rating}
+              </span>
+              <span className="text-on-surface-variant font-body-sm text-sm">
+                ({jobs} verified jobs)
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Explicit Trust Badges */}
-        <div className="mt-3.5 flex flex-wrap gap-1.5 border-t border-line pt-3">
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-200">
-            <CheckCircle2 size={11} className="text-emerald-600" />
-            Identity Verified
-          </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-bold text-blue-800 border border-blue-200">
-            <Award size={11} className="text-blue-600" />
-            Skill Verified
-          </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2.5 py-0.5 text-[10px] font-bold text-purple-800 border border-purple-200">
-            🏛️ Cooperative Member
-          </span>
+        {/* Cooperative Guild Affiliation Box */}
+        <div className="bg-surface-container-low rounded-xl p-3.5 mb-4 space-y-2 text-xs sm:text-sm">
+          <div className="flex justify-between items-center text-on-surface">
+            <span className="text-on-surface-variant">Affiliated Guild:</span>
+            <span className="font-semibold text-primary truncate max-w-[200px]">{society}</span>
+          </div>
+          <div className="flex justify-between items-center text-on-surface">
+            <span className="text-on-surface-variant">Police Verification:</span>
+            <span className="text-primary font-semibold flex items-center gap-1">
+              <span className="material-symbols-outlined text-[16px]">check_circle</span> UP Police Clear
+            </span>
+          </div>
+          <div className="flex justify-between items-center text-on-surface">
+            <span className="text-on-surface-variant">Co-op Stakeholder Share:</span>
+            <span className="font-mono font-bold text-on-surface">Class-A (Full Voting)</span>
+          </div>
         </div>
 
-        {/* Core Stats */}
-        <dl className="mt-4 grid grid-cols-3 gap-3 border-t border-line pt-3">
-          <div>
-            <dt className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
-              Rating
-            </dt>
-            <dd className="mt-1 flex items-center gap-1 font-display font-bold text-ink">
-              <Star size={14} className="fill-marigold-500 text-marigold-500" />
-              {rating}
-            </dd>
+        {/* Micro Live Split on Artisan Card */}
+        <div className="bg-primary/5 rounded-xl p-3.5 mb-4 border border-primary/10">
+          <div className="flex items-center justify-between mb-2 text-xs sm:text-sm">
+            <span className="font-label-caps text-[11px] text-primary uppercase font-bold">Standard Job Fair Split</span>
+            <span className="font-label-md text-xs sm:text-sm text-primary font-bold">₹500 Benchmark</span>
           </div>
-          <div>
-            <dt className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
-              Jobs done
-            </dt>
-            <dd className="mt-1 font-display font-bold text-ink">{jobs}</dd>
+          <div className="w-full h-3 bg-surface-container-high rounded-full overflow-hidden flex mb-2">
+            <div className="h-full bg-primary" style={{ width: '85%' }} title="Worker takes 85%"></div>
+            <div className="h-full bg-secondary-container" style={{ width: '10%' }} title="Welfare Fund 10%"></div>
+            <div className="h-full bg-outline-variant" style={{ width: '5%' }} title="Tech Ops 5%"></div>
           </div>
-          <div className="min-w-0">
-            <dt className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">
-              Service Area
-            </dt>
-            <dd className="mt-1 flex items-center gap-1 truncate text-xs font-semibold text-ink">
-              <MapPin size={13} className="shrink-0 text-muted" />
-              <span className="truncate">{area}</span>
-            </dd>
+          <div className="flex justify-between text-on-surface-variant text-[11px] sm:text-xs font-medium">
+            <span className="text-primary font-semibold">₹425 To Worker (85%)</span>
+            <span className="text-secondary font-semibold">₹50 Welfare (10%)</span>
+            <span>₹25 Ops (5%)</span>
           </div>
-        </dl>
+        </div>
+
+        {/* Action Trigger */}
+        {showBookingTrigger && onBook && (
+          <button
+            type="button"
+            onClick={onBook}
+            className="w-full bg-primary hover:bg-primary-container text-on-primary py-3 px-4 rounded-xl font-label-md text-sm font-bold text-center transition-all shadow-sm flex items-center justify-center gap-2"
+          >
+            <span className="material-symbols-outlined text-[18px]">bolt</span>
+            Book {name.split(' ')[0]} Directly
+          </button>
+        )}
       </div>
 
-      {/* Member ID footer */}
-      <div className="flex items-center justify-between border-t border-line bg-paper px-5 py-3">
-        <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-muted font-bold">
-          Member ID
-        </span>
-        <span className="font-mono text-xs font-semibold text-ink">{memberId}</span>
+      {/* Member ID Footer */}
+      <div className="flex items-center justify-between border-t border-outline-variant/40 bg-surface-container-low px-5 py-3 text-xs sm:text-sm text-on-surface-variant">
+        <span className="font-label-caps text-[10px] uppercase font-bold">Jurisdiction</span>
+        <span className="font-medium text-on-surface truncate">{area}</span>
       </div>
     </article>
   )
