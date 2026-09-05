@@ -165,30 +165,20 @@ def _verified_profile(worker_id):
     return profile
 
 
-def _find_worker_for(service):
-    """
-    Pick a partner to auto-assign a booking of this service to, or None.
-
-    Only verified partners who are currently online are considered. Nothing read
-    is_available before, which made the worker's own Available/Offline switch
-    purely decorative — they could go offline and still be handed new jobs.
-
-    Best rated first, then most jobs completed, so the choice is deterministic
-    and we can explain why it landed on that person. With no ORDER BY the
-    database was free to return whichever matching row it happened to reach
-    first, which is not an answer you want to give when asked.
-    """
-    match = (
-        db.session.query(User)
-        .join(WorkerProfile, WorkerProfile.user_id == User.id)
-        .filter(WorkerProfile.verification_status == "verified")
-        .filter(WorkerProfile.is_available.is_(True))
-        .filter(WorkerProfile.primary_service.ilike(f"%{service.name}%"))
-        .order_by(WorkerProfile.rating.desc(), WorkerProfile.total_jobs.desc())
-        .first()
-    )
-    return match.id if match else None
-
+import math
+def _find_worker_for(service, customer=None):
+    """Find nearest worker if customer lat/lon provided, else best rated."""
+    query = db.session.query(User).join(WorkerProfile, WorkerProfile.user_id == User.id).filter(WorkerProfile.verification_status == "verified").filter(WorkerProfile.is_available.is_(True)).filter(WorkerProfile.primary_service.ilike(f"%{service.name}%"))
+    candidates = query.all()
+    if not candidates: return None
+    if customer and customer.latitude is not None and customer.longitude is not None:
+        def get_dist(w):
+            if w.latitude is None or w.longitude is None: return float("inf")
+            return math.hypot(w.latitude - customer.latitude, w.longitude - customer.longitude)
+        candidates.sort(key=lambda w: (get_dist(w), -(w.worker_profile.rating if w.worker_profile else 0), -(w.worker_profile.total_jobs if w.worker_profile else 0)))
+    else:
+        candidates.sort(key=lambda w: (-(w.worker_profile.rating if w.worker_profile else 0), -(w.worker_profile.total_jobs if w.worker_profile else 0)))
+    return candidates[0].id
 
 # ---------------------------------------------------------------------------
 # Public
@@ -515,7 +505,7 @@ def create_booking():
                 "error": f"{worker.name} is offline right now. Please choose another partner."
             }), 409
     else:
-        worker_id = _find_worker_for(service)
+        worker_id = _find_worker_for(service, customer)
 
         # Refuse rather than create a booking nobody can ever act on.
         #
