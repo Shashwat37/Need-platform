@@ -172,77 +172,106 @@ export default function PaymentModal({
 
             {/* Payment Method Selector */}
             <div className="space-y-1.5">
-              <label className="font-label-md text-xs text-on-surface font-bold">
-                Select Payment Mode
+              <label className="font-label-md text-xs text-on-surface font-bold flex items-center justify-between">
+                <span>Select Payment Mode</span>
+                <span className="text-[10px] text-primary font-bold">100% Encrypted &amp; Secure</span>
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <button
                   type="button"
                   onClick={() => setMethod('upi')}
-                  className={`p-2.5 rounded-xl border text-left transition flex flex-col justify-between ${
+                  className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 ${
                     method === 'upi'
                       ? 'border-primary bg-primary/10 text-primary font-bold shadow-sm ring-2 ring-primary/20'
                       : 'border-outline-variant bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
                   }`}
                 >
-                  <Smartphone size={18} className="mb-1 text-primary" />
-                  <span className="text-xs">Instant UPI</span>
+                  <Smartphone size={20} className="text-primary" />
+                  <span className="text-xs font-semibold">UPI Apps</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setMethod('qr')}
+                  className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 ${
+                    method === 'qr'
+                      ? 'border-primary bg-primary/10 text-primary font-bold shadow-sm ring-2 ring-primary/20'
+                      : 'border-outline-variant bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
+                  }`}
+                >
+                  <QrCode size={20} className="text-emerald-600" />
+                  <span className="text-xs font-semibold">Scan QR</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setMethod('card')}
-                  className={`p-2.5 rounded-xl border text-left transition flex flex-col justify-between ${
+                  className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 ${
                     method === 'card'
                       ? 'border-primary bg-primary/10 text-primary font-bold shadow-sm ring-2 ring-primary/20'
                       : 'border-outline-variant bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
                   }`}
                 >
-                  <CreditCard size={18} className="mb-1 text-primary" />
-                  <span className="text-xs">Debit/Credit</span>
+                  <CreditCard size={20} className="text-primary" />
+                  <span className="text-xs font-semibold">Card</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setMethod('cash')}
-                  className={`p-2.5 rounded-xl border text-left transition flex flex-col justify-between ${
+                  className={`p-2.5 rounded-xl border text-center transition flex flex-col items-center justify-center gap-1 ${
                     method === 'cash'
-                      ? 'border-primary bg-primary/10 text-primary font-bold shadow-sm ring-2 ring-primary/20'
+                      ? 'border-secondary bg-secondary-container/30 text-secondary font-bold shadow-sm ring-2 ring-secondary/20'
                       : 'border-outline-variant bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
                   }`}
                 >
-                  <Banknote size={18} className="mb-1 text-secondary" />
-                  <span className="text-xs">Direct Cash</span>
+                  <Banknote size={20} className="text-amber-600" />
+                  <span className="text-xs font-semibold">Cash</span>
                 </button>
               </div>
             </div>
 
             {/* Dynamic Method Details */}
             {method === 'upi' && (
-              <div className="p-3 rounded-xl bg-surface-container-low space-y-2 border border-outline-variant/40">
+              <div className="p-3.5 rounded-xl bg-surface-container-low space-y-2.5 border border-outline-variant/40">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-on-surface">UPI Virtual Payment Address</span>
-                  <span className="text-[10px] text-primary font-bold flex items-center gap-1">
-                    <QrCode size={13} /> Scan QR Ready
-                  </span>
+                  <span className="font-semibold text-on-surface">Enter VPA / UPI ID</span>
+                  <span className="text-[10px] text-emerald-600 font-bold">Google Pay / PhonePe / Paytm</span>
                 </div>
                 <input
                   type="text"
                   value={upiId}
                   onChange={(e) => setUpiId(e.target.value)}
-                  className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-medium text-on-surface"
+                  placeholder="name@okhdfcbank"
+                  className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-medium text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
                 />
               </div>
             )}
 
+            {method === 'qr' && (
+              <div className="p-4 rounded-xl bg-surface-container-low text-center space-y-3 border border-outline-variant/40">
+                <span className="font-semibold text-xs text-on-surface block">Scan &amp; Pay via Any UPI App</span>
+                <div className="mx-auto w-36 h-36 bg-white p-2 rounded-xl shadow-md border border-outline-variant/60 flex flex-col items-center justify-center relative group">
+                  <QrCode size={110} className="text-slate-800" />
+                  <span className="absolute bottom-1 bg-emerald-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
+                    ₹{totalAmount}
+                  </span>
+                </div>
+                <div className="text-[11px] text-on-surface-variant font-mono">
+                  UPI ID: <span className="font-bold text-primary">need.cooperative@upi</span>
+                </div>
+              </div>
+            )}
+
             {method === 'card' && (
-              <div className="p-3 rounded-xl bg-surface-container-low space-y-2 border border-outline-variant/40">
-                <span className="font-semibold text-xs text-on-surface block">Simulated Card Details</span>
+              <div className="p-3.5 rounded-xl bg-surface-container-low space-y-2.5 border border-outline-variant/40">
+                <span className="font-semibold text-xs text-on-surface block">Credit / Debit Card</span>
                 <input
                   type="text"
                   value={cardNumber}
                   onChange={(e) => setCardNumber(e.target.value)}
-                  className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-medium text-on-surface"
+                  placeholder="Card Number"
+                  className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-medium text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
                 />
                 <div className="grid grid-cols-2 gap-2">
                   <input
@@ -250,16 +279,28 @@ export default function PaymentModal({
                     value={expiry}
                     onChange={(e) => setExpiry(e.target.value)}
                     placeholder="MM/YY"
-                    className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-medium text-on-surface"
+                    className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-medium text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
                   />
                   <input
                     type="password"
                     value={cvv}
                     onChange={(e) => setCvv(e.target.value)}
                     placeholder="CVV"
-                    className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-medium text-on-surface"
+                    className="w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-xs font-mono font-medium text-on-surface focus:ring-2 focus:ring-primary/20 focus:outline-none"
                   />
                 </div>
+              </div>
+            )}
+
+            {method === 'cash' && (
+              <div className="p-3.5 rounded-xl bg-amber-500/10 text-amber-900 border border-amber-500/20 text-xs space-y-1">
+                <div className="font-bold flex items-center gap-1.5 text-amber-800">
+                  <Banknote size={16} />
+                  Cash After Service Handover
+                </div>
+                <p className="text-[11px] text-amber-800/80 leading-relaxed">
+                  Pay ₹{totalAmount} in cash directly to the assigned member worker after service verification.
+                </p>
               </div>
             )}
 
