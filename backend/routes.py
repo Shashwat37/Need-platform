@@ -683,8 +683,13 @@ def worker_booking_action(booking_id):
         # credited, and it writes the wallet and the ledger row together.
         _credit_welfare(worker.id, booking)
 
+    elif action in ("confirm_settlement", "confirm"):
+        if booking.status != "completed":
+            return jsonify({"error": "Can only confirm settlement for completed jobs"}), 400
+        booking.status = "confirmed"
+
     else:
-        return jsonify({"error": "Action must be 'accept', 'decline', 'start', or 'complete'"}), 400
+        return jsonify({"error": "Action must be 'accept', 'decline', 'start', 'complete', or 'confirm_settlement'"}), 400
 
     db.session.commit()
 

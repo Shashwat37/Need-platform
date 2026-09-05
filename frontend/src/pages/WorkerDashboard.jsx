@@ -1099,7 +1099,24 @@ export default function WorkerDashboard() {
                                     onClick={() => handleJobAction(b.id, 'complete')}
                                     className="rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-white hover:bg-primary-container transition shadow-sm flex items-center gap-1"
                                   >
-                                    <span>Complete Job</span> ✅
+                                    <span>Complete Work</span> ⚡
+                                  </button>
+                                )}
+
+                                {b.status === 'completed' && !b.is_paid && (
+                                  <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/15 text-amber-900 px-2.5 py-1 text-xs font-extrabold shadow-xs">
+                                    <span className="w-2 h-2 rounded-full bg-amber-600 animate-pulse"></span>
+                                    Waiting for Customer Payment ⏳
+                                  </span>
+                                )}
+
+                                {b.status === 'completed' && b.is_paid && (
+                                  <button
+                                    onClick={() => handleJobAction(b.id, 'confirm_settlement')}
+                                    className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 text-xs font-extrabold transition shadow-md flex items-center gap-1.5"
+                                  >
+                                    <CheckCircle2 size={14} />
+                                    <span>Confirm Payment Received &amp; Settle ✅</span>
                                   </button>
                                 )}
 
