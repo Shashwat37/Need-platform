@@ -121,7 +121,7 @@ export default function WorkerIdCard({
             className="w-full bg-primary hover:bg-primary-container text-on-primary py-3 px-4 rounded-xl font-label-md text-sm font-bold text-center transition-all shadow-sm flex items-center justify-center gap-2"
           >
             <span className="material-symbols-outlined text-[18px]">bolt</span>
-            Book {name.split(' ')[0]} Directly
+            Book {(name || 'Worker').split(' ')[0]} Directly
           </button>
         )}
       </div>

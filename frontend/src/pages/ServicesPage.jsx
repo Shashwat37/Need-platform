@@ -118,23 +118,28 @@ export default function ServicesPage() {
   // Filtered Workers
   const filteredWorkers = useMemo(() => {
     let result = workers.filter((w) => {
-      const matchesTrade = !selectedTrade || w.trade.toLowerCase() === selectedTrade.toLowerCase()
-      const query = searchQuery.toLowerCase()
+      const workerTrade = (w?.trade || w?.primary_service || '').toString()
+      const workerName = (w?.name || '').toString()
+      const workerSkills = (w?.skills || '').toString()
+      const workerArea = (w?.area || '').toString()
+
+      const matchesTrade = !selectedTrade || workerTrade.toLowerCase() === selectedTrade.toLowerCase()
+      const query = (searchQuery || '').toLowerCase()
       const matchesSearch =
         !query ||
-        w.name.toLowerCase().includes(query) ||
-        w.trade.toLowerCase().includes(query) ||
-        (w.skills && w.skills.toLowerCase().includes(query)) ||
-        (w.area && w.area.toLowerCase().includes(query))
+        workerName.toLowerCase().includes(query) ||
+        workerTrade.toLowerCase().includes(query) ||
+        workerSkills.toLowerCase().includes(query) ||
+        workerArea.toLowerCase().includes(query)
       return matchesTrade && matchesSearch
     })
 
     if (sortBy === 'jobs') {
-      result.sort((a, b) => b.total_jobs - a.total_jobs)
+      result.sort((a, b) => (b?.total_jobs || 0) - (a?.total_jobs || 0))
     } else if (sortBy === 'experience') {
-      result.sort((a, b) => (b.experience_years || 0) - (a.experience_years || 0))
+      result.sort((a, b) => (b?.experience_years || 0) - (a?.experience_years || 0))
     } else {
-      result.sort((a, b) => b.rating - a.rating)
+      result.sort((a, b) => (b?.rating || 0) - (a?.rating || 0))
     }
 
     return result
@@ -324,29 +329,33 @@ export default function ServicesPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {filteredWorkers.map((w) => (
-                    <WorkerIdCard
-                      key={w.id}
-                      name={w.name}
-                      trade={w.trade}
-                      society={w.cooperative_name || 'Noida Artisans Cooperative Union'}
-                      memberId={w.member_id || `SS-EL-${w.id.toString().padStart(4, '0')}`}
-                      rating={w.rating}
-                      jobs={w.total_jobs}
-                      area={w.area || 'Noida Sector 62'}
-                      status={w.verification_status || 'verified'}
-                      showBookingTrigger={true}
-                      onBook={() => {
-                        setActiveWorkerForDrawer(w)
-                        const matchingSvc = services.find((s) => s.name.toLowerCase() === w.trade.toLowerCase())
-                        setBookingModal({
-                          isOpen: true,
-                          service: matchingSvc || null,
-                          worker: w,
-                        })
-                      }}
-                    />
-                  ))}
+                  {filteredWorkers.map((w, idx) => {
+                    const workerTrade = w?.trade || w?.primary_service || 'Skilled Artisan'
+                    const workerIdStr = w?.id ? w.id.toString().padStart(4, '0') : String(idx + 1).padStart(4, '0')
+                    return (
+                      <WorkerIdCard
+                        key={w?.id || idx}
+                        name={w?.name || 'Artisan Partner'}
+                        trade={workerTrade}
+                        society={w?.cooperative_name || 'Noida Artisans Cooperative Union'}
+                        memberId={w?.member_id || `SS-EL-${workerIdStr}`}
+                        rating={w?.rating || 4.8}
+                        jobs={w?.total_jobs || 0}
+                        area={w?.area || 'Noida Sector 62'}
+                        status={w?.verification_status || 'verified'}
+                        showBookingTrigger={true}
+                        onBook={() => {
+                          setActiveWorkerForDrawer(w)
+                          const matchingSvc = services.find((s) => s?.name && s.name.toLowerCase() === workerTrade.toLowerCase())
+                          setBookingModal({
+                            isOpen: true,
+                            service: matchingSvc || null,
+                            worker: w,
+                          })
+                        }}
+                      />
+                    )
+                  })}
                 </div>
               )
             )}
