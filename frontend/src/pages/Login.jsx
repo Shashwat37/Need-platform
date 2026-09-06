@@ -104,8 +104,8 @@ export default function Login() {
   }
 
   return (
-    <div className="w-full bg-surface py-6 sm:py-10 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+    <div className="w-full bg-surface py-6 sm:py-10">
+      <div className="container-page grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
 
         {/* ── LEFT COLUMN: Brand Pillar / Value Anchor (5 cols) ─────────── */}
         <div className="hidden lg:flex lg:col-span-5 flex-col justify-between p-6 sm:p-10 rounded-3xl bg-primary text-white shadow-xl relative overflow-hidden">

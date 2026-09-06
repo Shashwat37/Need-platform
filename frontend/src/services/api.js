@@ -318,6 +318,12 @@ export async function getDemandForecasting() {
   return response.data
 }
 
+/** AI Demand Forecasting (scikit-learn RandomForestRegressor + Live Weather / Demo). */
+export async function getAIDemandForecast({ location = 'Rohini', mode = 'demo', scenario = 'heavy_rain' } = {}) {
+  const response = await api.post('/demand-forecast', { location, mode, scenario })
+  return response.data
+}
+
 // ---------------------------------------------------------------------------
 // Labour Cooperatives & Societies Module
 // ---------------------------------------------------------------------------
@@ -417,6 +423,101 @@ export async function reviewCustomer(bookingId, rating, comment = '') {
   return response.data
 }
 
+// ---------------------------------------------------------------------------
+// Revenue Model & Business Architecture (Step 18)
+// ---------------------------------------------------------------------------
+
+/** Get server-side fee quotation for booking with optional protection and convenience fees. */
+export async function getFeeQuote(params = {}) {
+  const response = await api.get('/fees/quote', { params })
+  return response.data
+}
+
+/** Worker: Fetch available customer job leads with lead pricing & unlock status. */
+export async function getWorkerLeads() {
+  const response = await api.get('/worker/leads')
+  return response.data
+}
+
+/** Worker: Unlock customer job lead using wallet credits. */
+export async function unlockJobLead(bookingId) {
+  const response = await api.post(`/worker/leads/${bookingId}/unlock`)
+  return response.data
+}
+
+/** Worker: Get lead credit balance and unlock history. */
+export async function getWorkerLeadCredits() {
+  const response = await api.get('/worker/lead-credits')
+  return response.data
+}
+
+/** Worker: Top up lead credit balance. */
+export async function topupWorkerLeadCredits(amount) {
+  const response = await api.post('/worker/lead-credits/topup', { amount })
+  return response.data
+}
+
+/** Admin: Get configured category lead prices. */
+export async function getAdminLeadPricing() {
+  const response = await api.get('/admin/lead-pricing')
+  return response.data
+}
+
+/** Admin: Update or add category lead price. */
+export async function updateAdminLeadPricing(data) {
+  const response = await api.post('/admin/lead-pricing', data)
+  return response.data
+}
+
+/** Admin: Verify, pend, or suspend cooperative society status. */
+export async function verifyCooperative(coopId, status, notes = '') {
+  const response = await api.post(`/admin/cooperatives/${coopId}/verify`, { status, notes })
+  return response.data
+}
+
+/** Public: Fetch organization subscription plans (PG/Hostel, Office, Local Industry). */
+export async function getSubscriptionPlans() {
+  const response = await api.get('/subscriptions/plans')
+  return response.data
+}
+
+/** Organization: Create subscription. */
+export async function createSubscription(subData) {
+  const response = await api.post('/subscriptions', subData)
+  return response.data
+}
+
+/** Organization: Fetch active and past subscriptions. */
+export async function getMySubscriptions() {
+  const response = await api.get('/subscriptions/my')
+  return response.data
+}
+
+/** Organization: Cancel subscription. */
+export async function cancelSubscription(subId, reason = '') {
+  const response = await api.post(`/subscriptions/${subId}/cancel`, { reason })
+  return response.data
+}
+
+/** Admin: Fetch all organization subscriptions. */
+export async function getAdminSubscriptions() {
+  const response = await api.get('/admin/subscriptions')
+  return response.data
+}
+
+/** Admin: Update plan pricing or status. */
+export async function updateSubscriptionPlan(planId, data) {
+  const response = await api.post(`/admin/subscriptions/plans/${planId}`, data)
+  return response.data
+}
+
+/** Admin: Executive revenue command center KPIs, charts, and transaction ledger. */
+export async function getAdminRevenue() {
+  const response = await api.get('/admin/revenue')
+  return response.data
+}
+
 export default api
+
 
 

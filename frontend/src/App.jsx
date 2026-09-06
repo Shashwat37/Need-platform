@@ -8,12 +8,14 @@ import CustomerDashboard from './pages/CustomerDashboard'
 import WorkerDashboard from './pages/WorkerDashboard'
 import CooperativeDashboard from './pages/CooperativeDashboard'
 import CooperativesPage from './pages/CooperativesPage'
+import SubscriptionsPage from './pages/SubscriptionsPage'
 import SupportPage from './pages/SupportPage'
 import LandingPage from './pages/LandingPage'
 import Login from './pages/Login'
 import NotFound from './pages/NotFound'
 import Register from './pages/Register'
 import ServicesPage from './pages/ServicesPage'
+import DemandForecastingPage from './pages/DemandForecastingPage'
 
 export default function App() {
   return (
@@ -21,8 +23,11 @@ export default function App() {
       <Route element={<Layout />}>
         {/* Public routes */}
         <Route index element={<LandingPage />} />
-        <Route path="/services"     element={<ServicesPage />} />
-        <Route path="/cooperatives" element={<CooperativesPage />} />
+        <Route path="/services"        element={<ServicesPage />} />
+        <Route path="/subscriptions"   element={<SubscriptionsPage />} />
+        <Route path="/forecast"        element={<DemandForecastingPage />} />
+        <Route path="/demand-forecast" element={<DemandForecastingPage />} />
+        <Route path="/cooperatives"    element={<CooperativesPage />} />
         <Route path="/about"        element={<About />} />
         <Route path="/help"         element={<SupportPage />} />
         <Route path="/support"      element={<SupportPage />} />

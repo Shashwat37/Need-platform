@@ -82,14 +82,17 @@ export default function PaymentModal({
   const workerBankAccount = booking?.worker_bank_account || '919876543210'
   const workerBankIfsc = booking?.worker_bank_ifsc || 'PUNB0123400'
 
-  const serviceAmount = booking?.amount || 299
+  const totalBookingAmount = booking?.amount || 299
+  const convenienceFee = booking?.convenience_fee ?? 20
+  const protectionFee = booking?.protection_fee ?? (booking?.has_protection ? 25 : 0)
+  const baseServiceAmount = booking?.base_service_amount ?? Math.max(0, totalBookingAmount - convenienceFee - protectionFee)
   const tipAmount     = customTip !== '' ? Math.max(0, Number(customTip) || 0) : selectedTip
-  const totalAmount   = serviceAmount + tipAmount
+  const totalAmount   = totalBookingAmount + tipAmount
 
-  // Charges & Deductions Breakdown
-  const platformFee   = Math.round(serviceAmount * 0.05)
-  const welfareCut    = Math.round(serviceAmount * 0.10)
-  const workerNetEarned = Math.round(serviceAmount * 0.85 + tipAmount)
+  // Charges & Deductions Breakdown (based on base service amount)
+  const platformFee   = Math.round(baseServiceAmount * 0.05)
+  const welfareCut    = Math.round(baseServiceAmount * 0.10)
+  const workerNetEarned = Math.round(baseServiceAmount * 0.85 + tipAmount)
 
   const minutes = Math.floor(timeLeft / 60)
   const seconds = timeLeft % 60
@@ -286,19 +289,31 @@ export default function PaymentModal({
                 </span>
               </div>
               <div className="flex justify-between text-slate-700 pt-1">
-                <span>Gross Amount Paid:</span>
+                <span>Base Service Amount:</span>
+                <span className="font-mono font-bold text-slate-900">₹{baseServiceAmount}</span>
+              </div>
+              <div className="flex justify-between text-slate-700">
+                <span>Convenience Fee:</span>
+                <span className="font-mono text-slate-900">₹{convenienceFee}</span>
+              </div>
+              {protectionFee > 0 && (
+                <div className="flex justify-between text-slate-700">
+                  <span>Customer Protection Plan:</span>
+                  <span className="font-mono text-emerald-700 font-bold">₹{protectionFee} (Active)</span>
+                </div>
+              )}
+              {tipAmount > 0 && (
+                <div className="flex justify-between text-slate-700">
+                  <span>Artisan Tip:</span>
+                  <span className="font-mono text-slate-900">+₹{tipAmount}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-slate-700 pt-1 border-t border-emerald-200/60">
+                <span>Total Paid:</span>
                 <span className="font-mono font-bold text-slate-900">₹{totalAmount}</span>
               </div>
-              <div className="flex justify-between text-slate-700">
-                <span>Platform Admin Charge (5%):</span>
-                <span className="font-mono text-red-600 font-medium">-₹{platformFee}</span>
-              </div>
-              <div className="flex justify-between text-slate-700">
-                <span>Social Security Welfare Trust (10%):</span>
-                <span className="font-mono text-amber-700 font-medium">-₹{welfareCut}</span>
-              </div>
               <div className="flex justify-between text-slate-900 pt-2 border-t border-emerald-200">
-                <span className="font-bold text-emerald-900">Net Take-Home to {workerName}:</span>
+                <span className="font-bold text-emerald-900">Net Take-Home to {workerName} (85% + Tip):</span>
                 <span className="font-mono font-black text-emerald-700 text-sm">₹{workerNetEarned}</span>
               </div>
             </div>
@@ -565,17 +580,19 @@ export default function PaymentModal({
 
               <div className="space-y-1 text-xs text-slate-700">
                 <div className="flex justify-between text-slate-600">
-                  <span>Gross Fare:</span>
-                  <span className="font-mono">₹{serviceAmount}</span>
+                  <span>Base Service Fare:</span>
+                  <span className="font-mono">₹{baseServiceAmount}</span>
                 </div>
-                <div className="flex justify-between text-red-600 font-medium">
-                  <span>Platform Charge (5%):</span>
-                  <span className="font-mono">-₹{platformFee}</span>
+                <div className="flex justify-between text-slate-600">
+                  <span>Platform Convenience Fee:</span>
+                  <span className="font-mono text-blue-700 font-medium">+₹{convenienceFee}</span>
                 </div>
-                <div className="flex justify-between text-amber-700 font-medium">
-                  <span>Welfare Trust Fund (10%):</span>
-                  <span className="font-mono">-₹{welfareCut}</span>
-                </div>
+                {protectionFee > 0 && (
+                  <div className="flex justify-between text-slate-600">
+                    <span>Customer Protection Plan:</span>
+                    <span className="font-mono text-emerald-700 font-medium">+₹{protectionFee}</span>
+                  </div>
+                )}
                 {tipAmount > 0 && (
                   <div className="flex justify-between text-emerald-700 font-medium">
                     <span>100% Direct Tip:</span>
@@ -583,7 +600,7 @@ export default function PaymentModal({
                   </div>
                 )}
                 <div className="flex justify-between pt-1 border-t border-slate-200 font-bold text-emerald-800 text-xs">
-                  <span>Net Payout to {workerName}:</span>
+                  <span>Net Take-Home to {workerName} (85% + Tip):</span>
                   <span className="font-mono font-black text-emerald-700 text-sm">₹{workerNetEarned}</span>
                 </div>
               </div>

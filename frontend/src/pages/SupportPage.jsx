@@ -130,7 +130,7 @@ export default function SupportPage() {
 
       {/* ── Top Header Banner ────────────────────────────────────────────── */}
       <section className="relative w-full overflow-hidden bg-surface-container-low px-4 sm:px-6 lg:px-8 py-6 sm:py-8 border-b border-surface-container-high">
-        <div className="max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="container-page flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-primary mb-1">
               <LifeBuoy size={16} />
@@ -155,7 +155,7 @@ export default function SupportPage() {
       </section>
 
       {/* ── Main Container ─────────────────────────────────────────────── */}
-      <div className="max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+      <div className="container-page py-8 space-y-10">
 
         {/* ── Knowledge Base FAQs ────────────────────────────────────────── */}
         <section className="space-y-4">

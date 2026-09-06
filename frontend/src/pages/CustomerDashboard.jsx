@@ -28,6 +28,7 @@ import ReviewModal from '../components/ReviewModal'
 import DisputeModal from '../components/DisputeModal'
 import WorkerTrackingModal from '../components/WorkerTrackingModal'
 import BookingLifecycleStepper from '../components/BookingLifecycleStepper'
+import AIDemandForecastCard from '../components/AIDemandForecastCard'
 import { getServiceImage } from '../utils/serviceImages'
 
 const STATUS_STYLES = {
@@ -88,7 +89,7 @@ export default function CustomerDashboard() {
   // Modals state
   const [bookingModal, setBookingModal]   = useState({ isOpen: false, service: null, worker: null })
   const [paymentModal, setPaymentModal]   = useState({ isOpen: false, booking: null })
-  const [invoiceModal, setInvoiceModal]   = useState({ isOpen: false, invoiceId: null })
+  const [invoiceModal, setInvoiceModal]   = useState({ isOpen: false, invoiceId: null, booking: null })
   const [reviewModal, setReviewModal]     = useState({ isOpen: false, booking: null })
   const [disputeModal, setDisputeModal]   = useState({ isOpen: false, booking: null })
   const [trackingModal, setTrackingModal] = useState({ isOpen: false, booking: null })
@@ -164,7 +165,7 @@ export default function CustomerDashboard() {
 
   return (
     <div className="w-full bg-surface pb-16">
-      <div className="max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-8">
+      <div className="container-page py-4 space-y-8">
         {/* ── 1. Top Greeting Banner ──────────────────────────────────── */}
         <div className="relative bg-surface-container-lowest rounded-2xl shadow-sm p-6 sm:p-8 overflow-hidden border border-outline-variant/50">
           <div className="absolute -right-16 -top-16 w-80 h-80 bg-primary-fixed/20 rounded-full blur-3xl pointer-events-none" />
@@ -533,7 +534,7 @@ export default function CustomerDashboard() {
                     {filteredBookings.map((b) => {
                       const canCancel = ['pending', 'accepted'].includes(b.status)
                       const canPay = b.status === 'completed' && !b.is_paid
-                      const canInvoice = Boolean(b.is_paid && b.invoice_id)
+                      const canInvoice = Boolean((b.is_paid && b.invoice_id) || b.status === 'completed' || b.is_paid)
                       const canReview = b.status === 'completed' && !b.review
                       const hasReview = Boolean(b.review)
 
@@ -615,7 +616,7 @@ export default function CustomerDashboard() {
                               {canInvoice && (
                                 <button
                                   type="button"
-                                  onClick={() => setInvoiceModal({ isOpen: true, invoiceId: b.invoice_id })}
+                                  onClick={() => setInvoiceModal({ isOpen: true, invoiceId: b.invoice_id || `INV-${b.id}`, booking: b })}
                                   className="btn btn-outline text-[11px] py-1 px-2.5 font-semibold flex items-center gap-1"
                                 >
                                   <Receipt size={12} />
@@ -654,6 +655,33 @@ export default function CustomerDashboard() {
               </div>
             </div>
           )}
+        </section>
+
+        {/* ── 4.5 AI Service Demand & Real-Time Weather Forecaster ───────── */}
+        <section className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-800 text-xs font-bold border border-emerald-500/20 mb-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Real-Time AI Demand Forecasting Engine
+              </div>
+              <h3 className="font-headline-sm text-xl text-on-surface font-black">
+                Regional Service Demand &amp; Weather Impact
+              </h3>
+              <p className="text-xs text-on-surface-variant">
+                Live AI predictions using Open-Meteo Weather APIs &amp; Random Forest Regression. See when your neighbourhood experiences high technician demand.
+              </p>
+            </div>
+            <Link
+              to="/forecast"
+              className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+            >
+              <span>Full AI Forecast Hub</span>
+              <span>→</span>
+            </Link>
+          </div>
+
+          <AIDemandForecastCard defaultLocation="Rohini" />
         </section>
 
         {/* ── 5. Quick Rebooking Services Grid ────────────────────────── */}
@@ -723,8 +751,9 @@ export default function CustomerDashboard() {
       {invoiceModal.isOpen && (
         <InvoiceModal
           isOpen={invoiceModal.isOpen}
-          onClose={() => setInvoiceModal({ isOpen: false, invoiceId: null })}
+          onClose={() => setInvoiceModal({ isOpen: false, invoiceId: null, booking: null })}
           invoiceId={invoiceModal.invoiceId}
+          booking={invoiceModal.booking}
         />
       )}
 

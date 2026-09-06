@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom'
 import Navbar from './Navbar'
 import Footer from './Footer'
 import ChatbotWidget from './ChatbotWidget'
+import ThemeToggleFab from './ThemeToggleFab'
 
 /**
  * Layout.jsx — the frame that every page sits inside.
@@ -12,12 +13,13 @@ import ChatbotWidget from './ChatbotWidget'
  */
 export default function Layout() {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-surface text-on-surface transition-colors duration-200">
       <Navbar />
       <main className="flex-1 pt-16 w-full min-w-0">
         <Outlet />
       </main>
       <Footer />
+      <ThemeToggleFab />
       <ChatbotWidget />
     </div>
   )

@@ -57,7 +57,7 @@ export default function CooperativesPage() {
         <div className="pointer-events-none absolute -right-16 -top-24 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
         <div className="pointer-events-none absolute right-1/3 -bottom-20 h-64 w-64 rounded-full bg-secondary-container/10 blur-2xl" />
 
-        <div className="relative z-10 max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto flex flex-col md:flex-row md:items-end justify-between gap-8">
+        <div className="relative z-10 container-page flex flex-col md:flex-row md:items-end justify-between gap-8">
           <div className="max-w-2xl space-y-3">
             <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-3.5 py-1 text-xs font-bold text-primary">
               <Building2 size={14} />
@@ -89,7 +89,7 @@ export default function CooperativesPage() {
       </section>
 
       {/* ── Main Directory Grid ─────────────────────────────────────────── */}
-      <div className="max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="container-page py-10">
         {loading ? (
           <div className="flex h-64 items-center justify-center">
             <Loader2 className="animate-spin text-primary" size={36} />
@@ -116,10 +116,26 @@ export default function CooperativesPage() {
                     <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors shadow-sm">
                       <Building2 size={24} />
                     </div>
-                    <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-[11px] font-bold text-primary">
-                      <ShieldCheck size={13} />
-                      {coop.verification_badge || 'Chartered Society'}
-                    </span>
+                    {/* Society Verified Community Badge & Tooltip */}
+                    <div className="relative group/badge">
+                      <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[11px] font-bold shadow-xs cursor-help transition ${
+                        coop.verification_status === 'suspended'
+                          ? 'bg-red-100 text-red-800 border border-red-300'
+                          : coop.verification_status === 'pending'
+                          ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                          : 'bg-emerald-600 text-white'
+                      }`}>
+                        <ShieldCheck size={13} className={coop.verification_status === 'suspended' ? 'text-red-600' : coop.verification_status === 'pending' ? 'text-amber-700' : 'text-emerald-100'} />
+                        <span>{coop.verification_status === 'suspended' ? 'Suspended' : coop.verification_status === 'pending' ? 'Verification In Review' : 'Society Verified Community'}</span>
+                      </span>
+                      <div className="absolute right-0 top-full mt-1.5 hidden group-hover/badge:block z-30 w-64 p-2.5 rounded-xl bg-slate-900 text-white text-[11px] shadow-xl border border-slate-700 animate-fade-in pointer-events-none">
+                        <div className="font-bold text-emerald-400 flex items-center gap-1 mb-1">
+                          <ShieldCheck size={13} />
+                          Cooperative Society Trust Verification
+                        </div>
+                        This community has been verified through the NEED cooperative network under the Multi-State Co-operative Societies Act 2002.
+                      </div>
+                    </div>
                   </div>
 
                   <h3 className="font-headline-md text-base font-bold text-on-surface leading-snug">

@@ -64,6 +64,8 @@ import SectionHeading from '../components/SectionHeading'
 import BookingLifecycleStepper from '../components/BookingLifecycleStepper'
 import VerificationModal from '../components/VerificationModal'
 import InvoiceModal from '../components/InvoiceModal'
+import WorkerJobLeads from '../components/WorkerJobLeads'
+import AIDemandForecastCard from '../components/AIDemandForecastCard'
 
 // ---------------------------------------------------------------------------
 // Status helpers
@@ -388,7 +390,7 @@ export default function WorkerDashboard() {
 
   if (loading) {
     return (
-      <div className="w-full min-h-screen bg-surface py-10 px-4 max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto space-y-6">
+      <div className="container-page py-10 space-y-6">
         <div className="animate-pulse space-y-4">
           <div className="h-16 bg-surface-container-high rounded-2xl w-full"></div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -432,7 +434,7 @@ export default function WorkerDashboard() {
 
       {/* ── Top Greeting & Realtime Status Band ──────────────────────────── */}
       <section className="w-full border-b border-surface-container-high bg-surface-container-lowest/80 backdrop-blur-md px-4 sm:px-6 lg:px-8 py-5">
-        <div className="max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="container-page flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex flex-col gap-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="font-headline-lg text-2xl sm:text-3xl font-extrabold text-on-surface tracking-tight">
@@ -518,7 +520,7 @@ export default function WorkerDashboard() {
       </section>
 
       {/* ── Main Container ─────────────────────────────────────────────── */}
-      <div className="max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
+      <div className="container-page py-8 flex flex-col gap-8">
 
         {/* ── Verification Banner ────────────────────────────────────────── */}
         <VerificationBanner
@@ -1006,6 +1008,35 @@ export default function WorkerDashboard() {
             </div>
           </div>
         </section>
+
+        {/* ── AI Demand Forecasting & High-Surge Cluster Predictor ────────── */}
+        <section className="space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-800 text-xs font-bold border border-emerald-500/20 mb-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                AI Real-Time Demand Hotspots &amp; Weather Surge
+              </div>
+              <h3 className="font-headline-md text-xl font-black text-on-surface">
+                Regional Demand Intelligence &amp; High-Earning Hotspots
+              </h3>
+              <p className="text-xs text-on-surface-variant">
+                Live predictions powered by Scikit-Learn Random Forest Regression &amp; Open-Meteo Weather APIs. Check where service demand spikes to position yourself for high-volume dispatches.
+              </p>
+            </div>
+            <a
+              href="/forecast"
+              className="text-xs font-bold text-primary hover:underline flex items-center gap-1 shrink-0"
+            >
+              <span>Full AI Hub</span>
+              <span>→</span>
+            </a>
+          </div>
+          <AIDemandForecastCard defaultLocation="Rohini" />
+        </section>
+
+        {/* ── Cooperative Job Leads Discovery & Lead Credit Wallet ────────── */}
+        <WorkerJobLeads />
 
         {/* ── Recent Job Dispatches & Instant Ledger Table ────────────────── */}
         <section className="flex flex-col gap-4">

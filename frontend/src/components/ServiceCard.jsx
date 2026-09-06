@@ -20,9 +20,14 @@ export default function ServiceCard({ service, onBook, onViewWorkers, variant = 
           }}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
-        <div className="absolute top-3 left-3 bg-inverse-surface/85 backdrop-blur-md text-inverse-on-surface px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1 shadow-sm">
-          <span className="material-symbols-outlined text-secondary-container text-[16px]">verified</span>
-          Co-op Verified
+        <div className="absolute top-3 left-3 relative group/badge">
+          <div className="bg-emerald-800/90 backdrop-blur-md text-white px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1 shadow-sm cursor-help">
+            <span className="material-symbols-outlined text-emerald-300 text-[15px]">verified</span>
+            <span>Society Verified Community</span>
+          </div>
+          <div className="absolute left-0 top-full mt-1.5 hidden group-hover/badge:block z-20 w-60 p-2.5 rounded-xl bg-slate-900 text-white text-[10px] shadow-xl border border-slate-700 animate-fade-in pointer-events-none">
+            This community has been verified through the NEED cooperative network.
+          </div>
         </div>
         <div className="absolute bottom-2.5 right-3 bg-surface-container-lowest/95 backdrop-blur-md text-on-surface px-2.5 py-1 rounded-full font-label-md text-xs shadow-sm flex items-center gap-1 font-bold">
           <Star size={14} className="fill-secondary text-secondary" />

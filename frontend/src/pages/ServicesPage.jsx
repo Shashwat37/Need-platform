@@ -187,7 +187,7 @@ export default function ServicesPage() {
 
   return (
     <div className="w-full bg-surface pb-16">
-      <div className="max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-4 space-y-6">
+      <div className="container-page py-4 space-y-6">
         {/* Top Status & Assurance Bar */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-outline-variant/40">
           <div className="flex items-center gap-2 text-xs text-on-surface-variant flex-wrap">

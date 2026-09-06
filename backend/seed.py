@@ -6,11 +6,29 @@ WHY:  Provides realistic demonstration data for Cooperative & Platform Dashboard
 HOW:  Run once from backend folder:   python seed.py
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash
 
 from app import app
-from models import Booking, Cooperative, Dispute, Payment, Review, Service, SupportTicket, User, WelfareWallet, WorkerProfile, db
+from models import (
+    Booking,
+    Cooperative,
+    Dispute,
+    LeadCreditWallet,
+    LeadPricing,
+    Payment,
+    RevenueRecord,
+    Review,
+    Service,
+    Subscription,
+    SubscriptionPlan,
+    SupportTicket,
+    User,
+    WelfareWallet,
+    WorkerLeadPurchase,
+    WorkerProfile,
+    db,
+)
 from routes import WALLET_INSURANCE_SHARE, WALLET_LIQUID_SHARE, WELFARE_RATE
 
 DEMO_PASSWORD = "demo123"
@@ -387,8 +405,157 @@ def seed():
         )
         db.session.add(d1)
 
+        # -------------------------------------------------------------------
+        # REVENUE MODEL SEEDING (Step 18)
+        # -------------------------------------------------------------------
+
+        # 1. Category Lead Pricing
+        LEAD_PRICINGS = [
+            ("Electrician", "standard", 10.0),
+            ("Plumber", "standard", 15.0),
+            ("Carpenter", "standard", 20.0),
+            ("Painter", "standard", 25.0),
+            ("Cleaner", "standard", 15.0),
+            ("Gardener", "standard", 10.0),
+            ("House Help", "standard", 15.0),
+            ("Caregiver", "standard", 20.0),
+            ("Driver", "standard", 15.0),
+            ("Technician", "standard", 20.0),
+            ("AC Service", "standard", 25.0),
+            ("Refrigerator Service", "standard", 20.0),
+            ("Washing Machine Service", "standard", 20.0),
+            ("TV Installation", "standard", 15.0),
+            ("Appliance Repair", "standard", 20.0),
+            ("Car Washing", "standard", 10.0),
+            ("Construction Labour", "standard", 25.0),
+            ("Pest Control", "standard", 30.0),
+            ("Pet Grooming", "standard", 20.0),
+            ("Barber", "standard", 10.0),
+        ]
+        for cat, jtype, lprice in LEAD_PRICINGS:
+            db.session.add(LeadPricing(category=cat, job_type=jtype, lead_price=lprice))
+
+        # 2. Worker Lead Wallets (all 20 workers get 150 lead credits)
+        for w in worker_users:
+            db.session.add(LeadCreditWallet(
+                worker_id=w.id,
+                balance=150.0,
+                total_spent=0.0,
+                total_leads_unlocked=0,
+            ))
+
+        # 3. Organization Subscription Plans (PG/Hostel, Office, Local Industry)
+        SUBSCRIPTION_PLANS = [
+            ("PG / Hostel", "weekly", "Hostel Weekly Care", 499.0, "Weekly emergency plumbing & electrical sweeps;;Daily priority support hotline;;Zero convenience fee bookings"),
+            ("PG / Hostel", "monthly", "Hostel Comprehensive Shield", 1799.0, "Twice-weekly preventive maintenance checks;;Unlimited emergency priority callouts;;Dedicated cooperative guild manager;;100% replacement warranty on guild fittings"),
+            ("PG / Hostel", "yearly", "Hostel Institutional Guild Tier", 18999.0, "Full annual campus facility coverage;;Dedicated on-call electrician & plumber;;Quarterly deep sanitization & pest audits;;Official MSCS Act Guild Compliance Certificate"),
+
+            ("Office", "weekly", "Corporate Express Support", 899.0, "Weekly AC & network switchboard inspections;;Same-day technician response (under 45 mins);;Consolidated corporate billing"),
+            ("Office", "monthly", "Enterprise Workspace Shield", 3199.0, "Bi-weekly electrical, plumbing & HVAC checks;;Unlimited priority repair callouts;;Certified quarterly fire & wiring safety audit;;Dedicated account manager"),
+            ("Office", "yearly", "Federation Corporate Annual Partner", 34999.0, "Complete annual office facility maintenance;;Pre-scheduled quarterly deep cleaning & pest control;;Dedicated guild artisans assigned to your facility;;Corporate GST invoice with input credit"),
+
+            ("Local Industry", "weekly", "Industrial Essential Shift Support", 1499.0, "Weekly heavy wiring & motor inspections;;Emergency technician dispatch within 30 mins;;Zero surge fees on urgent shifts"),
+            ("Local Industry", "monthly", "Factory Robust Maintenance Tier", 5499.0, "Weekly industrial machinery & sanitation visits;;Safety inspections for electrical load & compliance;;On-demand certified technical workforce;;Direct guild supervisor oversight"),
+            ("Local Industry", "yearly", "Industrial Federation Enterprise Contract", 59999.0, "Comprehensive factory & plant maintenance contract;;Dedicated crew of certified electricians & mechanics;;Annual compliance and safety certification report;;Priority parts procurement via cooperative federated warehouse"),
+        ]
+        plan_objs = []
+        for org, cycle, name, price, feat in SUBSCRIPTION_PLANS:
+            plan = SubscriptionPlan(
+                org_type=org,
+                billing_cycle=cycle,
+                name=name,
+                price=price,
+                description=f"Managed cooperative maintenance package tailored for {org} facilities.",
+                features=feat,
+            )
+            db.session.add(plan)
+            plan_objs.append(plan)
+
+        db.session.flush()
+
+        # 4. Sample Subscriptions
+        sub1 = Subscription(
+            user_id=customer1.id,
+            plan_id=plan_objs[1].id,  # PG Monthly
+            org_name="Noida Green Heights PG & Student Hostel",
+            org_type="PG / Hostel",
+            billing_cycle="monthly",
+            price=1799.0,
+            start_date=datetime.utcnow() - timedelta(days=6),
+            expiry_date=datetime.utcnow() + timedelta(days=24),
+            status="active",
+            auto_renew=True,
+        )
+        db.session.add(sub1)
+
+        sub2 = Subscription(
+            user_id=customer_users[1].id,
+            plan_id=plan_objs[4].id,  # Office Monthly
+            org_name="Innovatech Coworking Hub Sector 62",
+            org_type="Office",
+            billing_cycle="monthly",
+            price=3199.0,
+            start_date=datetime.utcnow() - timedelta(days=12),
+            expiry_date=datetime.utcnow() + timedelta(days=18),
+            status="active",
+            auto_renew=True,
+        )
+        db.session.add(sub2)
+
+        sub3 = Subscription(
+            user_id=customer_users[2].id,
+            plan_id=plan_objs[7].id,  # Local Industry Monthly
+            org_name="NCR Tooling & Precision Die Works",
+            org_type="Local Industry",
+            billing_cycle="monthly",
+            price=5499.0,
+            start_date=datetime.utcnow() - timedelta(days=18),
+            expiry_date=datetime.utcnow() + timedelta(days=12),
+            status="active",
+            auto_renew=True,
+        )
+        db.session.add(sub3)
+
+        # 5. Worker Lead Purchase for Rahul Sharma
+        p_lead = WorkerLeadPurchase(
+            worker_id=worker1.id,
+            booking_id=b1.id,
+            amount_paid=10.0,
+            status="unlocked",
+            unlocked_at=datetime.utcnow() - timedelta(days=2),
+        )
+        db.session.add(p_lead)
+
+        # 6. Traceable Revenue Records for Audit Ledger
+        now = datetime.utcnow()
+        sample_revenues = [
+            (customer1.id, "SUBSCRIPTION", 1799.0, f"SUB-1", None, "PG / Hostel", "Hostel Comprehensive Shield Monthly for Noida Green Heights PG", now - timedelta(days=6)),
+            (customer_users[1].id, "SUBSCRIPTION", 3199.0, f"SUB-2", None, "Office", "Enterprise Workspace Shield Monthly for Innovatech Coworking", now - timedelta(days=12)),
+            (customer_users[2].id, "SUBSCRIPTION", 5499.0, f"SUB-3", None, "Local Industry", "Factory Robust Maintenance Tier Monthly for NCR Tooling", now - timedelta(days=18)),
+            (worker1.id, "JOB_LEAD", 10.0, f"LEAD-BOOKING-{b1.id}", "Electrician", None, "Job Lead Unlock for Electrician by Worker Rahul Sharma", now - timedelta(days=2)),
+            (worker_users[1].id, "JOB_LEAD", 15.0, f"LEAD-BOOKING-DEMO2", "Plumber", None, "Job Lead Unlock for Plumber by Worker Amit Verma", now - timedelta(days=1)),
+            (worker_users[2].id, "JOB_LEAD", 25.0, f"LEAD-BOOKING-DEMO3", "AC Service", None, "Job Lead Unlock for AC Service by Worker Suresh Patel", now - timedelta(hours=8)),
+            (customer1.id, "CONVENIENCE_FEE", 20.0, f"BOOKING-{b1.id}", "Electrician", None, "Compulsory Convenience Fee for Booking #1", now - timedelta(days=2)),
+            (customer_users[1].id, "CONVENIENCE_FEE", 20.0, f"BOOKING-DEMO4", "Plumber", None, "Compulsory Convenience Fee for Booking #2", now - timedelta(days=1)),
+            (customer1.id, "PROTECTION_FEE", 25.0, f"BOOKING-{b1.id}", "Electrician", None, "Optional Customer Protection Fee for Booking #1", now - timedelta(days=2)),
+            (customer_users[2].id, "PROTECTION_FEE", 35.0, f"BOOKING-DEMO5", "Appliance Repair", None, "Optional Customer Protection Fee for Booking #3", now - timedelta(hours=14)),
+            (customer1.id, "PLATFORM_FEE", 29.9, f"BOOKING-{b1.id}", "Electrician", None, "Cooperative Platform Operations Fee (10%) for Booking #1", now - timedelta(days=2)),
+        ]
+        for uid, stype, amt, ref, cat, org, desc, ctime in sample_revenues:
+            db.session.add(RevenueRecord(
+                user_id=uid,
+                source_type=stype,
+                amount=amt,
+                reference_id=ref,
+                service_category=cat,
+                org_type=org,
+                description=desc,
+                created_at=ctime,
+            ))
+
         db.session.commit()
         print("Seeded sample completed booking, payment breakdown, review and dispute.")
+        print("Seeded Revenue Model: 20 Lead Pricings, 20 Worker Lead Wallets, 9 Organization Subscription Plans, 3 Active Subscriptions, and Audit Ledger.")
 
         print("\n========================================================")
         print("  NEED PLATFORM DEMO LOGINS READY:")

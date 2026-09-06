@@ -13,6 +13,7 @@ export const TRANSLATIONS = {
     // Navigation
     nav_home: 'Home',
     nav_services: 'Find Services',
+    nav_forecast: 'AI Forecast 🤖',
     nav_cooperatives: 'Labour Cooperatives',
     nav_about: 'Cooperative Model',
     nav_worker_portal: 'Worker Portal',
@@ -51,6 +52,7 @@ export const TRANSLATIONS = {
     // Navigation
     nav_home: 'होम',
     nav_services: 'सेवाएं',
+    nav_forecast: 'AI पूर्वानुमान 🤖',
     nav_about: 'सहकारी मॉडल',
     nav_support: 'सहायता और सपोर्ट',
     nav_dashboard: 'डैशबोर्ड',
@@ -86,6 +88,7 @@ export const TRANSLATIONS = {
     // Navigation
     nav_home: 'मुख्यपृष्ठ',
     nav_services: 'सेवा',
+    nav_forecast: 'AI अंदाज 🤖',
     nav_about: 'सहकारी मॉडेल',
     nav_support: 'मदत आणि समर्थन',
     nav_dashboard: 'डॅशबोर्ड',
@@ -121,6 +124,7 @@ export const TRANSLATIONS = {
     // Navigation
     nav_home: 'হোম',
     nav_services: 'পরিষেবা',
+    nav_forecast: 'AI পূর্বাভাস 🤖',
     nav_about: 'সমবায় মডেল',
     nav_support: 'সাহায্য ও সহায়তা',
     nav_dashboard: 'ড্যাশবোর্ড',

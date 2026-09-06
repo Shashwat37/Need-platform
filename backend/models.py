@@ -272,6 +272,12 @@ class Booking(db.Model):
     is_emergency = db.Column(db.Boolean, default=False)
     amount = db.Column(db.Float, default=0.0)
 
+    # Customer-side revenue fee model
+    base_service_amount = db.Column(db.Float, default=0.0)
+    convenience_fee = db.Column(db.Float, default=20.0)  # Compulsory platform convenience fee
+    protection_fee = db.Column(db.Float, default=0.0)   # Optional Customer Protection Fee (max ₹50)
+    has_protection = db.Column(db.Boolean, default=False)
+
     # Lifecycle: requested -> accepted -> worker_assigned -> on_the_way -> arrived -> in_progress -> completed -> confirmed (or cancelled)
     status = db.Column(db.String(30), default="requested")
 
@@ -321,6 +327,10 @@ class Booking(db.Model):
             "address":             self.address,
             "is_emergency":        self.is_emergency,
             "amount":              self.amount,
+            "base_service_amount": round(self.base_service_amount if self.base_service_amount else (self.amount - (self.convenience_fee or 0.0) - (self.protection_fee or 0.0)), 2),
+            "convenience_fee":     round(self.convenience_fee or 0.0, 2),
+            "protection_fee":      round(self.protection_fee or 0.0, 2),
+            "has_protection":      bool(self.has_protection),
             "status":              self.status,
             "accepted_at":         self.accepted_at.isoformat() if self.accepted_at else None,
             "on_the_way_at":       self.on_the_way_at.isoformat() if self.on_the_way_at else None,
@@ -358,6 +368,8 @@ class Payment(db.Model):
     cooperative_share = db.Column(db.Float, default=0.0)  # e.g., 5%
     worker_earnings = db.Column(db.Float, default=0.0)    # e.g., 85%
     welfare_contribution = db.Column(db.Float, default=0.0)
+    convenience_fee = db.Column(db.Float, default=0.0)
+    protection_fee = db.Column(db.Float, default=0.0)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -373,6 +385,8 @@ class Payment(db.Model):
             "cooperative_share": round(self.cooperative_share or (self.amount * 0.05), 2),
             "worker_earnings": round(self.worker_earnings or (self.amount * 0.85), 2),
             "welfare_contribution": round(self.welfare_contribution or 0.0, 2),
+            "convenience_fee": round(self.convenience_fee or 0.0, 2),
+            "protection_fee": round(self.protection_fee or 0.0, 2),
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
@@ -592,5 +606,205 @@ class SupportTicket(db.Model):
             "description": self.description,
             "status": self.status,
             "admin_response": self.admin_response,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+# ===========================================================================
+# REVENUE MODEL ARCHITECTURE (Step 18)
+# ===========================================================================
+
+class LeadPricing(db.Model):
+    """Admin-configurable pricing for job leads per service category and job tier."""
+
+    __tablename__ = "lead_pricings"
+
+    id = db.Column(db.Integer, primary_key=True)
+    category = db.Column(db.String(80), nullable=False, unique=True)  # e.g. "Electrician", "Plumber"
+    job_type = db.Column(db.String(50), default="standard")          # "standard", "emergency", "high_value"
+    lead_price = db.Column(db.Float, nullable=False, default=15.0)   # e.g. ₹10, ₹15, ₹20
+    min_job_value = db.Column(db.Float, default=0.0)
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "category": self.category,
+            "job_type": self.job_type,
+            "lead_price": round(self.lead_price, 2),
+            "min_job_value": round(self.min_job_value or 0.0, 2),
+            "is_active": self.is_active,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class LeadCreditWallet(db.Model):
+    """Tracks worker's pre-funded lead credits balance for unlocking customer job leads."""
+
+    __tablename__ = "lead_credit_wallets"
+
+    id = db.Column(db.Integer, primary_key=True)
+    worker_id = db.Column(db.Integer, db.ForeignKey("users.id"), unique=True, nullable=False)
+    balance = db.Column(db.Float, default=150.0)  # default demo credits
+    total_spent = db.Column(db.Float, default=0.0)
+    total_leads_unlocked = db.Column(db.Integer, default=0)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    worker = db.relationship("User", foreign_keys=[worker_id], lazy="joined")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "worker_id": self.worker_id,
+            "balance": round(self.balance or 0.0, 2),
+            "total_spent": round(self.total_spent or 0.0, 2),
+            "total_leads_unlocked": self.total_leads_unlocked or 0,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class WorkerLeadPurchase(db.Model):
+    """Records an unlocked job lead by a worker to prevent duplicate charges and preserve audit trail."""
+
+    __tablename__ = "worker_lead_purchases"
+    __table_args__ = (
+        db.UniqueConstraint("worker_id", "booking_id", name="uq_worker_booking_lead"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    worker_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    booking_id = db.Column(db.Integer, db.ForeignKey("bookings.id"), nullable=False)
+    amount_paid = db.Column(db.Float, nullable=False)
+    status = db.Column(db.String(20), default="unlocked")
+    unlocked_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    worker = db.relationship("User", foreign_keys=[worker_id], lazy="joined")
+    booking = db.relationship("Booking", foreign_keys=[booking_id], lazy="joined")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "worker_id": self.worker_id,
+            "worker_name": self.worker.name if self.worker else "Worker",
+            "booking_id": self.booking_id,
+            "service_name": self.booking.service.name if (self.booking and self.booking.service) else "Service",
+            "service_category": self.booking.service.category if (self.booking and self.booking.service) else "General",
+            "customer_name": self.booking.customer.name if (self.booking and self.booking.customer) else "Customer",
+            "customer_phone": self.booking.customer.phone if (self.booking and self.booking.customer) else None,
+            "customer_address": self.booking.address if self.booking else None,
+            "amount_paid": round(self.amount_paid or 0.0, 2),
+            "status": self.status,
+            "unlocked_at": self.unlocked_at.isoformat() if self.unlocked_at else None,
+        }
+
+
+class SubscriptionPlan(db.Model):
+    """Configurable recurring service subscription plans for organizations (PG/Hostel, Offices, Local Industries)."""
+
+    __tablename__ = "subscription_plans"
+
+    id = db.Column(db.Integer, primary_key=True)
+    org_type = db.Column(db.String(50), nullable=False)       # "PG / Hostel", "Office", "Local Industry"
+    billing_cycle = db.Column(db.String(20), nullable=False)  # "weekly", "monthly", "yearly"
+    name = db.Column(db.String(100), nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    description = db.Column(db.String(255))
+    features = db.Column(db.Text)  # separated by ;;
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "org_type": self.org_type,
+            "billing_cycle": self.billing_cycle,
+            "name": self.name,
+            "price": round(self.price, 2),
+            "description": self.description,
+            "features": [f.strip() for f in self.features.split(";;") if f.strip()] if self.features else [],
+            "is_active": self.is_active,
+        }
+
+
+class Subscription(db.Model):
+    """Active or historical organization subscription to NEED facility maintenance services."""
+
+    __tablename__ = "subscriptions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    plan_id = db.Column(db.Integer, db.ForeignKey("subscription_plans.id"), nullable=False)
+
+    org_name = db.Column(db.String(150), nullable=False)
+    org_type = db.Column(db.String(50), nullable=False)       # "PG / Hostel", "Office", "Local Industry"
+    billing_cycle = db.Column(db.String(20), nullable=False)  # "weekly", "monthly", "yearly"
+    price = db.Column(db.Float, nullable=False)
+
+    start_date = db.Column(db.DateTime, default=datetime.utcnow)
+    expiry_date = db.Column(db.DateTime, nullable=False)
+    status = db.Column(db.String(20), default="active")       # "active", "cancelled", "expired"
+    auto_renew = db.Column(db.Boolean, default=True)
+
+    cancellation_reason = db.Column(db.Text)
+    cancelled_at = db.Column(db.DateTime)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship("User", foreign_keys=[user_id], lazy="joined")
+    plan = db.relationship("SubscriptionPlan", foreign_keys=[plan_id], lazy="joined")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "subscriber_name": self.user.name if self.user else None,
+            "subscriber_email": self.user.email if self.user else None,
+            "org_name": self.org_name,
+            "org_type": self.org_type,
+            "plan_id": self.plan_id,
+            "plan_name": self.plan.name if self.plan else "Custom Enterprise Plan",
+            "billing_cycle": self.billing_cycle,
+            "price": round(self.price, 2),
+            "start_date": self.start_date.isoformat() if self.start_date else None,
+            "expiry_date": self.expiry_date.isoformat() if self.expiry_date else None,
+            "status": self.status,
+            "auto_renew": self.auto_renew,
+            "is_active": self.status == "active" and (self.expiry_date > datetime.utcnow() if self.expiry_date else True),
+            "cancelled_at": self.cancelled_at.isoformat() if self.cancelled_at else None,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+        }
+
+
+class RevenueRecord(db.Model):
+    """Centralized, immutable audit record for every revenue-generating event."""
+
+    __tablename__ = "revenue_records"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=True)
+    source_type = db.Column(db.String(30), nullable=False)  # "JOB_LEAD", "SUBSCRIPTION", "CONVENIENCE_FEE", "PROTECTION_FEE", "PLATFORM_FEE"
+    amount = db.Column(db.Float, nullable=False)
+    reference_id = db.Column(db.String(80))                 # e.g. booking_id, subscription_id, lead_purchase_id
+    service_category = db.Column(db.String(80))             # for category reporting
+    org_type = db.Column(db.String(50))                     # for organization reporting
+    description = db.Column(db.String(255))
+    status = db.Column(db.String(20), default="completed")
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship("User", foreign_keys=[user_id], lazy="joined")
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "user_name": self.user.name if self.user else "Platform Guest",
+            "source_type": self.source_type,
+            "amount": round(self.amount or 0.0, 2),
+            "reference_id": self.reference_id,
+            "service_category": self.service_category,
+            "org_type": self.org_type,
+            "description": self.description,
+            "status": self.status,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }

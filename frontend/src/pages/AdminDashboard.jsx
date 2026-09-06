@@ -67,6 +67,8 @@ import {
   updateTicketStatus,
   verifyWorker,
 } from '../services/api'
+import AdminRevenueTab from '../components/AdminRevenueTab'
+import AIDemandForecastCard from '../components/AIDemandForecastCard'
 
 // ---------------------------------------------------------------------------
 // Status styles & badges
@@ -251,7 +253,7 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="w-full min-h-screen bg-surface py-10 px-4 max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto space-y-6">
+      <div className="container-page py-10 space-y-6">
         <div className="animate-pulse space-y-4">
           <div className="h-16 bg-surface-container-high rounded-2xl w-full" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -328,7 +330,7 @@ export default function AdminDashboard() {
 
       {/* ── Header Title Banner & Quick Actions ─────────────────────────── */}
       <section className="w-full bg-surface-container-lowest border-b border-surface-container-high px-4 sm:px-6 lg:px-8 py-6">
-        <div className="max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="container-page flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           <div>
             <div className="flex items-center gap-2 mb-1">
               <span className="font-label-caps text-xs uppercase tracking-wider text-primary font-bold">
@@ -377,7 +379,7 @@ export default function AdminDashboard() {
 
       {/* ── Action Notice Alert ────────────────────────────────────────── */}
       {actionNotice && (
-        <div className="max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        <div className="container-page mt-4">
           <div className="flex items-center justify-between rounded-2xl border border-primary/30 bg-primary/10 px-5 py-3.5 text-sm text-on-surface animate-fadeIn">
             <div className="flex items-center gap-2.5">
               <CheckCircle2 size={18} className="text-primary" />
@@ -391,7 +393,7 @@ export default function AdminDashboard() {
       )}
 
       {/* ── 5 Major Federation KPIs (Bento arrangement) ─────────────────── */}
-      <section className="max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <section className="container-page py-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {/* KPI 1: Gross GMV */}
           <div className="bg-surface-container-lowest rounded-2xl p-5 shadow-sm border border-surface-container-high flex flex-col justify-between">
@@ -503,7 +505,37 @@ export default function AdminDashboard() {
       </section>
 
       {/* ── Main Canvas & Tab Navigation ───────────────────────────────── */}
-      <section className="max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="container-page">
+        
+        {/* 🤖 Real-Time AI Demand Forecasting Alert Banner */}
+        <div className="bg-gradient-to-r from-emerald-900 via-primary to-emerald-800 text-white rounded-2xl p-4 sm:p-5 shadow-lg border border-emerald-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+          <div className="flex items-start sm:items-center gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center shrink-0 border border-white/20">
+              <span className="material-symbols-outlined text-white text-[24px]">psychology</span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 font-mono text-[10px] font-bold uppercase tracking-wider border border-emerald-400/30">
+                  🤖 AI ML Demand Engine Active
+                </span>
+                <span className="text-xs font-semibold text-emerald-100/90">
+                  Scikit-Learn Random Forest &amp; Open-Meteo Real-Time Weather Synced
+                </span>
+              </div>
+              <p className="text-sm font-bold text-white mt-1">
+                Monsoon Rain Surge detected in Rohini &amp; Dwarka (+120 workers required for Plumber &amp; Electrician dispatches).
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setActiveTab('forecasting')}
+            className="px-4 py-2.5 rounded-xl bg-white text-emerald-950 hover:bg-emerald-50 font-bold text-xs shadow-md transition flex items-center gap-1.5 shrink-0"
+          >
+            <span>{activeTab === 'forecasting' ? 'Forecasting Active' : 'Switch to AI Demand Hub'}</span>
+            <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+          </button>
+        </div>
+
         {/* Navigation Tabs */}
         <div className="flex items-center gap-2 border-b border-surface-container-high overflow-x-auto pb-px mb-6">
           <button
@@ -568,12 +600,30 @@ export default function AdminDashboard() {
             onClick={() => setActiveTab('forecasting')}
             className={`flex items-center gap-2 px-5 py-3 text-xs sm:text-sm font-bold border-b-2 transition-all whitespace-nowrap ${
               activeTab === 'forecasting'
+                ? 'border-primary text-primary bg-emerald-500/10 rounded-t-xl shadow-xs'
+                : 'border-transparent text-emerald-800 hover:text-emerald-950 font-extrabold bg-emerald-500/5 rounded-t-xl'
+            }`}
+          >
+            <TrendingUp size={16} className="text-emerald-700" />
+            <span>AI Demand Forecasting</span>
+            <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-extrabold text-white animate-pulse">
+              AI ML
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('revenue')}
+            className={`flex items-center gap-2 px-5 py-3 text-xs sm:text-sm font-bold border-b-2 transition-all whitespace-nowrap ${
+              activeTab === 'revenue'
                 ? 'border-primary text-primary bg-primary/5 rounded-t-xl'
                 : 'border-transparent text-on-surface-variant hover:text-on-surface'
             }`}
           >
-            <TrendingUp size={16} />
-            <span>AI Demand Forecasting</span>
+            <IndianRupee size={16} />
+            <span>Revenue &amp; Economics</span>
+            <span className="rounded-full bg-emerald-600 px-2 py-0.2 text-[10px] font-extrabold text-white">
+              Live
+            </span>
           </button>
         </div>
 
@@ -1083,13 +1133,16 @@ export default function AdminDashboard() {
 
         {/* ── TAB 5: AI DEMAND FORECASTING & PREDICTIVE ANALYTICS ─────────── */}
         {activeTab === 'forecasting' && (
-          <div className="space-y-6">
+          <div className="space-y-8">
+            {/* Real Machine Learning Demand Forecasting Engine */}
+            <AIDemandForecastCard defaultLocation="Rohini" />
+
             <div>
-              <h3 className="font-headline-md text-xl font-bold text-on-surface">
-                AI Demand Forecasting &amp; Worker Allocation
+              <h3 className="font-headline-md text-lg font-bold text-on-surface">
+                Federation Registry &amp; Historical Hotspots
               </h3>
               <p className="text-xs text-on-surface-variant mt-0.5">
-                Real-time predictive models anticipating seasonal service demand surges across Noida &amp; NCR.
+                Cooperative federation historical baseline metrics &amp; seasonal surge readiness.
               </p>
             </div>
 
@@ -1212,6 +1265,11 @@ export default function AdminDashboard() {
               </div>
             )}
           </div>
+        )}
+
+        {/* ── TAB 6: REVENUE INTELLIGENCE & LEAD PRICING ─────────────────── */}
+        {activeTab === 'revenue' && (
+          <AdminRevenueTab />
         )}
 
       </section>

@@ -4,9 +4,11 @@ import {
   AlertTriangle,
   ArrowRight,
   BadgeCheck,
+  BrainCircuit,
   Calendar,
   CheckCircle2,
   CircleDollarSign,
+  CloudRain,
   Gavel,
   IndianRupee,
   MapPin,
@@ -167,7 +169,7 @@ export default function LandingPage() {
         <div className="absolute -top-32 -left-32 w-96 h-96 rounded-full bg-primary/5 blur-3xl pointer-events-none" />
         <div className="absolute top-1/3 -right-20 w-[30rem] h-[30rem] rounded-full bg-secondary-container/10 blur-3xl pointer-events-none" />
 
-        <div className="max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="container-page relative z-10">
           {/* Overline Federation Tag */}
           <div className="flex items-center gap-2 mb-6 flex-wrap">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary-fixed text-on-primary-fixed-variant font-label-caps text-[11px] sm:text-xs tracking-wider uppercase font-bold shadow-sm">
@@ -349,9 +351,121 @@ export default function LandingPage() {
       </section>
 
       {/* ──────────────────────────────────────────────────────────────────
+          1.5 AI DEMAND FORECASTING SPOTLIGHT (College ML Feature Showcase)
+      ────────────────────────────────────────────────────────────────── */}
+      <section className="py-12 sm:py-16 bg-gradient-to-b from-surface-container-low to-surface border-y border-outline-variant/40 relative overflow-hidden">
+        <div className="absolute top-0 right-10 w-80 h-80 rounded-full bg-emerald-500/5 blur-3xl pointer-events-none" />
+        <div className="container-page relative z-10">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 mb-8">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/10 text-emerald-800 text-xs font-bold border border-emerald-500/30 mb-3 shadow-xs">
+                <BrainCircuit size={16} className="text-emerald-600" />
+                <span>Live AI/ML Feature • Scikit-Learn Random Forest + Open-Meteo Weather API</span>
+              </div>
+              <h2 className="font-headline-xl text-2xl sm:text-3xl lg:text-4xl text-on-surface font-extrabold tracking-tight">
+                Predictive AI Demand Forecasting &amp; Weather Intelligence
+              </h2>
+              <p className="font-body-md text-sm sm:text-base text-on-surface-variant max-w-2xl mt-2 leading-relaxed">
+                NEED runs predictive Machine Learning models that analyze rainfall, temperature spikes, day-of-week patterns, and localized waterlogging risk to automatically forecast technician shortages before emergencies happen.
+              </p>
+            </div>
+
+            <Link
+              to="/forecast"
+              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-primary text-on-primary font-bold text-sm shadow-md hover:bg-primary-container transition group shrink-0"
+            >
+              <span>Launch Full AI Engine</span>
+              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+            </Link>
+          </div>
+
+          {/* Teacher Demo Interactive Scenario Showcase */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Link
+              to="/forecast"
+              className="bg-surface-container-lowest rounded-2xl p-5 border border-outline-variant/60 shadow-xs hover:border-primary transition group flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold">
+                    <CloudRain size={20} />
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-red-500/10 text-red-700 text-[10px] font-extrabold uppercase">
+                    Critical Surge
+                  </span>
+                </div>
+                <h3 className="font-headline-sm text-base font-bold text-on-surface">
+                  Monsoon Cloudburst (Rohini &amp; Dwarka)
+                </h3>
+                <p className="text-xs text-on-surface-variant mt-1.5 leading-relaxed">
+                  82mm precipitation &amp; 72% waterlogging. Predicted jobs: 200 vs 80 available.
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-outline-variant/40 flex items-center justify-between text-xs">
+                <span className="font-mono font-bold text-red-600">+120 Workers Needed</span>
+                <span className="font-bold text-primary text-[11px] group-hover:underline">Simulate in AI Hub →</span>
+              </div>
+            </Link>
+
+            <Link
+              to="/forecast"
+              className="bg-surface-container-lowest rounded-2xl p-5 border border-outline-variant/60 shadow-xs hover:border-primary transition group flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 flex items-center justify-center font-bold">
+                    <span className="material-symbols-outlined text-[20px]">sunny</span>
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-800 text-[10px] font-extrabold uppercase">
+                    Heat Surge
+                  </span>
+                </div>
+                <h3 className="font-headline-sm text-base font-bold text-on-surface">
+                  43°C Extreme Summer Heatwave
+                </h3>
+                <p className="text-xs text-on-surface-variant mt-1.5 leading-relaxed">
+                  Severe capacitor burnout &amp; compressor overloads. AC technicians face 2.5x demand spike.
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-outline-variant/40 flex items-center justify-between text-xs">
+                <span className="font-mono font-bold text-amber-700">+180 AC Techs Needed</span>
+                <span className="font-bold text-primary text-[11px] group-hover:underline">Simulate in AI Hub →</span>
+              </div>
+            </Link>
+
+            <Link
+              to="/forecast"
+              className="bg-surface-container-lowest rounded-2xl p-5 border border-outline-variant/60 shadow-xs hover:border-primary transition group flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold">
+                    <span className="material-symbols-outlined text-[20px]">celebration</span>
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-800 text-[10px] font-extrabold uppercase">
+                    Festive Surge
+                  </span>
+                </div>
+                <h3 className="font-headline-sm text-base font-bold text-on-surface">
+                  Pre-Diwali Deep Cleaning Rush
+                </h3>
+                <p className="text-xs text-on-surface-variant mt-1.5 leading-relaxed">
+                  Annual household prep triggers high demand for deep home cleaners, painters, and carpenters.
+                </p>
+              </div>
+              <div className="mt-4 pt-3 border-t border-outline-variant/40 flex items-center justify-between text-xs">
+                <span className="font-mono font-bold text-emerald-700">+140 Cleaners Needed</span>
+                <span className="font-bold text-primary text-[11px] group-hover:underline">Simulate in AI Hub →</span>
+              </div>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* ──────────────────────────────────────────────────────────────────
           2. INTERACTIVE SPLIT SIMULATOR (from DESIGN.md & reference)
       ────────────────────────────────────────────────────────────────── */}
-      <section className="py-16 lg:py-20 max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 w-full">
+      <section className="container-page py-16 lg:py-20 w-full">
         <div className="text-center max-w-2xl mx-auto mb-10">
           <span className="font-label-caps text-xs bg-primary/10 text-primary px-3.5 py-1.5 rounded-full uppercase tracking-wider font-bold">
             Radical Economic Transparency
@@ -519,7 +633,7 @@ export default function LandingPage() {
           3. SERVICE EXPLORATION CATALOGUE
       ────────────────────────────────────────────────────────────────── */}
       <section className="py-16 bg-surface-container-low/60 border-t border-outline-variant/50">
-        <div className="max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container-page">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
             <div>
               <span className="font-label-caps text-xs bg-primary/10 text-primary px-3.5 py-1.5 rounded-full uppercase tracking-wider font-bold">
@@ -578,7 +692,7 @@ export default function LandingPage() {
       {/* ──────────────────────────────────────────────────────────────────
           4. HOW THE FEDERATION WORKS (4 STEPS)
       ────────────────────────────────────────────────────────────────── */}
-      <section className="py-16 lg:py-20 max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="container-page py-16 lg:py-20">
         <div className="text-center max-w-2xl mx-auto mb-12">
           <span className="font-label-caps text-xs bg-primary/10 text-primary px-3.5 py-1.5 rounded-full uppercase tracking-wider font-bold">
             Democratic Guild Workflow
@@ -618,7 +732,7 @@ export default function LandingPage() {
           5. PILLARS & COOPERATIVE CHARTER
       ────────────────────────────────────────────────────────────────── */}
       <section className="py-16 bg-surface-container-low border-t border-outline-variant/50">
-        <div className="max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container-page">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 2xl:gap-8">
             {PILLARS.map((pillar) => {
               const Icon = pillar.icon

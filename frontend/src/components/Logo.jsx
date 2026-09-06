@@ -13,7 +13,7 @@ export default function Logo({ showText = true, subtitle = true, className = 'w-
             NEED
           </span>
           {subtitle && (
-            <span className="font-label-caps text-[10px] text-secondary font-bold uppercase tracking-wider mt-0.5">
+            <span className="font-label-caps text-[10px] text-secondary font-bold uppercase tracking-wider mt-0.5 hidden sm:inline-block">
               Worker-Owned Federation
             </span>
           )}

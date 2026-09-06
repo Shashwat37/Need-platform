@@ -22,36 +22,102 @@ from models import (
     Booking,
     Cooperative,
     Dispute,
+    LeadCreditWallet,
+    LeadPricing,
     OTPTransaction,
     Payment,
+    RevenueRecord,
     Review,
     Service,
+    Subscription,
+    SubscriptionPlan,
     SupportTicket,
     Tip,
     User,
     WelfareTransaction,
     WelfareWallet,
     WelfareWithdrawalRequest,
+    WorkerLeadPurchase,
     WorkerProfile,
     db,
 )
+from services.demand_forecast import forecast_demand
 
 api = Blueprint("api", __name__)
 
 
 # ---------------------------------------------------------------------------
-# The cooperative money rules
-#
-# WHY these are named constants instead of numbers typed into each function:
-# they used to be written as bare numbers in several different places, and that
-# is exactly how the welfare wallet and its own ledger drifted apart. One
-# definition means they can never disagree with each other again.
+# The cooperative money rules & Customer Fee Configuration
 # ---------------------------------------------------------------------------
 WELFARE_RATE = 0.10             # share of every job that funds social security
 WORKER_SHARE = 0.90             # the rest goes straight to the worker
 WALLET_LIQUID_SHARE = 0.70      # of the welfare cut: savings the worker can draw
 WALLET_INSURANCE_SHARE = 0.30   # of the welfare cut: pooled insurance reserve
 EMERGENCY_FEE = 100.0           # flat rush charge on an emergency booking
+
+# Customer Fee Revenue Architecture
+CONVENIENCE_FEE_DEFAULT = 20.0       # Compulsory fee on all customer bookings
+MAX_PROTECTION_FEE = 50.0            # Customer Protection Fee can NEVER exceed ₹50
+PROTECTION_FEE_RATE = 0.05           # 5% of service base
+MIN_PROTECTION_FEE = 10.0            # Minimum protection fee if opted in
+
+
+def calculate_fees(service_price, is_emergency=False, include_protection=False):
+    """
+    Calculate verifiable booking totals server-side.
+    Base Service Amount + Compulsory Convenience Fee + Optional Customer Protection Fee (strictly <= ₹50).
+    """
+    rush = EMERGENCY_FEE if is_emergency else 0.0
+    base = round(float(service_price or 0.0) + rush, 2)
+    convenience = round(CONVENIENCE_FEE_DEFAULT, 2)
+
+    # Optional Protection Fee: between MIN_PROTECTION_FEE and MAX_PROTECTION_FEE (never > ₹50)
+    if include_protection:
+        raw_protection = round(base * PROTECTION_FEE_RATE, 2)
+        protection = round(min(max(raw_protection, MIN_PROTECTION_FEE), MAX_PROTECTION_FEE), 2)
+    else:
+        protection = 0.0
+
+    total = round(base + convenience + protection, 2)
+    return {
+        "base_service_amount": base,
+        "convenience_fee": convenience,
+        "protection_fee": protection,
+        "max_protection_fee": MAX_PROTECTION_FEE,
+        "has_protection": bool(include_protection),
+        "total_amount": total,
+    }
+
+
+def _lead_wallet_for(worker_id):
+    """Return worker's LeadCreditWallet, creating it with default 150 credits if missing."""
+    wallet = LeadCreditWallet.query.filter_by(worker_id=worker_id).first()
+    if not wallet:
+        wallet = LeadCreditWallet(worker_id=worker_id, balance=150.0)
+        db.session.add(wallet)
+        db.session.commit()
+    return wallet
+
+
+def _lead_price_for(service_category, service_price=0.0):
+    """Determine lead price from LeadPricing configuration with default fallback."""
+    pricing = LeadPricing.query.filter_by(category=service_category, is_active=True).first()
+    if pricing:
+        return float(pricing.lead_price)
+
+    # Intelligent default tiers based on service category and value
+    cat = (service_category or "").lower()
+    if "electric" in cat:
+        return 10.0
+    elif "plumb" in cat:
+        return 15.0
+    elif "carpent" in cat:
+        return 20.0
+    elif "appliance" in cat or "ac" in cat:
+        return 25.0
+    elif service_price > 1000:
+        return 35.0
+    return 15.0
 
 
 def _wallet_for(worker_id):
@@ -524,8 +590,10 @@ def create_booking():
             }), 409
 
     is_emergency = bool(data.get("is_emergency", False))
-    rush_fee = EMERGENCY_FEE if is_emergency else 0.0
-    total_amount = round(service.starting_price + rush_fee, 2)
+    include_protection = bool(data.get("include_protection", False) or data.get("has_protection", False))
+
+    # Calculate verifiable booking breakdown on the server
+    fee_calc = calculate_fees(service.starting_price, is_emergency=is_emergency, include_protection=include_protection)
 
     booking = Booking(
         customer_id=customer.id,
@@ -536,7 +604,11 @@ def create_booking():
         address=data.get("address") or customer.address or "Home Address",
         description=data.get("description", ""),
         is_emergency=is_emergency,
-        amount=total_amount,
+        base_service_amount=fee_calc["base_service_amount"],
+        convenience_fee=fee_calc["convenience_fee"],
+        protection_fee=fee_calc["protection_fee"],
+        has_protection=fee_calc["has_protection"],
+        amount=fee_calc["total_amount"],
         status="pending",
     )
     db.session.add(booking)
@@ -805,6 +877,11 @@ def checkout_payment():
             "invoice_id": existing_payment.invoice_id,
         }), 400
 
+    # Calculate fees and base breakdown
+    convenience_fee = round(booking.convenience_fee if booking.convenience_fee is not None else CONVENIENCE_FEE_DEFAULT, 2)
+    protection_fee = round(booking.protection_fee or 0.0, 2)
+    base_job_amount = round(booking.base_service_amount if booking.base_service_amount else max(0.0, booking.amount - convenience_fee - protection_fee), 2)
+
     # Auto-complete booking if customer pays before worker marks complete
     if booking.status != "completed":
         booking.status = "completed"
@@ -813,7 +890,7 @@ def checkout_payment():
             profile = WorkerProfile.query.filter_by(user_id=booking.worker_id).first()
             if profile:
                 profile.total_jobs = (profile.total_jobs or 0) + 1
-                net_earned = round(booking.amount * WORKER_SHARE, 2)
+                net_earned = round(base_job_amount * WORKER_SHARE, 2)
                 profile.earnings = round((profile.earnings or 0.0) + net_earned, 2)
                 _credit_welfare(booking.worker_id, booking)
 
@@ -824,12 +901,12 @@ def checkout_payment():
     # "or 0.0" rather than a default, so an explicit null in the JSON body
     # cannot crash this with a TypeError.
     tip_amount = max(0.0, float(data.get("tip_amount") or 0.0))
-    welfare_contribution = round(booking.amount * WELFARE_RATE, 2)
+    welfare_contribution = round(base_job_amount * WELFARE_RATE, 2)
     total_charged = round(booking.amount + tip_amount, 2)
 
-    platform_fee = round(booking.amount * 0.10, 2)
-    cooperative_share = round(booking.amount * 0.05, 2)
-    worker_earnings = round(booking.amount * 0.85, 2)
+    platform_fee = round(base_job_amount * 0.10, 2)
+    cooperative_share = round(base_job_amount * 0.05, 2)
+    worker_earnings = round(base_job_amount * 0.85, 2)
 
     # Generate official cooperative invoice ID (e.g. SHR-INV-2026-A1B2C3)
     invoice_id = f"SHR-INV-2026-{uuid.uuid4().hex[:6].upper()}"
@@ -844,8 +921,42 @@ def checkout_payment():
         cooperative_share=cooperative_share,
         worker_earnings=worker_earnings,
         welfare_contribution=welfare_contribution,
+        convenience_fee=convenience_fee,
+        protection_fee=protection_fee,
     )
     db.session.add(payment)
+
+    # Log revenue events into unified audit ledger
+    cat_name = booking.service.category if booking.service else "Home Services"
+    if convenience_fee > 0:
+        db.session.add(RevenueRecord(
+            user_id=customer.id,
+            source_type="CONVENIENCE_FEE",
+            amount=convenience_fee,
+            reference_id=f"BOOKING-{booking.id}",
+            service_category=cat_name,
+            description=f"Compulsory Convenience Fee for Booking #{booking.id}",
+        ))
+
+    if protection_fee > 0:
+        db.session.add(RevenueRecord(
+            user_id=customer.id,
+            source_type="PROTECTION_FEE",
+            amount=protection_fee,
+            reference_id=f"BOOKING-{booking.id}",
+            service_category=cat_name,
+            description=f"Optional Customer Protection Fee for Booking #{booking.id}",
+        ))
+
+    if platform_fee > 0:
+        db.session.add(RevenueRecord(
+            user_id=customer.id,
+            source_type="PLATFORM_FEE",
+            amount=platform_fee,
+            reference_id=f"BOOKING-{booking.id}",
+            service_category=cat_name,
+            description=f"Cooperative Platform Operations Fee (10%) for Booking #{booking.id}",
+        ))
 
     # Record the tip, and pass it straight through to the worker.
     #
@@ -1940,7 +2051,36 @@ def get_demand_forecasting():
         "demand_hotspots": hotspots[:6],
         "forecast_matrix": forecast_matrix,
         "recommendations": recommendations,
+        "ml_engine": forecast_demand(mode="demo", scenario="heavy_rain", location="Rohini"),
     })
+
+
+@api.route("/demand-forecast", methods=["GET", "POST"])
+def demand_forecast_endpoint():
+    """
+    Real ML-driven Demand Forecasting endpoint.
+    Processes live weather from Open-Meteo or deterministic demo scenarios,
+    runs scikit-learn RandomForestRegressor predictions across services,
+    and returns transparent worker requirement allocations.
+    """
+    try:
+        if request.method == "POST":
+            data = request.get_json(silent=True) or {}
+            location = data.get("location", "Rohini")
+            mode = data.get("mode", "demo")
+            scenario = data.get("scenario", "heavy_rain")
+        else:
+            location = request.args.get("location", "Rohini")
+            mode = request.args.get("mode", "demo")
+            scenario = request.args.get("scenario", "heavy_rain")
+
+        result = forecast_demand(mode=mode, scenario=scenario, location=location)
+        return jsonify(result), 200
+    except Exception as e:
+        # Fallback to guaranteed demo response so frontend never crashes
+        fallback = forecast_demand(mode="demo", scenario="heavy_rain", location="Rohini")
+        fallback["error_fallback"] = str(e)
+        return jsonify(fallback), 200
 
 
 # ---------------------------------------------------------------------------
@@ -2589,5 +2729,588 @@ def verification_status():
         "aadhaar_number": user.aadhaar_number,
         "trust_badge": user.trust_badge,
     }), 200
+
+
+# ===========================================================================
+# REVENUE MODEL SUITE (Step 18)
+# ===========================================================================
+
+# ---------------------------------------------------------------------------
+# Feature 4: Customer Fee Calculation
+# ---------------------------------------------------------------------------
+
+@api.get("/fees/quote")
+def get_fee_quote():
+    """
+    Returns server-calculated pricing breakdown for a service booking:
+    Base Service Amount + Compulsory Convenience Fee + Optional Customer Protection Fee (max ₹50).
+    """
+    service_id = request.args.get("service_id", type=int)
+    if not service_id:
+        return jsonify({"error": "service_id query parameter is required"}), 400
+
+    service = db.session.get(Service, service_id)
+    if not service or not service.is_active:
+        return jsonify({"error": "Service not found or inactive"}), 404
+
+    is_emergency = request.args.get("is_emergency", "false").lower() in ("true", "1", "yes")
+    include_protection = request.args.get("include_protection", "false").lower() in ("true", "1", "yes")
+
+    fee_details = calculate_fees(service.starting_price, is_emergency=is_emergency, include_protection=include_protection)
+    fee_details["service_name"] = service.name
+    fee_details["service_category"] = service.category
+    return jsonify(fee_details), 200
+
+
+# ---------------------------------------------------------------------------
+# Feature 1: Job Lead Pricing & Worker Lead Unlock
+# ---------------------------------------------------------------------------
+
+@api.get("/worker/leads")
+def get_worker_job_leads():
+    """
+    Returns available job leads for the worker's category/trade.
+    Shows lead price, approximate job value, requirement, area, time/date.
+    If the worker has unlocked the lead, reveals customer name, phone, and exact address.
+    If not unlocked, masks customer contact details.
+    """
+    result = _require_role("worker")
+    if isinstance(result, tuple):
+        return result
+    worker = result
+
+    wallet = _lead_wallet_for(worker.id)
+
+    # Fetch eligible leads (all bookings)
+    all_bookings = Booking.query.order_by(Booking.created_at.desc()).limit(40).all()
+
+    # Get IDs of leads this worker has already purchased/unlocked
+    purchased_map = {
+        p.booking_id: p for p in WorkerLeadPurchase.query.filter_by(worker_id=worker.id).all()
+    }
+
+    leads_data = []
+    for b in all_bookings:
+        category_name = b.service.category if b.service else "Home Services"
+        service_name = b.service.name if b.service else "General Service"
+
+        price = _lead_price_for(category_name, b.amount or 0.0)
+        is_unlocked = b.id in purchased_map or b.worker_id == worker.id
+
+        approx_area = "Noida / NCR Area"
+        if b.address:
+            parts = [p.strip() for p in b.address.split(",") if p.strip()]
+            approx_area = ", ".join(parts[-2:]) if len(parts) >= 2 else b.address
+
+        lead_item = {
+            "id": b.id,
+            "service_id": b.service_id,
+            "service_name": service_name,
+            "service_category": category_name,
+            "requirement": b.description or f"Customer requested verified {service_name} support.",
+            "approximate_job_value": round(b.amount or (b.service.starting_price if b.service else 299.0), 2),
+            "lead_price": round(price, 2),
+            "status": "unlocked" if is_unlocked else ("assigned" if b.worker_id and b.worker_id != worker.id else "available"),
+            "scheduled_date": b.scheduled_date,
+            "scheduled_time": b.scheduled_time,
+            "created_at": b.created_at.isoformat() if b.created_at else None,
+            "is_unlocked": is_unlocked,
+            "location_area": b.address if is_unlocked else approx_area,
+            "customer_name": b.customer.name if (is_unlocked and b.customer) else "Verified Member (Protected)",
+            "customer_phone": b.customer.phone if (is_unlocked and b.customer) else "+91 98••• •••89",
+            "customer_address": b.address if is_unlocked else "Unlock lead to view exact street/flat address",
+        }
+        leads_data.append(lead_item)
+
+    return jsonify({
+        "leads": leads_data,
+        "wallet_balance": round(wallet.balance, 2),
+        "total_leads_unlocked": wallet.total_leads_unlocked or 0,
+        "total_spent": round(wallet.total_spent or 0.0, 2),
+    }), 200
+
+
+@api.post("/worker/leads/<int:booking_id>/unlock")
+def unlock_job_lead(booking_id):
+    """
+    Worker unlocks a customer job lead using their lead credit balance.
+    Prevents duplicate charging for the same worker + lead.
+    """
+    result = _require_role("worker")
+    if isinstance(result, tuple):
+        return result
+    worker = result
+
+    booking = db.session.get(Booking, booking_id)
+    if not booking:
+        return jsonify({"error": "Job lead booking not found"}), 404
+
+    wallet = _lead_wallet_for(worker.id)
+
+    # 1. Prevent duplicate charging
+    existing_purchase = WorkerLeadPurchase.query.filter_by(
+        worker_id=worker.id, booking_id=booking.id
+    ).first()
+
+    category_name = booking.service.category if booking.service else "Home Services"
+    lead_price = _lead_price_for(category_name, booking.amount or 0.0)
+
+    if existing_purchase:
+        return jsonify({
+            "message": "Lead was already unlocked previously. No duplicate charge incurred.",
+            "lead": {
+                "booking_id": booking.id,
+                "customer_name": booking.customer.name if booking.customer else "Customer",
+                "customer_phone": booking.customer.phone if booking.customer else None,
+                "customer_address": booking.address,
+                "requirement": booking.description,
+            },
+            "amount_paid": existing_purchase.amount_paid,
+            "wallet_balance": round(wallet.balance, 2),
+            "unlocked": True,
+        }), 200
+
+    # 2. Check sufficient balance
+    if wallet.balance < lead_price:
+        return jsonify({
+            "error": f"Insufficient lead credits. This lead costs ₹{lead_price:.0f}, but your current balance is ₹{wallet.balance:.0f}. Please top up your wallet.",
+            "required_credits": lead_price,
+            "current_balance": round(wallet.balance, 2),
+        }), 400
+
+    # 3. Deduct lead price & record purchase
+    wallet.balance = round(wallet.balance - lead_price, 2)
+    wallet.total_spent = round((wallet.total_spent or 0.0) + lead_price, 2)
+    wallet.total_leads_unlocked = (wallet.total_leads_unlocked or 0) + 1
+
+    purchase = WorkerLeadPurchase(
+        worker_id=worker.id,
+        booking_id=booking.id,
+        amount_paid=lead_price,
+        status="unlocked",
+    )
+    db.session.add(purchase)
+
+    # If booking is unassigned, assign to this worker
+    if not booking.worker_id:
+        booking.worker_id = worker.id
+        if booking.status in ("pending", "requested"):
+            booking.status = "worker_assigned"
+            booking.assigned_at = datetime.utcnow()
+
+    # 4. Record in Platform Revenue Ledger
+    revenue_record = RevenueRecord(
+        user_id=worker.id,
+        source_type="JOB_LEAD",
+        amount=lead_price,
+        reference_id=f"LEAD-BOOKING-{booking.id}",
+        service_category=category_name,
+        description=f"Job Lead Unlock for {booking.service.name if booking.service else 'Service'} by Worker {worker.name}",
+    )
+    db.session.add(revenue_record)
+    db.session.commit()
+
+    return jsonify({
+        "message": f"Lead unlocked successfully! ₹{lead_price:.0f} debited from your lead wallet.",
+        "lead": {
+            "booking_id": booking.id,
+            "customer_name": booking.customer.name if booking.customer else "Customer",
+            "customer_phone": booking.customer.phone if booking.customer else None,
+            "customer_address": booking.address,
+            "requirement": booking.description,
+        },
+        "amount_paid": lead_price,
+        "wallet_balance": round(wallet.balance, 2),
+        "unlocked": True,
+    }), 200
+
+
+@api.get("/worker/lead-credits")
+def get_worker_lead_credits():
+    """Return worker lead credits balance and purchase history."""
+    result = _require_role("worker")
+    if isinstance(result, tuple):
+        return result
+    worker = result
+
+    wallet = _lead_wallet_for(worker.id)
+    purchases = WorkerLeadPurchase.query.filter_by(worker_id=worker.id).order_by(
+        WorkerLeadPurchase.unlocked_at.desc()
+    ).all()
+
+    return jsonify({
+        "balance": round(wallet.balance, 2),
+        "total_spent": round(wallet.total_spent or 0.0, 2),
+        "total_leads_unlocked": wallet.total_leads_unlocked or 0,
+        "history": [p.to_dict() for p in purchases],
+    }), 200
+
+
+@api.post("/worker/lead-credits/topup")
+def topup_worker_lead_credits():
+    """Top up worker's lead credits balance via simulated payment."""
+    result = _require_role("worker")
+    if isinstance(result, tuple):
+        return result
+    worker = result
+
+    data = request.get_json(silent=True) or {}
+    amount = float(data.get("amount") or 0.0)
+    if amount <= 0:
+        return jsonify({"error": "Top-up amount must be greater than 0"}), 400
+
+    wallet = _lead_wallet_for(worker.id)
+    wallet.balance = round(wallet.balance + amount, 2)
+    db.session.commit()
+
+    return jsonify({
+        "message": f"Successfully topped up ₹{amount:.2f} lead credits!",
+        "new_balance": round(wallet.balance, 2),
+    }), 200
+
+
+@api.get("/admin/lead-pricing")
+def get_admin_lead_pricing():
+    """Admin endpoint to list all category lead prices."""
+    result = _require_role("admin")
+    if isinstance(result, tuple):
+        return result
+
+    pricings = LeadPricing.query.order_by(LeadPricing.category.asc()).all()
+    return jsonify([p.to_dict() for p in pricings]), 200
+
+
+@api.post("/admin/lead-pricing")
+def update_admin_lead_pricing():
+    """Admin endpoint to create or update category lead pricing."""
+    result = _require_role("admin")
+    if isinstance(result, tuple):
+        return result
+
+    data = request.get_json(silent=True) or {}
+    category = data.get("category", "").strip()
+    if not category:
+        return jsonify({"error": "category is required"}), 400
+
+    lead_price = float(data.get("lead_price") or 15.0)
+    if lead_price < 0:
+        return jsonify({"error": "lead_price cannot be negative"}), 400
+
+    pricing = LeadPricing.query.filter_by(category=category).first()
+    if not pricing:
+        pricing = LeadPricing(category=category, lead_price=lead_price)
+        db.session.add(pricing)
+    else:
+        pricing.lead_price = lead_price
+        if "job_type" in data:
+            pricing.job_type = data["job_type"]
+        if "is_active" in data:
+            pricing.is_active = bool(data["is_active"])
+
+    db.session.commit()
+    return jsonify(pricing.to_dict()), 200
+
+
+# ---------------------------------------------------------------------------
+# Feature 2: Society Verified Community Status
+# ---------------------------------------------------------------------------
+
+@api.post("/admin/cooperatives/<int:coop_id>/verify")
+def verify_cooperative(coop_id):
+    """
+    Admin marks a labour society/cooperative as 'verified', 'pending', or 'suspended'.
+    Only authorized admin/federation users can update this status.
+    """
+    result = _require_role("admin")
+    if isinstance(result, tuple):
+        return result
+
+    coop = db.session.get(Cooperative, coop_id)
+    if not coop:
+        return jsonify({"error": "Cooperative not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    status = data.get("status", "verified").lower().strip()
+    if status not in ("verified", "pending", "suspended", "rejected"):
+        return jsonify({"error": "Invalid status. Must be 'verified', 'pending', or 'suspended'"}), 400
+
+    coop.verification_status = status
+    if status == "verified":
+        coop.verification_badge = "Society Verified Community"
+    elif status == "suspended":
+        coop.verification_badge = "Suspended Community"
+    else:
+        coop.verification_badge = "Verification Pending"
+
+    db.session.commit()
+    return jsonify({
+        "message": f"Cooperative '{coop.name}' status updated to {status}.",
+        "cooperative": coop.to_dict(),
+    }), 200
+
+
+# ---------------------------------------------------------------------------
+# Feature 3: Business & Organization Subscriptions
+# ---------------------------------------------------------------------------
+
+@api.get("/subscriptions/plans")
+def list_subscription_plans():
+    """Public listing of subscription plans for PG/Hostel, Office, and Local Industry."""
+    plans = SubscriptionPlan.query.filter_by(is_active=True).all()
+    plan_dicts = [p.to_dict() for p in plans]
+    return jsonify({"plans": plan_dicts, "count": len(plan_dicts)}), 200
+
+
+@api.post("/subscriptions")
+def create_subscription():
+    """
+    Subscribe an organization (PG/Hostel, Office, Local Industry) to NEED.
+    Server calculates verifiable pricing based on plan_id, records subscription and revenue.
+    """
+    user = _get_user_from_req()
+    if not user:
+        return jsonify({"error": "Please log in to subscribe"}), 401
+
+    data = request.get_json(silent=True) or {}
+    plan_id = data.get("plan_id")
+    org_name = (data.get("org_name") or f"{user.name}'s Organization").strip()
+    org_type = data.get("org_type")
+    billing_cycle = (data.get("billing_cycle") or "monthly").lower().strip()
+
+    plan = None
+    if plan_id:
+        plan = db.session.get(SubscriptionPlan, plan_id)
+    elif org_type and billing_cycle:
+        plan = SubscriptionPlan.query.filter_by(
+            org_type=org_type, billing_cycle=billing_cycle, is_active=True
+        ).first()
+
+    if not plan:
+        return jsonify({"error": "Selected subscription plan does not exist"}), 404
+
+    now = datetime.utcnow()
+    if plan.billing_cycle == "weekly":
+        expiry = now + timedelta(days=7)
+    elif plan.billing_cycle == "yearly":
+        expiry = now + timedelta(days=365)
+    else:  # monthly
+        expiry = now + timedelta(days=30)
+
+    sub = Subscription(
+        user_id=user.id,
+        plan_id=plan.id,
+        org_name=org_name,
+        org_type=plan.org_type,
+        billing_cycle=plan.billing_cycle,
+        price=plan.price,
+        start_date=now,
+        expiry_date=expiry,
+        status="active",
+        auto_renew=bool(data.get("auto_renew", True)),
+    )
+    db.session.add(sub)
+    db.session.flush()
+
+    revenue_record = RevenueRecord(
+        user_id=user.id,
+        source_type="SUBSCRIPTION",
+        amount=plan.price,
+        reference_id=f"SUB-{sub.id}",
+        org_type=plan.org_type,
+        description=f"{plan.name} ({plan.org_type} - {plan.billing_cycle.capitalize()}) for {org_name}",
+    )
+    db.session.add(revenue_record)
+    db.session.commit()
+
+    return jsonify(sub.to_dict()), 201
+
+
+@api.get("/subscriptions/my")
+def get_my_subscriptions():
+    """Return logged-in user/organization active subscription and history."""
+    user = _get_user_from_req()
+    if not user:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    subs = Subscription.query.filter_by(user_id=user.id).order_by(Subscription.created_at.desc()).all()
+    active_sub = next((s for s in subs if s.status == "active" and s.expiry_date > datetime.utcnow()), None)
+
+    return jsonify({
+        "active_subscription": active_sub.to_dict() if active_sub else None,
+        "subscriptions": [s.to_dict() for s in subs],
+    }), 200
+
+
+@api.post("/subscriptions/<int:sub_id>/cancel")
+def cancel_subscription(sub_id):
+    """Cancel subscription auto-renewal."""
+    user = _get_user_from_req()
+    if not user:
+        return jsonify({"error": "Not authenticated"}), 401
+
+    sub = db.session.get(Subscription, sub_id)
+    if not sub:
+        return jsonify({"error": "Subscription not found"}), 404
+
+    if user.role != "admin" and sub.user_id != user.id:
+        return jsonify({"error": "Forbidden"}), 403
+
+    data = request.get_json(silent=True) or {}
+    sub.status = "cancelled"
+    sub.auto_renew = False
+    sub.cancellation_reason = data.get("reason", "Cancelled by subscriber")
+    sub.cancelled_at = datetime.utcnow()
+    db.session.commit()
+
+    return jsonify({
+        "message": "Subscription cancelled successfully.",
+        "subscription": sub.to_dict(),
+    }), 200
+
+
+@api.get("/admin/subscriptions")
+def get_admin_subscriptions():
+    """Admin view of all organization subscriptions and revenue."""
+    result = _require_role("admin")
+    if isinstance(result, tuple):
+        return result
+
+    subs = Subscription.query.order_by(Subscription.created_at.desc()).all()
+    total_rev = sum(s.price for s in subs if s.status != "refunded")
+
+    return jsonify({
+        "subscriptions": [s.to_dict() for s in subs],
+        "total_count": len(subs),
+        "total_revenue": round(total_rev, 2),
+    }), 200
+
+
+@api.post("/admin/subscriptions/plans/<int:plan_id>")
+def update_subscription_plan(plan_id):
+    """Admin updates subscription plan pricing or status."""
+    result = _require_role("admin")
+    if isinstance(result, tuple):
+        return result
+
+    plan = db.session.get(SubscriptionPlan, plan_id)
+    if not plan:
+        return jsonify({"error": "Subscription plan not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    if "price" in data:
+        plan.price = max(0.0, float(data["price"]))
+    if "is_active" in data:
+        plan.is_active = bool(data["is_active"])
+    if "name" in data:
+        plan.name = data["name"]
+
+    db.session.commit()
+    return jsonify(plan.to_dict()), 200
+
+
+# ---------------------------------------------------------------------------
+# Feature 5: Admin / Federation Revenue Command Center
+# ---------------------------------------------------------------------------
+
+@api.get("/admin/revenue")
+def get_admin_revenue_dashboard():
+    """
+    Comprehensive platform revenue intelligence dashboard:
+    1. Total Revenue
+    2. Job Lead Revenue
+    3. Subscription Revenue
+    4. Convenience Fee Revenue
+    5. Customer Protection Fee Revenue
+    6. Revenue by Date
+    7. Revenue by Service Category
+    8. Revenue by Organization Type
+    9. Active Subscriptions
+    10. Lead Purchases
+    11. Recent Transactions Audit Trail
+    """
+    result = _require_role("admin")
+    if isinstance(result, tuple):
+        return result
+
+    records = RevenueRecord.query.order_by(RevenueRecord.created_at.desc()).all()
+
+    total_rev = 0.0
+    lead_rev = 0.0
+    sub_rev = 0.0
+    conv_rev = 0.0
+    prot_rev = 0.0
+    plat_rev = 0.0
+
+    service_rev_map = {}
+    org_rev_map = {}
+    date_rev_map = {}
+
+    for r in records:
+        amt = r.amount or 0.0
+        total_rev += amt
+
+        if r.source_type == "JOB_LEAD":
+            lead_rev += amt
+        elif r.source_type == "SUBSCRIPTION":
+            sub_rev += amt
+        elif r.source_type == "CONVENIENCE_FEE":
+            conv_rev += amt
+        elif r.source_type == "PROTECTION_FEE":
+            prot_rev += amt
+        elif r.source_type == "PLATFORM_FEE":
+            plat_rev += amt
+
+        if r.service_category:
+            service_rev_map[r.service_category] = round(service_rev_map.get(r.service_category, 0.0) + amt, 2)
+
+        if r.org_type:
+            org_rev_map[r.org_type] = round(org_rev_map.get(r.org_type, 0.0) + amt, 2)
+
+        if r.created_at:
+            d_str = r.created_at.strftime("%Y-%m-%d")
+            date_rev_map[d_str] = round(date_rev_map.get(d_str, 0.0) + amt, 2)
+
+    now = datetime.utcnow()
+    active_subs = Subscription.query.filter(
+        Subscription.status == "active", Subscription.expiry_date > now
+    ).order_by(Subscription.created_at.desc()).all()
+
+    recent_leads = WorkerLeadPurchase.query.order_by(WorkerLeadPurchase.unlocked_at.desc()).limit(20).all()
+    lead_pricings = LeadPricing.query.order_by(LeadPricing.category.asc()).all()
+    sub_plans = SubscriptionPlan.query.order_by(SubscriptionPlan.org_type.asc(), SubscriptionPlan.price.asc()).all()
+
+    revenue_by_date = [
+        {"date": d, "amount": amt} for d, amt in sorted(date_rev_map.items())[-14:]
+    ]
+
+    revenue_by_service = [
+        {"category": cat, "amount": amt} for cat, amt in sorted(service_rev_map.items(), key=lambda x: -x[1])
+    ]
+
+    revenue_by_org = [
+        {"org_type": org, "amount": amt} for org, amt in sorted(org_rev_map.items(), key=lambda x: -x[1])
+    ]
+
+    return jsonify({
+        "summary": {
+            "total_revenue": round(total_rev, 2),
+            "job_lead_revenue": round(lead_rev, 2),
+            "subscription_revenue": round(sub_rev, 2),
+            "convenience_fee_revenue": round(conv_rev, 2),
+            "protection_fee_revenue": round(prot_rev, 2),
+            "platform_fee_revenue": round(plat_rev, 2),
+            "active_subscriptions_count": len(active_subs),
+            "total_lead_purchases_count": len(recent_leads),
+        },
+        "revenue_by_date": revenue_by_date,
+        "revenue_by_service": revenue_by_service,
+        "revenue_by_org_type": revenue_by_org,
+        "active_subscriptions": [s.to_dict() for s in active_subs],
+        "lead_purchases": [p.to_dict() for p in recent_leads],
+        "recent_transactions": [r.to_dict() for r in records[:35]],
+        "lead_pricings": [p.to_dict() for p in lead_pricings],
+        "subscription_plans": [p.to_dict() for p in sub_plans],
+    }), 200
+
 
 

@@ -81,6 +81,13 @@ def create_app():
             ("reviews", "is_disputed BOOLEAN DEFAULT 0"),
             ("support_tickets", "booking_id INTEGER"),
             ("support_tickets", "admin_response TEXT"),
+            ("bookings", "base_service_amount FLOAT DEFAULT 0.0"),
+            ("bookings", "convenience_fee FLOAT DEFAULT 20.0"),
+            ("bookings", "protection_fee FLOAT DEFAULT 0.0"),
+            ("bookings", "has_protection BOOLEAN DEFAULT 0"),
+            ("payments", "convenience_fee FLOAT DEFAULT 0.0"),
+            ("payments", "protection_fee FLOAT DEFAULT 0.0"),
+            ("cooperatives", "verification_badge TEXT DEFAULT 'Society Verified Community'"),
         ]
 
         for table, col_def in alter_statements:

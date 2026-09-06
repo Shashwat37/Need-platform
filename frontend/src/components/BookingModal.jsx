@@ -58,6 +58,8 @@ export default function BookingModal({
   const [address, setAddress]                     = useState(user?.address || '')
   const [description, setDescription]             = useState('')
   const [isEmergency, setIsEmergency]             = useState(false)
+  const [includeProtection, setIncludeProtection] = useState(false)
+  const [showProtectionTooltip, setShowProtectionTooltip] = useState(false)
 
   const [busy, setBusy]     = useState(false)
   const [error, setError]   = useState('')
@@ -83,6 +85,8 @@ export default function BookingModal({
     if (isOpen) {
       setError('')
       setSuccess(false)
+      setIncludeProtection(false)
+      setShowProtectionTooltip(false)
       if (!address && user?.address) setAddress(user.address)
     }
     return () => {
@@ -100,10 +104,15 @@ export default function BookingModal({
 
   const basePrice = Number(activeService?.starting_price || activeService?.base_price || 299)
   const emergencySurcharge = isEmergency ? 100 : 0
-  const totalPrice = basePrice + emergencySurcharge
-  const workerShare = Math.round(totalPrice * 0.85)
-  const welfareShare = Math.round(totalPrice * 0.10)
-  const coopOpsShare = totalPrice - workerShare - welfareShare
+  const baseServiceTotal = basePrice + emergencySurcharge
+  const convenienceFee = 20
+  const rawProtectionFee = Math.round(baseServiceTotal * 0.05)
+  const protectionFee = includeProtection ? Math.min(Math.max(rawProtectionFee, 10), 50) : 0
+  const finalPayableTotal = baseServiceTotal + convenienceFee + protectionFee
+
+  const workerShare = Math.round(baseServiceTotal * 0.85)
+  const welfareShare = Math.round(baseServiceTotal * 0.10)
+  const coopOpsShare = baseServiceTotal - workerShare - welfareShare
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -136,6 +145,8 @@ export default function BookingModal({
         address: address.trim(),
         notes: description.trim(),
         is_emergency: isEmergency,
+        include_protection: includeProtection,
+        has_protection: includeProtection,
       }
 
       const res = await createBooking(payload)
@@ -200,7 +211,7 @@ export default function BookingModal({
           <div className="text-right">
             <span className="text-[10px] font-mono text-on-surface-variant uppercase">Fixed Rate</span>
             <div className="font-metric-val text-xl text-primary font-extrabold leading-tight">
-              ₹{totalPrice}
+              ₹{finalPayableTotal}
             </div>
           </div>
         </div>
@@ -398,25 +409,129 @@ export default function BookingModal({
               </div>
             </label>
 
-            {/* Live Fair Split Accounting Meter */}
-            <div className="p-3 rounded-xl bg-surface-container-low border border-outline-variant/40 space-y-1.5">
-              <div className="flex items-center justify-between text-xs">
+            {/* Platform Fees & Optional Customer Protection Plan */}
+            <div className="space-y-2 pt-1">
+              {/* Compulsory Convenience Fee Notice */}
+              <div className="p-3 rounded-xl bg-surface-container-low border border-outline-variant/50 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                    <Sparkles size={14} />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-on-surface block">
+                      Platform Convenience Fee (Compulsory)
+                    </span>
+                    <span className="text-[10px] text-on-surface-variant block">
+                      Covers digital cooperative dispatch, escrow verification &amp; 24/7 ops
+                    </span>
+                  </div>
+                </div>
+                <span className="font-mono text-xs font-bold text-primary shrink-0">
+                  ₹{convenienceFee}
+                </span>
+              </div>
+
+              {/* Optional Customer Protection Plan */}
+              <label className="flex items-start gap-2.5 p-3 rounded-xl bg-primary-fixed/20 border border-primary/30 cursor-pointer transition hover:bg-primary-fixed/30">
+                <input
+                  type="checkbox"
+                  checked={includeProtection}
+                  onChange={(e) => setIncludeProtection(e.target.checked)}
+                  className="rounded border-outline text-primary focus:ring-primary w-4 h-4 mt-0.5"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <ShieldCheck size={14} className="text-primary shrink-0" />
+                      <span className="font-bold text-xs text-on-surface">
+                        Add Customer Protection Plan
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          setShowProtectionTooltip(!showProtectionTooltip)
+                        }}
+                        className="text-on-surface-variant hover:text-primary transition p-0.5"
+                        title="Learn more about Customer Protection Plan"
+                      >
+                        <HelpCircle size={13} />
+                      </button>
+                    </div>
+                    <span className="font-mono text-xs font-bold text-primary">
+                      +₹{Math.min(Math.max(rawProtectionFee, 10), 50)}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-on-surface-variant block mt-0.5">
+                    Covers accidental property damage, workmanship guarantee &amp; prioritized guild re-service (max ₹50).
+                  </span>
+                  {showProtectionTooltip && (
+                    <div className="mt-2 p-2.5 rounded-lg bg-surface-container-highest text-[11px] text-on-surface-variant border border-outline-variant/60 animate-fade-in space-y-1">
+                      <div className="font-bold text-primary flex items-center gap-1">
+                        <ShieldCheck size={13} />
+                        NEED Peace-of-Mind Warranty:
+                      </div>
+                      <ul className="list-disc pl-4 space-y-0.5 text-[10px]">
+                        <li>Up to ₹5,000 accidental damage repair coverage on qualifying jobs.</li>
+                        <li>7-day post-service free callback inspection if unsatisfied.</li>
+                        <li>Direct priority dispute arbitration by Noida Cooperative Federation.</li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </label>
+            </div>
+
+            {/* Live Transparent Bill Summary */}
+            <div className="p-3.5 rounded-xl bg-surface-container-low border border-outline-variant/50 space-y-2">
+              <div className="flex items-center justify-between text-xs pb-1.5 border-b border-outline-variant/40">
                 <span className="font-label-caps text-[10px] uppercase font-bold text-on-surface-variant">
-                  Democratic Split Breakdown
+                  Itemized Fare Breakdown
                 </span>
                 <span className="font-bold text-primary text-xs">
-                  ₹{totalPrice} Total
+                  ₹{finalPayableTotal} Total
                 </span>
               </div>
-              <div className="w-full h-2 rounded-full overflow-hidden bg-surface-container flex">
-                <div className="h-full bg-primary" style={{ width: '85%' }} />
-                <div className="h-full bg-secondary-container" style={{ width: '10%' }} />
-                <div className="h-full bg-outline-variant" style={{ width: '5%' }} />
+              <div className="space-y-1 text-xs text-on-surface-variant">
+                <div className="flex justify-between">
+                  <span>Base Service Fare:</span>
+                  <span className="font-mono text-on-surface font-medium">₹{basePrice}</span>
+                </div>
+                {isEmergency && (
+                  <div className="flex justify-between text-secondary font-medium">
+                    <span>Emergency Rush Surcharge:</span>
+                    <span className="font-mono">+₹100</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span>Platform Convenience Fee:</span>
+                  <span className="font-mono text-on-surface font-medium">+₹{convenienceFee}</span>
+                </div>
+                {includeProtection && (
+                  <div className="flex justify-between text-primary font-medium">
+                    <span>Customer Protection Fee:</span>
+                    <span className="font-mono">+₹{protectionFee}</span>
+                  </div>
+                )}
+                <div className="flex justify-between pt-1.5 border-t border-outline-variant/40 font-bold text-on-surface text-xs">
+                  <span>Total Payable:</span>
+                  <span className="font-mono font-black text-primary text-sm">₹{finalPayableTotal}</span>
+                </div>
               </div>
-              <div className="flex justify-between text-[10px] font-medium text-on-surface-variant">
-                <span className="text-primary font-semibold">₹{workerShare} to Worker (85%)</span>
-                <span className="text-secondary font-semibold">₹{welfareShare} Welfare (10%)</span>
-                <span>₹{coopOpsShare} Ops (5%)</span>
+
+              {/* Cooperative Democratic Split meter */}
+              <div className="pt-2 border-t border-outline-variant/30 space-y-1">
+                <div className="flex justify-between text-[10px] text-on-surface-variant">
+                  <span className="font-bold text-primary">Artisan Share: ₹{workerShare} (85%)</span>
+                  <span className="font-bold text-secondary">Welfare: ₹{welfareShare} (10%)</span>
+                  <span>Guild Ops: ₹{coopOpsShare} (5%)</span>
+                </div>
+                <div className="w-full h-1.5 rounded-full overflow-hidden bg-surface-container flex">
+                  <div className="h-full bg-primary" style={{ width: '85%' }} />
+                  <div className="h-full bg-secondary-container" style={{ width: '10%' }} />
+                  <div className="h-full bg-outline-variant" style={{ width: '5%' }} />
+                </div>
               </div>
             </div>
 
@@ -434,7 +549,7 @@ export default function BookingModal({
               ) : (
                 <>
                   <span className="material-symbols-outlined text-[16px]">bolt</span>
-                  <span>Confirm Cooperative Booking (₹{totalPrice})</span>
+                  <span>Confirm Cooperative Booking (₹{finalPayableTotal})</span>
                 </>
               )}
             </button>

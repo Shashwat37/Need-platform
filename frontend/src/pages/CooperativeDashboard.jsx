@@ -36,7 +36,9 @@ import {
   Users,
   Wrench,
   X,
+  Zap,
 } from 'lucide-react'
+import AIDemandForecastCard from '../components/AIDemandForecastCard'
 import {
   cooperativeAddWorker,
   cooperativeAssignWorker,
@@ -155,7 +157,7 @@ export default function CooperativeDashboard() {
 
   if (loading) {
     return (
-      <div className="w-full min-h-screen bg-surface py-10 px-4 max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto space-y-6">
+      <div className="container-page py-10 space-y-6">
         <div className="animate-pulse space-y-4">
           <div className="h-44 bg-surface-container-high rounded-3xl w-full" />
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -212,7 +214,7 @@ export default function CooperativeDashboard() {
         <div className="pointer-events-none absolute -right-16 -top-24 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
         <div className="pointer-events-none absolute right-1/3 -bottom-20 h-64 w-64 rounded-full bg-secondary-container/10 blur-2xl" />
 
-        <div className="relative z-10 max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto flex flex-col gap-6">
+        <div className="relative z-10 container-page flex flex-col gap-6">
           {/* Upper Header Meta & Credential Bar */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="flex items-start gap-4">
@@ -221,9 +223,29 @@ export default function CooperativeDashboard() {
               </div>
               <div className="flex flex-col">
                 <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <span className="bg-primary text-white font-label-caps text-[11px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                    State Affiliated Society
-                  </span>
+                  {/* Society Verified Community Badge */}
+                  <div className="relative group/badge">
+                    <span className={`font-label-caps text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider flex items-center gap-1.5 shadow-sm cursor-help ${
+                      cooperative?.verification_status === 'suspended'
+                        ? 'bg-red-600 text-white'
+                        : cooperative?.verification_status === 'pending'
+                        ? 'bg-amber-600 text-white'
+                        : 'bg-emerald-600 text-white'
+                    }`}>
+                      <ShieldCheck size={14} className="text-emerald-100" />
+                      <span>{cooperative?.verification_status === 'suspended' ? 'Suspended Society' : cooperative?.verification_status === 'pending' ? 'Verification In Review' : 'Society Verified Community'}</span>
+                    </span>
+                    <div className="absolute left-0 top-full mt-2 hidden group-hover/badge:block z-30 w-72 p-3 rounded-xl bg-slate-900 text-white text-xs shadow-2xl border border-slate-700 animate-fade-in pointer-events-none">
+                      <div className="font-bold text-emerald-400 flex items-center gap-1 mb-1">
+                        <ShieldCheck size={14} />
+                        NEED Verified Community Status
+                      </div>
+                      <p className="text-[11px] text-slate-300 leading-relaxed">
+                        This community has been verified through the NEED cooperative network under the Multi-State Co-operative Societies Act 2002. All artisans are background-verified and trade-certified.
+                      </p>
+                    </div>
+                  </div>
+
                   <span className="bg-surface-container-lowest text-on-surface-variant font-label-caps text-[11px] font-semibold px-2.5 py-0.5 rounded-full shadow-sm border border-surface-container-high">
                     Autonomous Assembly
                   </span>
@@ -368,7 +390,36 @@ export default function CooperativeDashboard() {
       </section>
 
       {/* ── Main Workstation Container ───────────────────────────────────── */}
-      <div className="max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col gap-8">
+      <div className="container-page py-8 flex flex-col gap-8">
+
+        {/* 🤖 Real-Time AI Demand Forecasting Alert Banner */}
+        <div className="bg-gradient-to-r from-emerald-900 via-primary to-emerald-800 text-white rounded-2xl p-4 sm:p-5 shadow-lg border border-emerald-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3.5">
+            <div className="w-11 h-11 rounded-xl bg-white/10 flex items-center justify-center shrink-0 border border-white/20">
+              <span className="material-symbols-outlined text-white text-[24px]">psychology</span>
+            </div>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 font-mono text-[10px] font-bold uppercase tracking-wider border border-emerald-400/30">
+                  🤖 AI Cooperative Dispatch Assistant
+                </span>
+                <span className="text-xs font-semibold text-emerald-100/90">
+                  Live ML Random Forest &amp; Weather-Driven Worker Reallocation
+                </span>
+              </div>
+              <p className="text-sm font-bold text-white mt-1">
+                Monsoon Rain Surge detected: +120 additional technicians needed in Rohini &amp; Dwarka clusters.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setActiveTab('forecasting')}
+            className="px-4 py-2.5 rounded-xl bg-white text-emerald-950 hover:bg-emerald-50 font-bold text-xs shadow-md transition flex items-center gap-1.5 shrink-0"
+          >
+            <span>{activeTab === 'forecasting' ? 'Forecasting Active' : 'View AI Dispatch Recommendations'}</span>
+            <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
+          </button>
+        </div>
 
         {/* ── Tabs Navigation ────────────────────────────────────────────── */}
         <div className="flex items-center gap-2 border-b border-surface-container-high overflow-x-auto pb-px">
@@ -418,6 +469,21 @@ export default function CooperativeDashboard() {
           >
             <AlertTriangle size={16} />
             Dispute Tribunal ({disputes.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab('forecasting')}
+            className={`flex items-center gap-2 px-5 py-3 text-xs sm:text-sm font-bold border-b-2 transition-all whitespace-nowrap ${
+              activeTab === 'forecasting'
+                ? 'border-primary text-primary bg-emerald-500/10 rounded-t-xl shadow-xs'
+                : 'border-transparent text-emerald-800 hover:text-emerald-950 font-extrabold bg-emerald-500/5 rounded-t-xl'
+            }`}
+          >
+            <Zap size={16} className="text-emerald-700" />
+            <span>AI Demand &amp; Dispatch Forecast</span>
+            <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-extrabold text-white animate-pulse">
+              AI ML
+            </span>
           </button>
         </div>
 
@@ -938,6 +1004,13 @@ export default function CooperativeDashboard() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── TAB 5: AI DEMAND & DISPATCH FORECAST ───────────────────────── */}
+        {activeTab === 'forecasting' && (
+          <div className="space-y-6">
+            <AIDemandForecastCard defaultLocation="Noida" />
           </div>
         )}
 

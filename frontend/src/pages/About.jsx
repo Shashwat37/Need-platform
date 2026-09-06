@@ -48,7 +48,7 @@ export default function About() {
         <div className="pointer-events-none absolute -right-16 -top-24 h-96 w-96 rounded-full bg-primary/5 blur-3xl" />
         <div className="pointer-events-none absolute right-1/3 -bottom-20 h-64 w-64 rounded-full bg-secondary-container/10 blur-2xl" />
 
-        <div className="relative z-10 max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto text-center space-y-4">
+        <div className="relative z-10 container-page text-center space-y-4">
           <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 border border-primary/20 px-3.5 py-1 text-xs font-bold text-primary mx-auto">
             <Scale size={14} />
             <span>DEMOCRATIC COOPERATIVE CHARTER • MSCS ACT 2002</span>
@@ -66,7 +66,7 @@ export default function About() {
       </section>
 
       {/* ── Main Philosophy & Comparison ─────────────────────────────────── */}
-      <div className="max-w-[1280px] 2xl:max-w-[1340px] 3xl:max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-12">
+      <div className="container-page py-12 space-y-12">
 
         <div className="grid gap-12 lg:grid-cols-12 items-start">
           {/* Narrative Column (6 cols) */}
