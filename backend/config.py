@@ -21,7 +21,10 @@ class Config:
     # --- Flask & Security --------------------------------------------------
     SECRET_KEY = os.getenv("SECRET_KEY", "need-cooperative-master-secret-2026")
     DEFAULT_DB_PATH = os.path.join(BASE_DIR, "instance", "database.db")
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", f"sqlite:///{DEFAULT_DB_PATH}")
+    _raw_db_url = os.getenv("DATABASE_URL", f"sqlite:///{DEFAULT_DB_PATH}")
+    if _raw_db_url and _raw_db_url.startswith("postgres://"):
+        _raw_db_url = _raw_db_url.replace("postgres://", "postgresql://", 1)
+    SQLALCHEMY_DATABASE_URI = _raw_db_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*")
 

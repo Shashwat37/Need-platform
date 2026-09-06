@@ -44,58 +44,59 @@ def create_app():
         db.create_all()
 
         # Add optional columns dynamically if SQLite database already exists
-        alter_statements = [
-            ("worker_profiles", "verification_notes TEXT"),
-            ("worker_profiles", "cooperative_id INTEGER"),
-            ("worker_profiles", "identity_verified BOOLEAN DEFAULT 1"),
-            ("worker_profiles", "skill_verified BOOLEAN DEFAULT 1"),
-            ("worker_profiles", "upi_id TEXT DEFAULT 'thakuraayush@fam'"),
-            ("worker_profiles", "bank_account_number TEXT DEFAULT '919876543210'"),
-            ("worker_profiles", "bank_ifsc TEXT DEFAULT 'PUNB0123400'"),
-            ("worker_profiles", "bank_name TEXT DEFAULT 'Punjab National Bank'"),
-            ("worker_profiles", "account_holder_name TEXT"),
-            ("users", "is_verified BOOLEAN DEFAULT 1"),
-            ("users", "trust_badge TEXT DEFAULT 'Verified Member'"),
-            ("users", "is_mobile_verified BOOLEAN DEFAULT 1"),
-            ("users", "is_email_verified BOOLEAN DEFAULT 1"),
-            ("users", "aadhaar_number TEXT"),
-            ("users", "is_aadhaar_verified BOOLEAN DEFAULT 0"),
-            ("bookings", "cooperative_id INTEGER"),
-            ("bookings", "accepted_at DATETIME"),
-            ("bookings", "assigned_at DATETIME"),
-            ("bookings", "on_the_way_at DATETIME"),
-            ("bookings", "arrived_at DATETIME"),
-            ("bookings", "in_progress_at DATETIME"),
-            ("bookings", "completed_at DATETIME"),
-            ("bookings", "confirmed_at DATETIME"),
-            ("bookings", "cancelled_at DATETIME"),
-            ("bookings", "cancellation_reason TEXT"),
-            ("bookings", "cancelled_by TEXT"),
-            ("payments", "platform_fee FLOAT DEFAULT 0.0"),
-            ("payments", "cooperative_share FLOAT DEFAULT 0.0"),
-            ("payments", "worker_earnings FLOAT DEFAULT 0.0"),
-            ("reviews", "quality_score INTEGER DEFAULT 5"),
-            ("reviews", "professionalism_score INTEGER DEFAULT 5"),
-            ("reviews", "timeliness_score INTEGER DEFAULT 5"),
-            ("reviews", "review_type TEXT DEFAULT 'customer_to_worker'"),
-            ("reviews", "is_disputed BOOLEAN DEFAULT 0"),
-            ("support_tickets", "booking_id INTEGER"),
-            ("support_tickets", "admin_response TEXT"),
-            ("bookings", "base_service_amount FLOAT DEFAULT 0.0"),
-            ("bookings", "convenience_fee FLOAT DEFAULT 20.0"),
-            ("bookings", "protection_fee FLOAT DEFAULT 0.0"),
-            ("bookings", "has_protection BOOLEAN DEFAULT 0"),
-            ("payments", "convenience_fee FLOAT DEFAULT 0.0"),
-            ("payments", "protection_fee FLOAT DEFAULT 0.0"),
-            ("cooperatives", "verification_badge TEXT DEFAULT 'Society Verified Community'"),
-        ]
+        if db.engine.dialect.name == "sqlite":
+            alter_statements = [
+                ("worker_profiles", "verification_notes TEXT"),
+                ("worker_profiles", "cooperative_id INTEGER"),
+                ("worker_profiles", "identity_verified BOOLEAN DEFAULT 1"),
+                ("worker_profiles", "skill_verified BOOLEAN DEFAULT 1"),
+                ("worker_profiles", "upi_id TEXT DEFAULT 'thakuraayush@fam'"),
+                ("worker_profiles", "bank_account_number TEXT DEFAULT '919876543210'"),
+                ("worker_profiles", "bank_ifsc TEXT DEFAULT 'PUNB0123400'"),
+                ("worker_profiles", "bank_name TEXT DEFAULT 'Punjab National Bank'"),
+                ("worker_profiles", "account_holder_name TEXT"),
+                ("users", "is_verified BOOLEAN DEFAULT 1"),
+                ("users", "trust_badge TEXT DEFAULT 'Verified Member'"),
+                ("users", "is_mobile_verified BOOLEAN DEFAULT 1"),
+                ("users", "is_email_verified BOOLEAN DEFAULT 1"),
+                ("users", "aadhaar_number TEXT"),
+                ("users", "is_aadhaar_verified BOOLEAN DEFAULT 0"),
+                ("bookings", "cooperative_id INTEGER"),
+                ("bookings", "accepted_at DATETIME"),
+                ("bookings", "assigned_at DATETIME"),
+                ("bookings", "on_the_way_at DATETIME"),
+                ("bookings", "arrived_at DATETIME"),
+                ("bookings", "in_progress_at DATETIME"),
+                ("bookings", "completed_at DATETIME"),
+                ("bookings", "confirmed_at DATETIME"),
+                ("bookings", "cancelled_at DATETIME"),
+                ("bookings", "cancellation_reason TEXT"),
+                ("bookings", "cancelled_by TEXT"),
+                ("payments", "platform_fee FLOAT DEFAULT 0.0"),
+                ("payments", "cooperative_share FLOAT DEFAULT 0.0"),
+                ("payments", "worker_earnings FLOAT DEFAULT 0.0"),
+                ("reviews", "quality_score INTEGER DEFAULT 5"),
+                ("reviews", "professionalism_score INTEGER DEFAULT 5"),
+                ("reviews", "timeliness_score INTEGER DEFAULT 5"),
+                ("reviews", "review_type TEXT DEFAULT 'customer_to_worker'"),
+                ("reviews", "is_disputed BOOLEAN DEFAULT 0"),
+                ("support_tickets", "booking_id INTEGER"),
+                ("support_tickets", "admin_response TEXT"),
+                ("bookings", "base_service_amount FLOAT DEFAULT 0.0"),
+                ("bookings", "convenience_fee FLOAT DEFAULT 20.0"),
+                ("bookings", "protection_fee FLOAT DEFAULT 0.0"),
+                ("bookings", "has_protection BOOLEAN DEFAULT 0"),
+                ("payments", "convenience_fee FLOAT DEFAULT 0.0"),
+                ("payments", "protection_fee FLOAT DEFAULT 0.0"),
+                ("cooperatives", "verification_badge TEXT DEFAULT 'Society Verified Community'"),
+            ]
 
-        for table, col_def in alter_statements:
-            try:
-                db.session.execute(db.text(f"ALTER TABLE {table} ADD COLUMN {col_def};"))
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
+            for table, col_def in alter_statements:
+                try:
+                    db.session.execute(db.text(f"ALTER TABLE {table} ADD COLUMN {col_def};"))
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
 
     # --- Routes ------------------------------------------------------------
     app.register_blueprint(api, url_prefix="/api")

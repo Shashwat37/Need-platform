@@ -263,8 +263,8 @@ class Booking(db.Model):
     cooperative_id = db.Column(db.Integer, db.ForeignKey("cooperatives.id"))
     service_id = db.Column(db.Integer, db.ForeignKey("services.id"), nullable=False)
 
-    scheduled_date = db.Column(db.String(20))
-    scheduled_time = db.Column(db.String(20))
+    scheduled_date = db.Column(db.String(30))
+    scheduled_time = db.Column(db.String(60))
     address = db.Column(db.String(255))
     description = db.Column(db.Text)
     image_url = db.Column(db.String(255))
