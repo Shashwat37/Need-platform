@@ -13,7 +13,7 @@ if not exist venv\Scripts\activate.bat (
 )
 
 call venv\Scripts\activate.bat
-echo Starting the ShramSetu backend on http://localhost:5000
+echo Starting the NEED backend on http://localhost:5000
 echo Press Ctrl+C to stop it.
 echo.
 python app.py

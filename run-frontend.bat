@@ -12,7 +12,7 @@ if not exist node_modules (
   exit /b 1
 )
 
-echo Starting the ShramSetu frontend on http://localhost:5173
+echo Starting the NEED frontend on http://localhost:5173
 echo Press Ctrl+C to stop it.
 echo.
 call npm run dev

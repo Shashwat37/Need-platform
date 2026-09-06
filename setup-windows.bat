@@ -1,12 +1,12 @@
 @echo off
 REM ============================================================
-REM  ShramSetu — one-time setup for Windows.
+REM  NEED Platform — one-time setup for Windows.
 REM  Double-click this once. It installs everything and fills
 REM  the database with demo data. Needs internet.
 REM ============================================================
 
 echo.
-echo ===== ShramSetu setup (this takes a few minutes) =====
+echo ===== NEED Platform setup (this takes a few minutes) =====
 echo.
 
 REM %~dp0 is the folder this .bat file lives in, so the script
