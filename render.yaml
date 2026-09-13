@@ -32,10 +32,6 @@ services:
       - key: CORS_ORIGINS
         value: https://neend-platform.vercel.app
 
-      # SQLite path — Render free tier persists the disk between restarts
-      - key: DATABASE_URL
-        value: sqlite:///instance/database.db
-
       # OTP is in demo mode — no real SMS gateway needed
       - key: OTP_DEMO_MODE
         value: "true"
