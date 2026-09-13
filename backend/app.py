@@ -41,6 +41,10 @@ def create_app():
     # --- Database ----------------------------------------------------------
     db.init_app(app)
     with app.app_context():
+        # Ensure the instance/ folder exists before SQLite tries to open the
+        # database file inside it (critical on Render and other fresh envs).
+        instance_dir = os.path.join(BASE_DIR, "instance")
+        os.makedirs(instance_dir, exist_ok=True)
         db.create_all()
 
         # Add optional columns dynamically if SQLite database already exists
