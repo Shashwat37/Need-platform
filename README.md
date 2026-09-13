@@ -440,8 +440,8 @@ Things a real deployment would need (honestly listed as *not built*):
 
 | Service | Platform | URL |
 |---------|----------|-----|
-| Frontend | Vercel | *(will update after deploy)* |
-| Backend API | Render | *(will update after deploy)* |
+| Frontend | Vercel | [need-platform-five.vercel.app](https://need-platform-five.vercel.app) |
+| Backend API | Render | [neend-backend.onrender.com](https://neend-backend.onrender.com) |
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for the full step-by-step guide to deploy the backend on Render and the frontend on Vercel (both free tier).
 ## 🤝 Contributing
@@ -476,4 +476,5 @@ This project is released under the [MIT License](LICENSE).
 ---
 
 <p align="center">Built with ❤️ as a college project · No real money involved · Demo use only</p>
+
 

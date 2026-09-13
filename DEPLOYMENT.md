@@ -1,4 +1,4 @@
-﻿# NEED Platform — Deployment Guide
+# NEED Platform — Deployment Guide
 
 This project has two parts that are deployed separately:
 
@@ -36,17 +36,15 @@ Both platforms have a **free tier** that is sufficient for a demo/prototype.
    |-----|-------|
    | `SECRET_KEY` | (click Generate) |
    | `FLASK_ENV` | `production` |
-   | `CORS_ORIGINS` | `https://neend-platform.vercel.app` *(update after Step 2)* |
-   | `DATABASE_URL` | `sqlite:///instance/database.db` |
+   | `CORS_ORIGINS` | `https://need-platform-five.vercel.app` |
+   | `AUTO_SEED` | `true` *(auto-seeds demo data on first boot)* |
    | `OTP_DEMO_MODE` | `true` |
    | `DEFAULT_DEMO_OTP` | `123456` |
-6. **Create Web Service** → wait ~3 minutes for the first build
+   *(Leave `DATABASE_URL` empty to use default persistent SQLite)*
+6. **Create Web Service** → wait ~2-3 minutes for the first build
 
-### Seed the demo database
-Once deployed, open the Render **Shell** tab and run:
-```bash
-python seed.py
-```
+### Demo database seeding
+With `AUTO_SEED=true`, the platform automatically initializes and seeds all demo data (workers, services, categories, users) upon initial startup. No manual shell commands are needed!
 
 ### Verify backend is live
 Visit `https://<your-render-url>/api/health` — you should see:
@@ -68,7 +66,7 @@ Visit `https://<your-render-url>/api/health` — you should see:
    | `VITE_API_URL` | `https://<your-render-url>/api` |
 6. Click **Deploy** → wait ~1 minute
 
-Copy the Vercel URL (e.g. `https://neend-platform.vercel.app`).
+Copy the Vercel URL (e.g. `https://need-platform-five.vercel.app`).
 
 ---
 
@@ -77,7 +75,7 @@ Copy the Vercel URL (e.g. `https://neend-platform.vercel.app`).
 1. Go back to **Render → neend-backend → Environment**
 2. Update `CORS_ORIGINS` to your exact Vercel URL:
    ```
-   https://neend-platform.vercel.app
+   https://need-platform-five.vercel.app
    ```
 3. Click **Save Changes** — Render redeploys automatically
 
@@ -120,3 +118,4 @@ npm run dev
 ```
 
 The `.env` files (not in git) still control local settings.
+

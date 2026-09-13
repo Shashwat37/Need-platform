@@ -28,9 +28,8 @@ services:
         value: production
 
       # Update this to your Vercel frontend URL after deploying the frontend
-      # Example: https://neend-platform.vercel.app
       - key: CORS_ORIGINS
-        value: https://neend-platform.vercel.app
+        value: https://need-platform-five.vercel.app
 
       # OTP is in demo mode — no real SMS gateway needed
       - key: OTP_DEMO_MODE
