@@ -37,3 +37,8 @@ services:
         value: "true"
       - key: DEFAULT_DEMO_OTP
         value: "123456"
+
+      # Auto-seed demo data on first boot if the database is empty
+      # Set to "false" after seeding if you want to preserve user data
+      - key: AUTO_SEED
+        value: "true"

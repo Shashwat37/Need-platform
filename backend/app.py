@@ -102,6 +102,20 @@ def create_app():
                 except Exception:
                     db.session.rollback()
 
+        # --- Auto-seed on first boot ----------------------------------------
+        # When AUTO_SEED=true, check if the database is empty and seed it.
+        # This allows Render's free tier (no shell access) to self-populate
+        # with demo data on the very first deployment.
+        if os.getenv("AUTO_SEED", "false").lower() in ("true", "1", "yes"):
+            from models import User
+            if User.query.count() == 0:
+                import seed as seed_module
+                try:
+                    seed_module.run_seed()
+                    print("[startup] Auto-seed complete — demo data loaded.")
+                except Exception as e:
+                    print(f"[startup] Auto-seed failed (non-fatal): {e}")
+
     # --- Routes ------------------------------------------------------------
     app.register_blueprint(api, url_prefix="/api")
     app.register_blueprint(auth, url_prefix="/api/auth")

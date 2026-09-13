@@ -567,5 +567,10 @@ def seed():
         print("========================================================")
 
 
+def run_seed():
+    """Importable entry point for auto-seeding from app.py startup."""
+    seed()
+
+
 if __name__ == "__main__":
     seed()
