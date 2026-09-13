@@ -1,4 +1,4 @@
-﻿# render.yaml — Render Blueprint for the NEED backend.
+# render.yaml — Render Blueprint for the NEED backend.
 #
 # This file tells Render.com how to build and run the Flask API.
 # To deploy: go to https://render.com → New → Blueprint → connect this repo.
@@ -10,6 +10,7 @@ services:
     name: neend-backend
     runtime: python
     rootDir: backend
+    pythonVersion: "3.11.9"
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
     plan: free
