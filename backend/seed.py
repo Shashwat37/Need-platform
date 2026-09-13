@@ -6,10 +6,10 @@ WHY:  Provides realistic demonstration data for Cooperative & Platform Dashboard
 HOW:  Run once from backend folder:   python seed.py
 """
 
+from contextlib import nullcontext
 from datetime import datetime, timedelta
+from flask import has_app_context
 from werkzeug.security import generate_password_hash
-
-from app import app
 from models import (
     Booking,
     Cooperative,
@@ -185,9 +185,17 @@ WORKERS = [
 ]
 
 
-def seed():
+def seed(flask_app=None):
     """Wipe database and seed comprehensive demo data."""
-    with app.app_context():
+    if flask_app:
+        ctx = flask_app.app_context()
+    elif has_app_context():
+        ctx = nullcontext()
+    else:
+        from app import app as default_app
+        ctx = default_app.app_context()
+
+    with ctx:
         print("Clearing database...")
         db.drop_all()
         db.create_all()
@@ -567,9 +575,9 @@ def seed():
         print("========================================================")
 
 
-def run_seed():
+def run_seed(flask_app=None):
     """Importable entry point for auto-seeding from app.py startup."""
-    seed()
+    seed(flask_app)
 
 
 if __name__ == "__main__":
