@@ -1,0 +1,14 @@
+﻿{
+  "version": 2,
+  "comment": "Vercel config for the NEED frontend (React/Vite).",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

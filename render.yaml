@@ -1,0 +1,42 @@
+﻿# render.yaml — Render Blueprint for the NEED backend.
+#
+# This file tells Render.com how to build and run the Flask API.
+# To deploy: go to https://render.com → New → Blueprint → connect this repo.
+#
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: neend-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    plan: free
+
+    # Health check — Render pings this to confirm the service is alive
+    healthCheckPath: /api/health
+
+    envVars:
+      # A strong random secret — CHANGE THIS in the Render dashboard
+      - key: SECRET_KEY
+        generateValue: true
+
+      # Set to "production" to enable secure cookies and stricter settings
+      - key: FLASK_ENV
+        value: production
+
+      # Update this to your Vercel frontend URL after deploying the frontend
+      # Example: https://neend-platform.vercel.app
+      - key: CORS_ORIGINS
+        value: https://neend-platform.vercel.app
+
+      # SQLite path — Render free tier persists the disk between restarts
+      - key: DATABASE_URL
+        value: sqlite:///instance/database.db
+
+      # OTP is in demo mode — no real SMS gateway needed
+      - key: OTP_DEMO_MODE
+        value: "true"
+      - key: DEFAULT_DEMO_OTP
+        value: "123456"

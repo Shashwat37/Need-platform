@@ -433,6 +433,17 @@ Things a real deployment would need (honestly listed as *not built*):
 
 ---
 
+
+---
+
+## 🚀 Live Deployment
+
+| Service | Platform | URL |
+|---------|----------|-----|
+| Frontend | Vercel | *(will update after deploy)* |
+| Backend API | Render | *(will update after deploy)* |
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the full step-by-step guide to deploy the backend on Render and the frontend on Vercel (both free tier).
 ## 🤝 Contributing
 
 1. **Fork** the repo and create your branch:
@@ -465,3 +476,4 @@ This project is released under the [MIT License](LICENSE).
 ---
 
 <p align="center">Built with ❤️ as a college project · No real money involved · Demo use only</p>
+

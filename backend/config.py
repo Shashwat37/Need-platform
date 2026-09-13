@@ -29,9 +29,10 @@ class Config:
     CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*")
 
     # --- Session & Security Headers ----------------------------------------
-    SESSION_COOKIE_SAMESITE = "Lax"
+    SESSION_COOKIE_SAMESITE = "None" if os.getenv("FLASK_ENV") == "production" else "Lax"
     SESSION_COOKIE_HTTPONLY = True
-    SESSION_COOKIE_SECURE = False  # Set True in production over HTTPS
+    # Automatically True in production (HTTPS on Render), False locally (HTTP)
+    SESSION_COOKIE_SECURE = os.getenv("FLASK_ENV") == "production"
     PERMANENT_SESSION_LIFETIME = 60 * 60 * 24 * 7  # 7 days
 
     # --- OTP Verification Global Settings ----------------------------------
